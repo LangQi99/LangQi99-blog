@@ -9,7 +9,7 @@ export const SITE_DESCRIPTION = "A blog template";
 export const DATE_FORMAT = "ddd MMM DD YYYY";
 
 // User profile information
-export const USER_NAME = "EveSunMaple";
+export const USER_NAME = "LangQi99";
 export const USER_SITE = "https://frosti.saroprock.com"; // At the same time, this is also the site retrieved by the i18n configuration.
 export const USER_AVATAR = "/profile.webp";
 
@@ -58,6 +58,13 @@ export const menuItems = [
         svg: "material-symbols:earthquake-rounded",
         target: "_self",
       }, // Life category
+      {
+        id: "ctf",
+        text: "CTF blogs",
+        href: "/blog/categories/ctf",
+        svg: "material-symbols:earthquake-rounded",
+        target: "_self",
+      }, // CTF category
     ],
   }, // Blog page with sub-items
   {
@@ -77,7 +84,7 @@ export const menuItems = [
   {
     id: "contact",
     text: "Contact",
-    href: "mailto:contact.evesunmaple@outlook.com", // Contact email
+    href: "2032771946@qq.com", // Contact email
     target: "_blank", // Open in a new tab
     svg: "material-symbols:attach-email-outline-rounded",
   },
@@ -85,20 +92,20 @@ export const menuItems = [
 
 // Social media and contact icons
 export const socialIcons = [
+  // {
+  //   href: "https://afdian.net/a/saroprock",
+  //   ariaLabel: "Support my work",
+  //   title: "Support my work",
+  //   svg: "ri:cup-line",
+  // },
   {
-    href: "https://afdian.net/a/saroprock",
-    ariaLabel: "Support my work",
-    title: "Support my work",
-    svg: "ri:cup-line",
-  },
-  {
-    href: "https://github.com/EveSunMaple",
+    href: "https://github.com/LangQi99",
     ariaLabel: "Github",
     title: "Github",
     svg: "ri:github-line",
   },
   {
-    href: "https://space.bilibili.com/438392347",
+    href: "https://space.bilibili.com/431932999",
     ariaLabel: "BiliBili",
     title: "BiliBili",
     svg: "ri:bilibili-line",
