@@ -194,24 +194,49 @@ docker build -t 镜像名:标签 Dockerfile路径
 | `docker exec` | 进入运行中的容器 |
 | `docker inspect` | 查看容器/镜像的详细信息 |
 
-## 网络代理
+## 网络
+
+### 换源
+
+最推荐的方式
+
+```json
+"registry-mirrors": ["http://docker.m.daocloud.io"]
+```
 
 ### Docker代理
 
-1. 打开 Docker Desktop
-2. 点击右上角的设置齿轮图标
-3. 选择 "Resources" → "Proxies"
-4. 在 "HTTP Proxy" 和 "HTTPS Proxy" 字段中输入你的代理地址（例如 `http://proxy.example.com:8080`）
-5. 如果需要认证，使用格式 `http://username:password@proxy.example.com:8080`
-6. 点击 "Apply & Restart
+研究一个小时未果，放弃。
+
+1. ~~打开 Docker Desktop~~
+2. ~~点击右上角的设置齿轮图标~~
+3. ~~选择 "Resources" → "Proxies"~~
+4. ~~在 "HTTP Proxy" 和 "HTTPS Proxy" 字段中输入你的代理地址（例如 `http://proxy.example.com:8080`）~~
+5. ~~如果需要认证，使用格式 `http://username:password@proxy.example.com:8080`~~
+6. ~~点击 "Apply & Restart~~
 
 ### WSL2代理
+
+修改`~/.bashrc`
+
+```bash
+export host_ip=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
+export http_proxy="http://$host_ip:10804"
+export https_proxy="http://$host_ip:10804"
+echo "Proxy ON: $http_proxy"
+```
 
 ## 实战测试
 
 ### 拉取
+
+从github拉取excalidraw
 ```bash
 git clone https://github.com/excalidraw/excalidraw
+```
+也可以直接从dockerhub拉取
+```bash
+docker pull name:tag
 ```
 
 ### 构建镜像
@@ -220,4 +245,22 @@ docker build -t ec-draw .
 ```
 
 ### 运行容器
+```bash
+docker run -d --name my_container -p 8080:80 ec-draw
+```
 
+### 访问
+```bash
+http://localhost:8080
+```
+成功访问
+
+
+### 停止
+```bash
+docker stop my_container
+```
+
+### 注意
+
+- 以上代码可以运行在windows和wsl2上
