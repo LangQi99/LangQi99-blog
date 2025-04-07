@@ -11,7 +11,7 @@ export const DATE_FORMAT = "ddd MMM DD YYYY";
 // User profile information
 export const USER_NAME = "LangQi99";
 export const USER_SITE = "https://frosti.saroprock.com"; // At the same time, this is also the site retrieved by the i18n configuration.
-export const USER_AVATAR = "/profile.webp";
+export const USER_AVATAR = "/profile.png";
 
 // Server and transition settings
 export const SERVER_URL = "https://demo.saroprock.com";
