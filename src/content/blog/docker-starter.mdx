@@ -1,0 +1,266 @@
+---
+title: "Docker 入门"
+description: "Docker 基础学习"
+pubDate: "Apr 02 2025"
+image: /image/image3.png
+categories:
+  - tech
+tags:
+  - Docker
+---
+import Collapse from "../../components/mdx/Collapse.astro";
+import Diff from "../../components/mdx/Diff.astro";
+import Error from "../../components/mdx/Error.astro";
+import Info from "../../components/mdx/Info.astro";
+import Kbd from "../../components/mdx/Kbd.astro";
+import Success from "../../components/mdx/Success.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TimeLine from "../../components/mdx/TimeLine.astro";
+import LinkCard from "../../components/mdx/LinkCard.astro";
+
+## 什么是 Docker？
+
+Docker 是一个开源的容器化平台，用于开发、部署和运行应用程序。它允许开发者将应用程序及其依赖项打包到一个轻量级、可移植的容器中，然后可以在任何支持 Docker 的环境中运行。
+
+## Docker 与虚拟机的区别
+
+| 特性 | Docker 容器 | 虚拟机 (VM) |
+|-------------|--------------------------|--------------------------|
+| **隔离** | 进程级隔离 | 完整的硬件级隔离 |
+| **启动** | 秒级启动 | 分钟级启动 |
+| **性能** | 接近原生性能 | 有性能损耗 |
+| **资源** | 轻量，共享宿主OS内核 | 重量级，每个VM有完整OS |
+| **大小** | 通常为MB级别 | 通常为GB级别 |
+| **移植** | 高，跨平台兼容性好 | 相对较低 |
+
+## 核心概念
+
+### 1. 容器 (Container)
+- 是镜像的运行**实例**
+- 轻量级、独立、可执行的软件包
+- 包含运行应用所需的所有内容：代码、运行时、系统工具、系统库和设置
+- 容器之间相互隔离
+
+### 2. 镜像 (Image)
+- 容器的**模板**，只读文件
+- 包含创建容器所需的所有文件和配置
+- 采用分层存储结构，可复用已有层
+- 通过 Dockerfile 构建
+
+### 3. Docker 引擎
+- Docker 的核心组件
+- 包含：
+  - Docker 守护进程 (dockerd)：长期运行的服务端进程
+  - Docker 客户端 (docker CLI)：用户与守护进程交互的接口
+  - REST API：用于程序与守护进程交互
+
+## Docker 安装
+
+### 在 Windows 上安装 Docker
+
+- 访问官方 Docker 网站：https://www.docker.com/products/docker-desktop/
+- 使用 WSL2 作为后端
+
+## Docker 基本命令
+
+### **容器生命周期管理**
+**`docker run`** - 创建并启动一个新容器
+```bash
+docker run [选项] 镜像名 [命令]
+```
+- 常用选项：
+  - `-d`：后台运行（守护态）
+  - `-p 主机端口:容器端口`：端口映射
+  - `-v 主机路径:容器路径`：挂载数据卷
+  - `--name 容器名`：指定容器名称
+  - `-e 环境变量`：设置环境变量
+  - `--rm`：容器退出后自动删除
+- 示例：
+```bash
+docker run -d -p 8080:80 --name my_nginx nginx
+```
+
+**`docker stop`** - 停止运行中的容器
+```bash
+docker stop 容器ID或名称
+```
+- 示例：
+```bash
+docker stop my_nginx
+```
+
+**`docker rm`** - 删除已停止的容器
+```bash
+docker rm 容器ID或名称
+```
+- 强制删除运行中的容器：`-f`
+- 删除所有已停止的容器：
+```bash
+docker rm $(docker ps -aq)
+```
+
+---
+
+### **容器查询与操作**
+**`docker ps`** - 查看容器列表
+```bash
+docker ps [选项]
+```
+- 常用选项：
+`-a`：显示所有容器（包括已停止的）
+`-q`：仅显示容器ID
+- 示例：
+```bash
+docker ps -a
+```
+
+**`docker logs`** - 查看容器日志
+```bash
+docker logs 容器ID或名称
+```
+- 实时跟踪日志：`-f`
+- 显示最后 N 行：`--tail N`
+- 示例：
+```bash
+docker logs -f my_nginx
+```
+
+**`docker exec`** - 在运行中的容器内执行命令
+```bash
+docker exec [选项] 容器ID或名称 命令
+```
+- 常用选项：
+`-it`：交互式终端（进入容器）
+- 示例：
+```bash
+docker exec -it my_nginx /bin/bash
+```
+
+**`docker inspect`** - 查看容器/镜像的详细信息（JSON 格式）
+```bash
+docker inspect 容器ID/镜像名
+```
+- 示例：
+```bash
+docker inspect my_nginx | grep IPAddress # 查看容器IP
+```
+
+---
+
+### **镜像管理**
+**`docker images`** - 列出本地镜像
+```bash
+docker images [选项]
+```
+- 常用选项：
+`-q`：仅显示镜像ID
+- 示例：
+```bash
+docker images
+```
+
+**`docker rmi`** - 删除本地镜像
+```bash
+docker rmi 镜像ID或名称
+```
+- 强制删除：`-f`
+- 删除所有镜像（慎用！）：
+```bash
+docker rmi $(docker images -aq)
+```
+
+**`docker pull`** - 下载镜像
+```bash
+docker pull 镜像名:标签
+```
+
+**`docker build`** - 通过 Dockerfile 构建镜像
+```bash
+docker build -t 镜像名:标签 Dockerfile路径
+```
+
+---
+
+### 总结
+| 命令 | 作用 |
+|--------------------|------------------------------|
+| `docker run` | 创建并启动容器 |
+| `docker ps` | 查看容器列表 |
+| `docker stop` | 停止容器 |
+| `docker rm` | 删除容器 |
+| `docker images` | 列出镜像 |
+| `docker rmi` | 删除镜像 |
+| `docker logs` | 查看容器日志 |
+| `docker exec` | 进入运行中的容器 |
+| `docker inspect` | 查看容器/镜像的详细信息 |
+
+## 网络
+
+### 换源
+
+最推荐的方式
+
+```json
+"registry-mirrors": ["http://docker.m.daocloud.io"]
+```
+
+### Docker代理
+
+研究一个小时未果，放弃。
+
+1. ~~打开 Docker Desktop~~
+2. ~~点击右上角的设置齿轮图标~~
+3. ~~选择 "Resources" → "Proxies"~~
+4. ~~在 "HTTP Proxy" 和 "HTTPS Proxy" 字段中输入你的代理地址（例如 `http://proxy.example.com:8080`）~~
+5. ~~如果需要认证，使用格式 `http://username:password@proxy.example.com:8080`~~
+6. ~~点击 "Apply & Restart~~
+
+### WSL2代理
+
+修改`~/.bashrc`
+
+```bash
+export host_ip=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
+export http_proxy="http://$host_ip:10804"
+export https_proxy="http://$host_ip:10804"
+echo "Proxy ON: $http_proxy"
+```
+
+## 实战测试
+
+### 拉取
+
+从github拉取excalidraw
+```bash
+git clone https://github.com/excalidraw/excalidraw
+```
+也可以直接从dockerhub拉取
+```bash
+docker pull name:tag
+```
+
+### 构建镜像
+```bash
+docker build -t ec-draw .
+```
+
+### 运行容器
+```bash
+docker run -d --name my_container -p 8080:80 ec-draw
+```
+
+### 访问
+```bash
+http://localhost:8080
+```
+成功访问
+
+
+### 停止
+```bash
+docker stop my_container
+```
+
+### 注意
+
+- 以上代码可以运行在windows和wsl2上
