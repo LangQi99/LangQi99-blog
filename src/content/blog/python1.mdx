@@ -1,0 +1,135 @@
+---
+title: "Python 笔记：一些冷门但高效的设计巧思"
+description: "一些冷门但高效的设计巧思"
+pubDate: "Sep 03 2025"
+categories:
+  - tech
+tags:
+  - Python
+---
+
+## UniversalObject 万用对象
+
+- **它是什么**：一个“万用/黑洞对象”。访问任意属性、调用任意方法、以任意参数调用，都不会报错，并且始终返回它自身。
+- **核心机制**：
+  - `__getattribute__`：访问任意属性时直接返回对象自身。
+  - `__call__`：把实例当函数调用时也返回对象自身。
+- **直接效果**：可无限链式调用，结果始终是原对象本身。
+
+```python
+class UniversalObject(object):
+    """ 万用对象 """
+    def __init__(self):
+        pass
+
+    def __getattribute__(self, __name):
+        return self
+
+    def __call__(self, *args, **kwds):
+        return self
+```
+
+### 行为示例
+```python
+u = UniversalObject()
+result = u.any.attr.or_method(1, x=2).more.calls
+print(result is u)  # True
+```
+
+### 典型用途
+- **测试替身/Mock**：替代复杂依赖，避免 `AttributeError`/`TypeError`，便于聚焦核心逻辑。
+- **空对象模式**：替代 `None`，让调用方无需四处写空判断。
+
+## functools.lru_cache 结果缓存
+- 为纯函数结果做缓存，避免重复计算；`maxsize` 控制缓存大小，`typed=True` 区分不同类型的同值参数。
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=128)
+def fib(n: int) -> int:
+    return n if n < 2 else fib(n - 1) + fib(n - 2)
+
+print(fib(6))
+```
+上述 `lru_cache` 代码的工作过程如下：
+
+1. 当你第一次调用 `fib(n)` 时，函数会正常递归计算斐波那契数列，并把每个参数和结果存入缓存。  
+2. 如果后续再次调用 `fib(n)`，且参数 `n` 之前已经算过，直接从缓存返回结果，不再递归计算。  
+3. `maxsize=128` 表示最多缓存 128 个不同参数的结果。
+
+例如，`fib(6)` 实际只会递归计算一次，后续再调用 `fib(6)` 或更小的参数时，都会直接命中缓存，速度极快。
+
+
+## functools.singledispatch 单分派泛函数
+- 基于“第一个参数类型”分派到相应实现；可在任意模块延后注册新类型的实现。
+
+```python
+from functools import singledispatch
+
+@singledispatch
+def to_str(x) -> str:
+    return f"obj:{x!r}"
+
+@to_str.register
+def _(x: int) -> str:
+    return f"int:{x}"
+
+@to_str.register
+def _(x: list) -> str:
+    return "list:" + ",".join(map(str, x))
+
+print(to_str(42))       # int:42
+print(to_str([1,2,3]))  # list:1,2,3
+```
+## globals() C/S架构RPC传输
+
+### 期望效果
+
+服务端RPC传递以下代码
+```python
+ServerSystems.ClientRpc.RequestToClient(convert_operation(COLLECTION(
+    GLOBALS()["clientApi"].SetHudChatStackVisible(False),
+    GLOBALS()["clientApi"].RegisterUIAnimations(CommonUI.DEFINITION, True),
+    GLOBALS()["clientApi"].RegisterUI(CommonUI.NAMESPACE, CommonUI.KEY, GLOBALS()["custom_ui_class_path"], CommonUI.SCREEN_DEF),
+    GLOBALS().setitem(CommonUI.SCREEN_DEF, GLOBALS()["clientApi"].CreateUI(CommonUI.NAMESPACE, CommonUI.KEY, {"isHud": 1})),
+    GLOBALS()[CommonUI.SCREEN_DEF].setattr("GameComponent", GLOBALS()["clientApi"].GetEngineCompFactory().CreateGame(LevelId)),
+    GLOBALS()[CommonUI.SCREEN_DEF].setattr("AddChatMessage", FUNCTION(COLLECTION(
+        GLOBALS()[CommonUI.SCREEN_DEF].Clone("/templates/chat_item", "/chat_messages", LOCALS()["args"][0]),
+        GLOBALS()[CommonUI.SCREEN_DEF].GetBaseUIControl("/chat_messages/" + LOCALS()["args"][0] + "/anchor/content").asLabel().SetText(LOCALS()["args"][1]),
+        GLOBALS()[CommonUI.SCREEN_DEF].GameComponent.AddTimer(LOCALS()["args"][2], GLOBALS()[CommonUI.SCREEN_DEF].RemoveComponent, "/chat_messages/" + LOCALS()["args"][0], "/chat_messages")
+    ))),
+    GLOBALS()[CommonUI.SCREEN_DEF].setattr("AddDeathMessage", FUNCTION(COLLECTION(
+        GLOBALS()[CommonUI.SCREEN_DEF].Clone("/templates/death_item", "/death_messages", LOCALS()["args"][0]),
+        GLOBALS()[CommonUI.SCREEN_DEF].GetBaseUIControl("/death_messages/" + LOCALS()["args"][0] + "/anchor/content").asLabel().SetText(LOCALS()["args"][1]),
+        GLOBALS()[CommonUI.SCREEN_DEF].GetBaseUIControl("/death_messages/" + LOCALS()["args"][0] + "/anchor/outline").SetVisible(LOCALS()["args"][2]),
+        GLOBALS()[CommonUI.SCREEN_DEF].GameComponent.AddTimer(LOCALS()["args"][3], GLOBALS()[CommonUI.SCREEN_DEF].RemoveComponent,"/death_messages/" + LOCALS()["args"][0], "/death_messages")
+    )))
+)), target)
+```
+
+对应的客户端等价运行如下代码
+
+```python
+clientApi.SetHudChatStackVisible(False)
+clientApi.RegisterUIAnimations(CommonUI.DEFINITION, True)
+clientApi.RegisterUI(CommonUI.NAMESPACE, CommonUI.KEY, GLOBALS()["custom_ui_class_path"], CommonUI.SCREEN_DEF)
+CommonUI.SCREEN_DEF = clientApi.CreateUI(CommonUI.NAMESPACE, CommonUI.KEY, {"isHud": 1})
+CommonUI.SCREEN_DEF.GameComponent = clientApi.GetEngineCompFactory().CreateGame(LevelId)
+
+def AddChatMessage(id_, text, ttl):
+    path = "/chat_messages/" + str(id_)
+    CommonUI.SCREEN_DEF.Clone("/templates/chat_item", "/chat_messages", id_)
+    CommonUI.SCREEN_DEF.GetBaseUIControl(path + "/anchor/content").asLabel().SetText(text)
+    CommonUI.SCREEN_DEF.GameComponent.AddTimer(ttl, CommonUI.SCREEN_DEF.RemoveComponent, path, "/chat_messages")
+
+def AddDeathMessage(id_, text, outlined, ttl):
+    path = "/death_messages/" + str(id_)
+    CommonUI.SCREEN_DEF.Clone("/templates/death_item", "/death_messages", id_)
+    CommonUI.SCREEN_DEF.GetBaseUIControl(path + "/anchor/content").asLabel().SetText(text)
+    CommonUI.SCREEN_DEF.GetBaseUIControl(path + "/anchor/outline").SetVisible(outlined)
+    CommonUI.SCREEN_DEF.GameComponent.AddTimer(ttl, CommonUI.SCREEN_DEF.RemoveComponent, path, "/death_messages")
+
+CommonUI.SCREEN_DEF.AddChatMessage = AddChatMessage
+CommonUI.SCREEN_DEF.AddDeathMessage = AddDeathMessage
+```
