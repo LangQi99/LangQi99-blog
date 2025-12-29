@@ -1,0 +1,234 @@
+---
+title: "为国内服务器安装 v2rayA 并配置 Xray 内核 (Ubuntu/Debian)"
+description: "记录在无法科学上网的初始环境下，如何通过手动下载 .deb 包和配置 Xray 核心来成功部署 v2rayA，解决 Docker 方式不可用和官方源连接失败的问题。"
+pubDate: "Dec 29 2025"
+categories:
+  - tech
+tags:
+  - Linux
+  - Ubuntu
+  - 网络代理
+  - v2rayA
+  - Xray
+---
+
+import Collapse from "../../components/mdx/Collapse.astro";
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import Success from "../../components/mdx/Success.astro";
+
+## 背景
+
+最近在腾讯云的 Ubuntu 24.04 Server 上部署 v2rayA 时踩了不少坑。
+主要的痛点在于：
+
+- **Docker 方式不可用**：由于目前 Docker Hub 以及主流加速镜像在国内基本被墙，导致 `docker pull` 直接超时。
+- **官方源无法连接**：v2rayA 的官方 apt 源因为 GPG 密钥下载失败（网络原因）无法添加。
+- **协议支持**：老版本的 V2Ray 核心不支持较新的协议（如 SS-2022），必须强制使用 Xray 内核。
+
+本文记录了在无法"科学上网"的初始环境下，如何通过手动下载 .deb 包和配置 Xray 核心来成功把梯子搭起来。
+
+## 环境信息
+
+- **OS**: Ubuntu 24.04 LTS (Noble Numbat)
+- **架构**: x86_64 (amd64)
+- **云服务商**: 腾讯云 (Tencent Cloud)
+
+## 第一步：手动安装 v2rayA 面板
+
+由于添加 apt 源失败，我们推荐手动安装。针对服务器网络极差的情况，推荐使用方法 B。
+
+### 1. 下载安装包
+
+注意区分架构，普通服务器通常是 x64 (amd64)，树莓派等是 arm64。
+
+#### 方法 A：服务器直接下载
+
+```bash
+# 进入临时目录
+cd /tmp
+
+# 下载 v2rayA 安装包 (使用 ghproxy 加速)
+wget https://mirror.ghproxy.com/https://github.com/v2rayA/v2rayA/releases/download/v2.2.7.4/installer_debian_x64_2.2.7.4.deb
+```
+
+#### 方法 B：本机下载上传
+
+如果服务器下载总是超时，请在你的本地电脑（Mac/Windows/Linux）上下载好文件，然后通过 SSH (scp) 上传到服务器。
+
+**本机下载：**
+在本地浏览器访问 GitHub 下载 .deb 包：[v2rayA Releases](https://github.com/v2rayA/v2rayA/releases) (找 installer_debian_x64_...deb)
+
+**上传到服务器：**
+打开本机终端，运行以下命令（假设文件在当前目录，上传到服务器 /tmp）：
+
+```bash
+# 语法：scp [本地文件] [用户]@[IP]:[目标路径]
+scp installer_debian_x64_2.2.7.4.deb langqi@12.34.56.78:/tmp/
+```
+
+### 2. 安装
+
+回到服务器终端，进入 /tmp 目录安装：
+
+```bash
+cd /tmp
+sudo apt install ./installer_debian_x64_2.2.7.4.deb
+```
+
+<Warning>
+如果之前尝试过其他安装方式，建议先执行 `sudo apt purge v2raya` 清理一下。
+</Warning>
+
+### 3. 启动服务
+
+```bash
+sudo systemctl start v2raya
+sudo systemctl enable v2raya
+```
+
+此时 v2rayA 面板已启动，但还没有"内核/引擎"，无法连接节点。
+
+## 第二步：手动部署 Xray 内核
+
+v2rayA 默认优先寻找 V2Ray 核心，但为了支持新协议，我们需要安装 Xray。
+
+### 1. 下载 Xray Core
+
+同样推荐在本机下载好后上传。
+
+#### 方法 A：服务器直接下载
+
+```bash
+cd /tmp
+wget -O xray-linux-64.zip https://mirror.ghproxy.com/https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+```
+
+#### 方法 B：本机下载上传
+
+**本机下载：**
+在本地浏览器下载最新核心包：[Xray-core Releases](https://github.com/XTLS/Xray-core/releases) (下载 Xray-linux-64.zip)
+
+**上传到服务器：**
+在本机终端运行：
+
+```bash
+scp Xray-linux-64.zip langqi@12.34.56.78:/tmp/
+```
+
+**解压 (服务器端)：**
+
+```bash
+# 回到服务器终端
+cd /tmp
+sudo apt install unzip -y
+# 解压到名为 xray-core 的文件夹中
+unzip Xray-linux-64.zip -d xray-core
+```
+
+### 2. 部署到系统目录
+
+标准的二进制文件路径是 `/usr/local/bin`，资源文件路径是 `/usr/local/share`。
+
+```bash
+# 1. 移动核心程序 (发动机)
+sudo mv xray-core/xray /usr/local/bin/
+sudo chmod +x /usr/local/bin/xray
+
+# 2. 移动资源文件 (地图和站点库 geoip/geosite)
+sudo mkdir -p /usr/local/share/xray
+sudo mv xray-core/geoip.dat /usr/local/share/xray/
+sudo mv xray-core/geosite.dat /usr/local/share/xray/
+
+# 3. 清理垃圾
+rm -rf Xray-linux-64.zip xray-core
+```
+
+## 第三步：解决内核冲突与配置
+
+这是一个关键点。v2rayA 的检测逻辑是：如果有 V2Ray，就用 V2Ray；如果没有，才去找 Xray。
+如果在安装过程中不小心装了旧版 v2ray，或者 v2rayA 自动识别错误，都会导致连接失败。
+
+### 1. 强制移除旧版 V2Ray
+
+为了确保 v2rayA 只能用 Xray，我们把系统里可能存在的 V2Ray 删掉。
+
+```bash
+sudo rm /usr/local/bin/v2ray
+sudo rm -rf /usr/local/share/v2ray
+```
+
+<Info>
+如果 apt 安装过 v2ray，可以用 `sudo apt purge v2ray` 卸载
+</Info>
+
+### 2. 重启服务
+
+```bash
+sudo systemctl restart v2raya
+```
+
+## 第四步：Web 端设置
+
+### 1. 放行端口
+
+如果是云服务器（腾讯云/阿里云），记得去后台安全组放行 TCP 2017 端口。
+
+### 2. 导入节点与连接
+
+浏览器访问 `http://服务器IP:2017`。
+
+1. 创建管理员账号密码。
+
+2. 导入订阅。
+
+导入订阅后，选择一个节点。注意：Xray 内核在 v2rayA 中目前不支持同时选择多个节点（负载均衡），请只选中一个节点，然后点击左上角的 **Start**。
+
+## 第五步：验证
+
+### 1. 正确的验证方式：Curl
+
+在服务器终端验证代理是否生效（v2rayA 默认 HTTP 端口为 20172，SOCKS5 为 20170）：
+
+```bash
+# -x 指定代理地址
+curl -x http://127.0.0.1:20172 -I https://www.google.com
+```
+
+如果返回 `HTTP/1.1 200 Connection established` 或 `200 OK`，说明代理已通。
+
+### 2. 经典误区：为什么 Ping 不通？
+
+很多人配置好后习惯用 `ping google.com` 测试，发现 100% 丢包，以为没配置好。
+
+<Warning>
+**原因**：Ping 使用的是 ICMP 协议，而普通的 HTTP/SOCKS 代理不转发 ICMP 包。
+
+**结论**：永远不要用 Ping 来测试梯子，请使用 curl。
+</Warning>
+
+### 3. 如何让终端命令（apt/docker/git）走代理？
+
+如果在终端执行 `docker pull` 或 `git clone` 依然慢，是因为它们默认不走代理。你需要设置环境变量：
+
+**临时生效（当前窗口）：**
+
+```bash
+export http_proxy=http://127.0.0.1:20172
+export https_proxy=http://127.0.0.1:20172
+```
+
+**永久生效（写入 .bashrc）：**
+
+```bash
+echo 'export http_proxy=http://127.0.0.1:20172' >> ~/.bashrc
+echo 'export https_proxy=http://127.0.0.1:20172' >> ~/.bashrc
+source ~/.bashrc
+```
+
+设置后，再运行 `curl https://www.google.com`（无需加 -x）即可直接访问。
+
+## 总结
+
+在 Docker Hub 无法访问的当下，离线包 + 手动二进制部署 反而是最快、最稳的方法。关键在于理清 v2rayA（前端面板）和 Xray（后端核心）的关系，并利用国内可用的 GitHub 镜像加速下载。同时，切记不要用 Ping 验证代理。
+
