@@ -1,0 +1,143 @@
+---
+title: "Linux SSH 断开后优雅保持程序运行方案记录 (nohup/screen/tmux)"
+description: "记录在 Linux 服务器上运行耗时任务时，如何解决 SSH 断开导致程序终止的问题。对比 nohup、Screen 和 Tmux 的使用场景与配置。"
+pubDate: "Dec 29 2025"
+categories:
+  - tech
+tags:
+  - Linux
+  - SSH
+  - Tmux
+  - Screen
+  - DevOps
+---
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import Success from "../../components/mdx/Success.astro";
+
+## 背景
+
+在 Linux 服务器上执行耗时任务（如模型训练、编译大项目、爬虫抓取）时，经常遇到 SSH 连接意外断开的情况。
+
+一旦 SSH 会话结束，系统会向该会话下的所有子进程发送 SIGHUP (Signal Hang Up) 信号。默认情况下，进程收到该信号会立即终止，导致任务中断，数据丢失。
+
+本文记录了三种常用的解决方案，分别适用于不同的场景。
+
+## 方案一：nohup
+
+如果任务逻辑简单，不需要中途进行交互（如输入密码、确认选项等），nohup 是最直接的方案。它通过忽略 SIGHUP 信号来保证程序后台运行。
+
+### 1. 使用方法
+
+命令格式为 `nohup [command] &`。其中 `&` 表示将任务放入后台执行。
+
+```bash
+# 示例：后台运行 Python 脚本
+nohup python main.py &
+```
+
+### 2. 输出重定向
+
+默认情况下，程序的标准输出（stdout）和错误输出（stderr）会被写入当前目录下的 `nohup.out` 文件。
+
+```bash
+# 实时查看运行日志
+tail -f nohup.out
+```
+
+也可以手动指定输出文件：
+
+```bash
+# 将标准输出和错误输出都重定向到 my_log.txt
+nohup python main.py > my_log.txt 2>&1 &
+```
+
+<Warning>
+局限性：nohup 将程序的标准输入（stdin）重定向到了 /dev/null。这意味着如果程序在运行过程中需要用户输入（例如 input()），程序会因读取不到输入而抛出 EOFError 或挂起。
+</Warning>
+
+## 方案二：Screen
+
+screen 是 GNU 计划开发的一个终端多路复用器。它允许在一个 SSH 会话中创建多个虚拟终端窗口，即使 SSH 断开，窗口内的程序依然运行。
+
+### 1. 基础操作
+
+```bash
+# 1. 创建一个名为 demo 的会话
+screen -S demo
+
+# 2. 在新窗口中执行命令
+python main.py
+
+# 3. 分离会话 (Detach)
+# 快捷键：先按 Ctrl+a，松开后按 d
+# 此时会返回原终端，程序在后台运行
+
+# 4. 恢复会话 (Reattach)
+screen -r demo
+```
+
+### 2. 使用体验问题
+
+Screen 是较早期的工具，默认配置在现代终端下体验一般：
+
+- 无法使用鼠标滚轮：直接滚动鼠标无法查看历史输出，会显示 `^[[A` 等乱码。
+- 查看历史记录繁琐：需要按 `Ctrl+a` 然后按 `[` 进入 Copy mode，才能通过键盘翻页查看。
+
+## 方案三：Tmux (推荐)
+
+tmux 是 screen 的现代替代品，采用 C/S 架构。相比 Screen，它在会话管理、分屏和配置灵活性上更好。
+
+### 1. 开启鼠标支持
+
+默认情况下 Tmux 也不支持鼠标滚动。为了解决查看日志不便的问题，需要修改配置文件。
+
+在 `~/.tmux.conf` 中添加以下配置（如果没有该文件则新建）：
+
+```bash
+# 开启鼠标支持：允许点击切换窗口、拖动调整分屏大小、鼠标滚轮查看历史记录
+echo "set -g mouse on" >> ~/.tmux.conf
+
+# 重新加载配置使生效
+tmux source-file ~/.tmux.conf
+```
+
+### 2. 常用操作指令
+
+#### 会话管理
+
+```bash
+# 新建会话并指定名称
+tmux new -s [session_name]
+
+# 查看当前所有会话
+tmux ls
+
+# 恢复/连接到指定会话
+tmux attach -t [session_name]
+
+# 杀死/关闭会话
+tmux kill-session -t [session_name]
+```
+
+#### 快捷键操作 (默认前缀键为 Ctrl+b)
+
+- 分离会话 (Detach): `Ctrl+b` -> `d`
+- 新建窗口: `Ctrl+b` -> `c`
+- 切换窗口: `Ctrl+b` -> `0-9` (或鼠标点击)
+- 分屏: `Ctrl+b` -> `%` (左右分屏) 或 `"` (上下分屏)
+
+<Info>
+在开启 mouse on 后，选中文本即自动复制（在某些终端模拟器中需按住 Shift 键选择）。
+</Info>
+
+## 总结
+
+| 工具 | 适用场景 | 优点 | 缺点 |
+|------|---------|------|------|
+| nohup | 简单的非交互式脚本 | 系统自带，命令简单 | 无法中途交互，日志查看不便 |
+| Screen | 旧系统或无需配置的环境 | 稳定性高 | 操作逻辑陈旧，不支持鼠标滚轮 |
+| Tmux | 长期开发、多任务管理 | 功能强大，支持分屏与鼠标，配置灵活 | 需要额外安装与简单配置 |
+
+对于需要长期维护的服务器环境，建议配置好 `~/.tmux.conf` 并使用 Tmux 作为默认工具。
+
