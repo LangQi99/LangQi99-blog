@@ -1,0 +1,202 @@
+---
+title: "用任意 AI 巧妙一口气生成图文并茂的论文/大作业"
+description: "拒绝手搓公式和绘图。本文介绍一种通过 Prompt Engineering 让 AI 编写 Python 脚本，从而自动计算数据、绘制图表并生成完整 LaTeX 源码的高级玩法。"
+pubDate: "Jan 01 2026"
+image: /image/1767271685315.png
+categories:
+  - tech
+tags:
+  - Python
+  - LaTeX
+  - AI
+  - Automation
+  - Academic
+---
+
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import Success from "../../components/mdx/Success.astro";
+
+## 背景
+
+每到期末，理工科的大作业往往让人头秃。你不仅要推导公式，还要用 Python/Matlab 跑仿真数据，把数据画成图，最后还得把这些东西手动粘贴到 Word 或者 LaTeX 里，排版又是一场噩梦。
+
+痛点分析：
+
+- 数据与图表割裂：代码跑完图，还得手动保存、重命名、插入文档。
+- 排版繁琐：LaTeX 的表格和公式写起来非常费劲。
+- AI 直接写的太假：直接让 AI 写论文，它往往会瞎编数据（幻觉），或者没有配图，一看就是生成的。
+
+本文介绍一种策略：不要让 AI 写论文，而是让 AI 写一个 **"能生成论文"的代码** 。
+
+我们将以一个量子力学大作业（无限深势阱仿真）为例，展示如何用一个 py 脚本搞定一切。
+
+## 效果预览
+
+![1767271685315](image/ai-paper-latex/1767271685315.png)
+
+## 核心思路
+
+与其让 AI 输出文本，不如让它输出一个 Python 脚本，这个脚本包含三个模块：
+
+1. **计算核心**：利用 numpy 算出真实可靠的数据（拒绝胡编乱造）。
+2. **绘图引擎**：利用 matplotlib 自动生成高清图表并保存。
+3. **文档生成**：利用 Python 的字符串操作，将计算结果、图表路径嵌入 LaTeX 模板，并输出 .tex 文件。
+
+<Info>
+这种方法的优势在于可复现性。只要代码逻辑是对的，生成的图表和数据就绝对对应，不会出现"图文不符"的低级错误。
+</Info>
+
+## 案例剖析：aaaaa.py
+
+我们来看一个实际案例 aaaaa.py。这是我让 AI 生成的一个脚本，它的目标是完成一份关于"1D 和 2D 无限深势阱"的物理大作业。
+
+### 1. 物理引擎与计算
+
+首先，脚本定义了物理常数和核心计算函数。这一步保证了论文里的数据是基于数学公式算出来的，而不是 AI 瞎编的。
+
+```python
+# aaaaa.py 片段：定义物理计算逻辑
+def energy_1d(n):
+    """Energy levels for 1D well"""
+    return (n**2 * np.pi**2 * hbar**2) / (2 * m * L**2)
+
+def evolve_psi(coeffs, x, t, N):
+    """Calculate wave function at time t"""
+    # ... 省略具体计算过程 ...
+    return psi_t
+```
+
+### 2. 自动化绘图
+
+这是最爽的一步。脚本会自动创建输出目录，并批量生成所需的图表。注意它直接把图保存到了 OUTPUT_DIR。
+
+```python
+# aaaaa.py 片段：自动绘图
+OUTPUT_DIR = "quantum_paper_output"
+# ... 创建目录 ...
+
+print("Generating Eigenstate Figures...")
+fig, axes = plt.subplots(4, 2, figsize=(10, 12))
+# ... 循环画图 ...
+plt.savefig(f"{OUTPUT_DIR}/fig_eigenstates.png", dpi=300)
+```
+
+它甚至还生成了复杂的 3D 表面图，展示 2D 势阱的简并态：
+
+```python
+def plot_2d_eigen(nx, ny, filename):
+    # ... 3D 绘图逻辑 ...
+    ax.plot_surface(X, Y, prob2d, cmap='viridis', edgecolor='none')
+    plt.savefig(f"{OUTPUT_DIR}/{filename}", dpi=300)
+```
+
+### 3. 动态生成 LaTeX 表格
+
+手写 LaTeX 表格是世界上最痛苦的事情之一。但用 Python 生成就非常简单。脚本里用循环计算出数据，拼接成 LaTeX 的表格行格式：
+
+```python
+# aaaaa.py 片段：自动生成表格内容
+energy_table_rows = ""
+for n in range(1, 21):
+    e_val = energy_1d(n)
+    # 自动填充 n, 能量值, 和公式表达
+    energy_table_rows += f"{n} & {e_val:.4f} & ${n**2} E_1$ \\\\\n"
+```
+
+### 4. 组装论文
+
+最后，脚本通过一个巨大的 f-string（格式化字符串），把刚才生成的表格行插入到 LaTeX 模板中，并写入 paper.tex。
+
+```python
+# aaaaa.py 片段：LaTeX 模板注入
+tex_content = r"""\documentclass[12pt, a4paper]{article}
+% ... 导包 ...
+\begin{document}
+
+\section{Results}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccc}
+        Quantum Number $n$ & Energy & Factor \\
+        \midrule
+""" + energy_table_rows + r"""   <-- 插入刚才生成的表格数据
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{fig_eigenstates.png} <-- 引用刚才生成的图片
+    \caption{Eigenstates visualization...}
+\end{figure}
+
+\end{document}
+"""
+
+with open(f"{OUTPUT_DIR}/paper.tex", "w", encoding="utf-8") as f:
+    f.write(tex_content)
+```
+
+## 实操步骤
+
+### 第一步：让 AI 写代码
+
+你可以给 ChatGPT/DeepSeek/Claude 发送类似的 Prompt：
+
+"请帮我写一个 Python 脚本，用于模拟[你的课题]。脚本需要做以下事情：
+
+1. 使用 Numpy 计算[核心公式]。
+2. 使用 Matplotlib 绘制[关键图表]并保存为 PNG。
+3. 生成一个完整的 LaTeX 论文源码文件，其中包含摘要、公式推导、刚才生成的图片（使用 includegraphics）以及计算出的数据表格。
+4. 将所有输出文件放在一个文件夹里。
+
+### 第二步：运行脚本
+
+拿到代码后（例如 aaaaa.py），直接在本地运行：
+
+```bash
+python aaaaa.py
+```
+
+<Success>
+运行结束后，你会发现当前目录下多了一个 quantum_paper_output 文件夹，里面躺着 paper.tex 和几张高清 PNG 图片。
+</Success>
+
+## 进阶：如何编译生成的 LaTeX
+
+拿到了 .tex 文件，很多新手不知道怎么转成 PDF。这里提供两种方案。
+
+### 方案 A：使用 Overleaf (推荐新手)
+
+如果你不想在本地折腾环境，这是最简单的办法。
+
+1. 把 quantum_paper_output 文件夹打包成一个 ZIP 压缩包。
+2. 访问 Overleaf 并注册/登录。
+3. 点击 "New Project" -> "Upload Project"。
+4. 上传你的 ZIP 包。
+5. 上传完成后，点击网页右侧的 Recompile 按钮，PDF 就出来了。
+
+### 方案 B：本地编译 (VS Code)
+
+如果你是理工科学生，建议配置本地环境，一劳永逸。
+
+1. **安装 TeX 发行版**：
+   - Windows: 安装 TeX Live (完整版很大) 或 MiKTeX。
+   - macOS: 安装 MacTeX。
+   - Linux: `sudo apt install texlive-full`。
+
+2. **安装 VS Code 插件**：
+   - 在 VS Code 扩展商店搜索并安装 LaTeX Workshop。
+
+3. **编译**：
+   - 用 VS Code 打开 paper.tex。
+   - 按 `Ctrl+Alt+B` (Windows) 或 `Cmd+Option+B` (Mac) 触发编译。
+   - 或者点击右上角的播放小图标。
+   - 编译成功后，点击右上角的查看图标即可预览 PDF。
+
+## 总结
+
+通过 Python 脚本"一口气"生成论文，不仅能保证数据准确，还能极大节省排版时间。你只需要专注于调整 Python 代码里的参数和 LaTeX 模板的文字描述，剩下的繁琐工作全部交给机器。
+
+这就是 AI 时代的写作业方式： **Code is all you need** .
