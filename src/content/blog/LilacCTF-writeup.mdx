@@ -1,0 +1,142 @@
+---
+title: "[LilacCTF 2026] Your GitHub, mine 题解：利用 GitHub 机制伪造发件人"
+description: "记录 LilacCTF 2026 中一道利用 GitHub 逻辑特性的 Misc 题目。通过将 Issue 转换为 Discussion，绕过发件人检查机制"
+pubDate: "Jan 26 2026"
+categories:
+  - security
+tags:
+  - CTF
+  - Misc
+  - GitHub
+  - Trick
+---
+
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import Success from "../../components/mdx/Success.astro";
+
+## 背景
+
+在最近的 LilacCTF 2026 中，有一道名为 "Your GitHub, mine" 的 Misc 题目非常有意思。
+
+题目要求我们让一个特定的 GitHub 机器人账号 @2rn8p752rs-lang 给题目组的账号 @lilacctf-tech 发送一封邮件，且邮件头必须包含 X-GitHub-Sender: 2rn8p752rs-lang。
+
+限制条件：
+
+1.  机器人创建 Issue 的那封初始邮件不算数。
+2.  我们只能控制机器人创建一个 Issue，无法登录机器人账号。
+3.  需要绕过 GitHub 的身份验证机制。
+
+本文记录了如何利用 GitHub 的 "Issue 转 Discussion" 功能特性来完成这次攻击。
+
+## 题目入口
+
+题目提供了一个 nc 端口。连接后，首先面临的是一个 HashCash PoW Challenge。这是为了防止滥用，要求我们计算出一个后缀，使得 SHA256 哈希值满足特定条件。
+
+### 1. 自动化脚本
+
+手算是不可能的，直接上 Python 脚本自动爆破：
+
+```python
+from pwn import *
+import hashlib
+import itertools
+import string
+
+# 配置信息
+HOST = '1.95.71.133'
+PORT = 9999
+REPO_NAME = "your-username/lilacctf-puzzle-xxx"  # 你的仓库名
+
+def solve_pow(prefix, difficulty=6):
+    print(f"[*] Calculating PoW (Prefix: {prefix})...")
+    chars = string.ascii_letters + string.digits
+    # 爆破长度 1-10 的字符串
+    for length in range(1, 10):
+        for p in itertools.product(chars, repeat=length):
+            suffix = ''.join(p)
+            candidate = prefix + suffix
+            if hashlib.sha256(candidate.encode()).hexdigest().startswith('0' * difficulty):
+                return suffix
+
+r = remote(HOST, PORT)
+
+# 读取挑战前缀
+r.recvuntil(b"SHA256('")
+prefix = r.recvuntil(b"'", drop=True).decode()
+r.recvuntil(b"hex")
+
+# 计算并发送
+solution = solve_pow(prefix)
+r.sendline(solution.encode())
+r.sendline(REPO_NAME.encode())
+r.interactive()
+```
+
+<Success>
+运行脚本通过验证后，机器人 @2rn8p752rs-lang 会在我们的仓库中创建一个 Issue。
+</Success>
+
+## 解法
+
+此时我们拥有了一个由机器人创建的 Issue。如果我们直接在该 Issue 下评论并 @ 目标用户，通知邮件的发送者（X-GitHub-Sender）会是我们自己，而不是机器人。
+
+我们需要利用 GitHub 的一个特性：将 Issue 转换为 Discussion。
+
+### 1. 添加触发器
+
+首先，我们需要让目标用户 @lilacctf-tech 有理由收到这个通知。
+
+打开机器人创建的那个 Issue，点击 Edit，在正文中添加：
+
+```markdown
+Hello @lilacctf-tech
+```
+
+虽然这次编辑操作是由我们执行的，但 Issue 的归属作者依然是机器人。
+
+### 2. Issue 转 Discussion
+
+
+进入仓库页面，点击上方菜单栏的 **Settings**，开启 **Discussions** 功能。
+
+开启后，再回到对应 Issue 页面，此时右下角就会出现 "Convert to discussion" 按钮。点击它即可将 Issue 转为 Discussion。
+
+
+**原理分析：**
+当 Issue 被转换为 Discussion 时，GitHub 会生成一条新的 "Discussion created" 通知。由于 Discussion 的内容继承自 Issue，系统会将新生成的 Discussion 作者视为 Issue 的原始创建者（即机器人）。
+
+因此，发出的通知邮件头中，X-GitHub-Sender 字段就会变成机器人的 ID，从而满足题目要求。
+
+## 踩坑记录
+
+按照上述步骤操作后，发现这里迟迟没有收到 Flag，目标似乎根本没收到邮件。
+
+<Warning>
+关键坑点：私有仓库的隐私保护机制
+</Warning>
+
+我在测试时直接使用了 GitHub Classroom 默认创建的仓库，通常它是 Private 的。
+
+在 GitHub 的隐私逻辑中：如果在私有仓库中 Mention 一个非协作者，GitHub 为了防止泄露仓库存在性，绝对不会向对方发送任何通知。
+
+## 解决方案
+
+解决办法非常简单粗暴：
+
+1.  进入仓库 Settings -> General。
+2.  拉到最下方 Danger Zone。
+3.  点击 Change repository visibility -> Make public。
+
+<Info>
+将仓库公开后，建议重新运行一遍流程（生成新 Issue -> 编辑 @ 目标 -> 转 Discussion），以确保通知被触发。
+</Info>
+
+## 总结
+
+这道题其实考察的不是传统的 Web 漏洞，而是对 GitHub 平台业务逻辑的熟悉程度。
+
+1.  **Issue 转 Discussion** 会保留原作者身份，这是一个 Feature。
+2.  **私有仓库** 不给外人发通知，这是一个 Privacy Protection。
+
+结合这两点，只需两步操作即可优雅地拿到 Flag。
