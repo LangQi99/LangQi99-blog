@@ -16,15 +16,15 @@ const { page, totalPages, pageLinks, baseUrl } = Astro.props as PaginationProps;
         <>
           {pageLinks.active.map((link: string | number) =>
             link === "..." ? (
-              <PaginationDropdown hiddenPages={pageLinks.hidden} current={page.current} baseUrl={baseUrl} />
+              <PaginationDropdown hiddenPages={pageLinks.hidden} current={page.currentPage} baseUrl={baseUrl} />
             ) : (
-              <PaginationNumber number={link} current={page.current} baseUrl={baseUrl} />
+              <PaginationNumber number={link} current={page.currentPage} baseUrl={baseUrl} />
             ),
           )}
         </>
       ) : (
         pageLinks.active.map((link: string | number) => (
-          <PaginationNumber number={link} current={page.current} baseUrl={baseUrl} isOnly={totalPages === 1} />
+          <PaginationNumber number={link} current={page.currentPage} baseUrl={baseUrl} isOnly={totalPages === 1} />
         ))
       )
     }

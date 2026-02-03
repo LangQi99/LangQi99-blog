@@ -23,9 +23,12 @@ export interface Page {
     next?: string;
   };
   data: Post[];
+  start: number;
+  end: number;
   total: number;
   size: number;
-  current: number;
+  currentPage: number;
+  lastPage: number;
 }
 
 export interface PostData {
