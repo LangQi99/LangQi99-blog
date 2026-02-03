@@ -7,26 +7,34 @@ import GitHubStats from "@/components/mdx/GitHubStats.astro";
 ---
 
 <BaseLayout title="Home">
-  <MainCard title="Welcome!" description="LangQi99's Blog" textOverlay="HOME" infoIcon="lucide:info">
-    <div class="space-y-8">
+  <MainCard title="~/README.md" description="LangQi99/blog" textOverlay="HOME" infoIcon="lucide:terminal" extraClasses="min-h-[60vh]">
+    <div class="space-y-8 font-mono">
       <!-- Hero Section -->
       <section class="py-6">
-        <div class="flex flex-col items-center text-center">
-          <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            🌟 LangQi99's Blog
+        <div class="flex flex-col items-start text-left">
+          
+          <div class="mb-6 text-gray-400 text-sm">
+            <span class="text-purple-600">import</span> <span class="text-yellow-600">{`{ Welcome }`}</span> <span class="text-purple-600">from</span> <span class="text-green-600">'@universe/blog'</span>;
+            <br/>
+            <span class="text-gray-400">// <span class="text-orange-400">TODO:</span> Explore the universe of code</span>
+          </div>
+
+          <h1 class="text-4xl md:text-6xl font-bold mb-4 text-black">
+            <span class="text-blue-600">const</span> <span class="text-yellow-600">author</span> = <span class="text-green-600">'LangQi99'</span>;
           </h1>
-          <!-- <p class="text-xl text-base-content/80 max-w-3xl mb-8">
-            A minimal, responsive, and feature-rich Astro blog theme designed for creators who value beautiful content
-            presentation and exceptional performance.
-          </p> -->
-          <div class="flex flex-wrap gap-4 justify-center">
-            <a href="/blog" class="btn btn-primary gap-2 btn-shine-effect">
-              <Icon name="lucide:book-open" class="w-5 h-5" />
-              <span>Explore Blog</span>
+          
+          <p class="text-xl text-gray-600 max-w-3xl mb-8 border-l-2 border-gray-200 pl-4">
+             A minimal, responsive, and <span class="text-purple-600 font-bold">feature-rich</span> Astro blog theme designed for <span class="text-pink-500 font-bold">&lt;Developers /&gt;</span> who value data density.
+          </p>
+
+          <div class="flex flex-wrap gap-4">
+            <a href="/blog" class="btn-category group !text-sm !px-4 !py-2">
+              <Icon name="lucide:terminal" class="w-4 h-4 text-purple-600" />
+              <span class="text-black font-bold">./run_blog.sh</span>
             </a>
-            <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn btn-outline gap-2">
-              <Icon name="lucide:github" class="w-5 h-5" />
-              <span>Star on GitHub</span>
+            <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn-category group !text-sm !px-4 !py-2 !border-gray-400">
+               <Icon name="lucide:github" class="w-4 h-4 text-black" />
+              <span class="text-gray-600">git clone repo</span>
             </a>
           </div>
         </div>
