@@ -28,71 +28,98 @@ type MenuItem = {
 const typedMenu = SITE_MENU as MenuItem[];
 ---
 
-<nav class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
-  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between font-mono text-sm">
-    <!-- Terminal Prompt / Home -->
-    <a href="/" class="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded transition-colors duration-200">
-      <span class="text-green-600 font-bold">➜</span>
-      <span class="text-blue-600 font-bold">~</span>
-      <span class="text-gray-600">/</span>
-      <span class="font-bold text-gray-800">blog</span>
-    </a>
+<nav class="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/60 transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between font-mono text-sm">
+    
+    <!-- Left: Status & Path -->
+    <div class="flex items-center gap-4">
+      {/* Status Pill */}
+      <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full border border-gray-300/80 bg-white/50 shadow-sm text-xs text-gray-500 font-medium select-none">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+        ready
+      </div>
 
-    <!-- Navigation Links as Terminal Commands -->
-    <div class="hidden md:flex items-center gap-6">
-      {
-        typedMenu.map((item) => {
-          const isHome = item.href === '/';
-          const prefix = isHome ? '~/' : './';
-          const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
-          
-          return (
-          <a
-            href={item.href}
-            target={item.target || "_self"}
-            class:list={[
-              "relative group px-1 text-gray-500 hover:text-black transition-colors duration-200",
-              isActive ? "!text-black font-bold" : ""
-            ]}
-          >
-            {/* Hover Block Cursor */}
-            <span class="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-4 bg-black opacity-0 group-hover:opacity-100 transition-opacity duration-150"></span>
-            
-            <span class="font-mono">
-              <span class={isActive ? "text-green-600" : "text-gray-400 group-hover:text-green-600 transition-colors"}>{prefix}</span>
-              {item.text ? item.text.toLowerCase() : ""}
-            </span>
-          </a>
-        )})
-      }
-    </div>
-
-    <!-- Mobile Menu Icon (Simple fallback) -->
-    <div class="md:hidden flex items-center">
-        <!-- Minimal mobile menu specific for IDE theme -->
-         <details class="dropdown dropdown-end">
-          <summary class="btn btn-ghost btn-xs font-mono text-gray-500">// menu</summary>
-          <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52 border border-gray-200">
-             {
-                typedMenu.map((item) => (
-                  <li>
-                    <a href={item.href} class={currentPath === item.href ? "active font-bold" : ""}>
-                      {item.text}
-                    </a>
-                  </li>
-                ))
-              }
-          </ul>
-        </details>
-    </div>
-
-    <!-- Right Controls -->
-    <div class="flex items-center gap-3">
-      {/* Avatar Widget */}
-      <a href="/about" class="avatar w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors">
-         <img src={USER_AVATAR || "/favicon.svg"} alt="User Avatar" class="w-full h-full object-cover" />
+      {/* Breadcrumb Path */}
+      <a href="/" class="flex items-center gap-1 group">
+        <span class="text-blue-600 font-bold">~</span>
+        <span class="text-gray-400">/</span>
+        <span class="font-bold text-gray-900 group-hover:text-black transition-colors">LangQi99-blog</span>
+        <span class="w-2 h-4 bg-gray-400 ml-1 animate-blink"></span>
       </a>
-      <ThemeToggle className="hover:bg-gray-100 p-1 rounded" />
+    </div>
+
+    <!-- Right: Command Toolbar -->
+    <div class="flex items-center gap-3">
+      
+      <!-- Desktop Menu as Command Pills -->
+      <div class="hidden md:flex items-center gap-3">
+        {
+          typedMenu.map((item) => {
+             // Map standard icons/prefixes based on text
+             let cmdPrefix = "$ cd";
+             if (item.text.toLowerCase().includes('search')) cmdPrefix = "$ grep";
+             if (item.text.toLowerCase().includes('about')) cmdPrefix = "$ man";
+             
+             const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+
+             return (
+              <a
+                href={item.href}
+                class:list={[
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 shadow-sm",
+                  isActive 
+                    ? "bg-gray-100 border-gray-400 text-black" 
+                    : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-md"
+                ]}
+              >
+                <span class:list={["font-bold text-xs", isActive ? "text-green-600" : "text-green-500"]}>
+                  {cmdPrefix}
+                </span>
+                <span class="font-medium text-xs">
+                  {item.href === '/' ? '~' : item.href.replace('/', './')}
+                </span>
+              </a>
+             )
+          })
+        }
+      </div>
+
+      <!-- Divider -->
+      <div class="h-6 w-px bg-gray-300 mx-1 hidden sticky:block"></div>
+
+      <!-- Widgets -->
+      <div class="flex items-center gap-2">
+          <ThemeToggle className="hover:bg-gray-100 p-1.5 rounded-lg border border-transparent hover:border-gray-200 transition-all" />
+          
+           {/* Avatar Widget */}
+          <a href="/about" class="avatar w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-all hover:scale-105 shadow-sm">
+             <img src={USER_AVATAR || "/favicon.svg"} alt="User Avatar" class="w-full h-full object-cover" />
+          </a>
+      </div>
+
+       <!-- Mobile Menu Icon -->
+        <div class="md:hidden flex items-center">
+             <details class="dropdown dropdown-end">
+              <summary class="btn btn-ghost btn-sm px-2 font-mono text-gray-500 border border-gray-200 rounded-md">
+                  $ menu
+              </summary>
+              <ul class="p-2 shadow-xl menu dropdown-content z-[1] bg-white rounded-xl w-52 border border-gray-100 mt-2">
+                 {
+                    typedMenu.map((item) => (
+                      <li>
+                        <a href={item.href} class={currentPath === item.href ? "active font-bold" : ""}>
+                          $ cd {item.text}
+                        </a>
+                      </li>
+                    ))
+                  }
+              </ul>
+            </details>
+        </div>
+
     </div>
   </div>
 </nav>
