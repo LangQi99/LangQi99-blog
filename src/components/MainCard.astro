@@ -30,12 +30,12 @@ const {
 const accessibleHelpText = `${helpText}: ${title}`;
 ---
 
-<Card class={`overflow-hidden ${extraClasses}`}>
+<Card class={`overflow-hidden ${extraClasses}`} title={title ? `~/posts/${title.toLowerCase().replace(/\s+/g, '-')}.md` : '~/untitled.md'}>
   {
     image ? (
       // With image - show image with overlay title
       <div class="relative">
-        <div class="aspect-video w-full overflow-hidden">
+        <div class="aspect-video w-full overflow-hidden border-b border-gray-200">
           <Image
             src={image}
             alt={title}
@@ -48,93 +48,49 @@ const accessibleHelpText = `${helpText}: ${title}`;
         </div>
 
         <div class="absolute bottom-4 left-4 lg:bottom-6 lg:left-6">
-          <div class="inline-block bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/40 shadow-lg">
-            <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold text-white">{title}</h1>
+          <div class="inline-block bg-black/80 px-4 py-2 border border-white/20 shadow-none">
+            <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold text-white font-mono">{title}</h1>
           </div>
         </div>
 
         {description && (
           <div class="absolute bottom-4 right-4 lg:bottom-6 lg:right-6">
-            <div class="dropdown dropdown-top dropdown-end dropdown-hover">
-              <label
-                tabindex="0"
-                aria-label={accessibleHelpText}
-                class="group btn btn-sm px-2 bg-black/60 backdrop-blur-md hover:bg-black/80 border border-white/40 text-white shadow-lg rounded-full flex items-center gap-0 transition-all duration-300 ease-in-out"
-              >
-                <Icon name={infoIcon} class="w-4 h-4 flex-shrink-0" />
-                <span class="w-0 overflow-hidden group-hover:w-20 transition-all duration-300 text-xs whitespace-nowrap">
-                  {helpText}
-                </span>
-              </label>
-              <div
-                tabindex="0"
-                class="dropdown-content z-[1] card w-64 sm:w-80 p-2 shadow-lg bg-black/70 backdrop-blur-md text-white border border-white/20 mb-4"
-                data-state="closed"
-              >
-                <div class="card-body p-3">
-                  <p class="text-sm">{description}</p>
-                </div>
-              </div>
-            </div>
+             {/* Simplified tooltip for IDE theme */}
+             <div class="dropdown dropdown-top dropdown-end dropdown-hover">
+               <label tabindex="0" class="btn btn-sm btn-square rounded-none border border-gray-500 bg-gray-900 text-white hover:bg-black">
+                 <Icon name={infoIcon} class="w-4 h-4" />
+               </label>
+               <div tabindex="0" class="dropdown-content z-[1] p-2 shadow-sm bg-gray-900 text-white border border-gray-700 w-64 text-xs font-mono mb-2">
+                 {description}
+               </div>
+             </div>
           </div>
         )}
       </div>
     ) : textOverlay ? (
-      // No image, but with textOverlay - show gradient background with overlay text
+      // No image, but with textOverlay - show simple gray bg
       <div class="relative">
-        <div class={`aspect-video w-full overflow-hidden bg-gradient-to-br from-base-300 to-base-100 ${headerClass}`}>
-          {showTextBackground && textOverlay && (
-            <div class="absolute inset-0 w-full h-full error-animation-container">
-              <div class="text-9xl md:text-[12rem] font-bold text-primary opacity-20 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div class={`aspect-video w-full overflow-hidden bg-gray-100 border-b border-gray-200 flex items-center justify-center ${headerClass}`}>
+             <span class="text-4xl md:text-6xl font-bold text-gray-200 font-mono select-none">
                 {textOverlay}
-              </div>
-            </div>
-          )}
+             </span>
         </div>
 
-        <div class="absolute bottom-4 left-4 lg:bottom-6 lg:left-6">
-          <div class="inline-block bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/40 shadow-lg">
-            <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold text-white">{title}</h1>
-          </div>
+        <div class="absolute bottom-4 left-4">
+            <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold text-black font-mono bg-white/80 px-2 border border-gray-200">{title}</h1>
         </div>
-
-        {description && (
-          <div class="absolute bottom-4 right-4 lg:bottom-6 lg:right-6">
-            <div class="dropdown dropdown-top dropdown-end dropdown-hover">
-              <label
-                tabindex="0"
-                aria-label={accessibleHelpText}
-                class="group btn btn-sm px-2 bg-black/60 backdrop-blur-md hover:bg-black/80 border border-white/40 text-white shadow-lg rounded-full flex items-center gap-0 transition-all duration-300 ease-in-out"
-              >
-                <Icon name={infoIcon} class="w-4 h-4 flex-shrink-0" />
-                <span class="w-0 overflow-hidden group-hover:w-20 transition-all duration-300 text-xs whitespace-nowrap">
-                  {helpText}
-                </span>
-              </label>
-              <div
-                tabindex="0"
-                class="dropdown-content z-[1] card w-64 sm:w-80 p-2 shadow-lg bg-black/70 backdrop-blur-md text-white border border-white/20 mb-4"
-                data-state="closed"
-              >
-                <div class="card-body p-3">
-                  <p class="text-sm">{description}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     ) : (
       // No image, no textOverlay - show simple title and description at top
-      <div class="pt-6 px-6">
-        <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold">{title}</h1>
-        {description && <p class="mt-2 text-sm text-base-content/80">{description}</p>}
+      <div class="pt-6 px-6 border-b border-gray-100 pb-4">
+        <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold font-mono">{title}</h1>
+        {description && <p class="mt-2 text-sm text-gray-500 font-mono"> // {description}</p>}
       </div>
     )
   }
 
   <!-- Content section -->
-  <div class="p-4 sm:p-6">
+  <div class="p-4 sm:p-6 font-mono">
     <slot />
   </div>
 </Card>

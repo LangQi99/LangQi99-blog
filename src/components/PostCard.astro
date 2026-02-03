@@ -25,10 +25,10 @@ const {
 const displayDate = pubDate ? dayjs(pubDate).format(DATE_FORMAT) : "";
 ---
 
-<Card class="overflow-hidden">
+<Card class="overflow-hidden" title={`~/posts/${title.toLowerCase().replace(/\s+/g, '-')}.md`}>
   <div class="flex flex-col lg:flex-row">
     <!-- Content Section -->
-    <div class="flex-1 p-6 overflow-hidden bg-base-100 lg:order-1 order-2 flex flex-col justify-between">
+    <div class="flex-1 p-6 overflow-hidden bg-white lg:order-1 order-2 flex flex-col justify-between">
       <div>
         <PostInfo pubDate={displayDate} badge={badge} word={word} time={time} />
         <Heading url={url} title={title}>{title}</Heading>

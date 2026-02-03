@@ -5,7 +5,6 @@ import { ClientRouter } from "astro:transitions";
 import ElementCrossing from "astro-vtbot/components/ElementCrossing.astro";
 import PointerOnNavigation from "astro-vtbot/components/PointerOnNavigation.astro";
 import Header from "@components/Header.astro";
-import Sidebar from "@components/Sidebar.astro";
 import Footer from "@components/Footer.astro";
 import Navbar from "@components/Navbar.astro";
 import MobileTOC from "@components/widgets/MobileTOC.astro";
@@ -14,7 +13,7 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
 ---
 
 <!doctype html>
-<html lang={SITE_LANGUAGE} class="bg-base-300" data-theme={SITE_THEME.light}>
+<html lang={SITE_LANGUAGE} class="bg-white" data-theme="light">
   <head>
     <ClientRouter />
     <ElementCrossing />
@@ -22,70 +21,32 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
     <Header description={SITE_DESCRIPTION} favicon={SITE_FAVICON} image={image} />
     <title>{`${title} - ${SITE_TAB}`}</title>
 
-    <!-- Initial theme setup on first load -->
+    {/* Theme persistence script - kept minimal as we are forcing light/IDE theme but might want dark mode later */}
     <script define:vars={{ SITE_THEME }} is:inline>
       (function () {
         const storedTheme = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-        // Use stored theme if available, otherwise use system preference
-        let theme;
-        if (storedTheme) {
-          theme = storedTheme;
-        } else {
-          theme = prefersDark ? SITE_THEME.dark : SITE_THEME.light;
-          localStorage.setItem("theme", theme);
-        }
-
-        // Apply theme to document
+         // Default to light for IDE theme
+        let theme = storedTheme || 'light';
         document.documentElement.setAttribute("data-theme", theme);
-
-        // Listen for system preference changes
-        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-          // Only update if user hasn't explicitly set a theme preference
-          if (!localStorage.getItem("theme")) {
-            const newTheme = e.matches ? SITE_THEME.dark : SITE_THEME.light;
-            document.documentElement.setAttribute("data-theme", newTheme);
-            localStorage.setItem("theme", newTheme);
-          }
-        });
       })();
     </script>
   </head>
-  <body>
-    <!-- Mobile Navbar - Hidden on desktop -->
+  <body class="bg-white font-mono text-gray-800 antialiased min-h-screen flex flex-col">
+    <!-- Top Navbar -->
     <Navbar />
 
-    <div class="max-w-6xl mx-auto">
-      <div class="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-4 gap-4 p-4">
-        <main class="col-span-1 md:col-span-4 lg:col-span-3 bg-transparent order-1 md:order-2 mt-16 md:mt-0">
-          <div class="flex flex-col gap-4">
-            <slot />
-            <Footer />
-          </div>
+    <div class="flex-grow w-full max-w-5xl mx-auto px-4 py-8">
+        <main class="w-full">
+           <slot />
         </main>
-        <aside class="col-span-1 bg-transparent order-2 md:order-1 md:top-4">
-          <Sidebar headings={headings} showTOC={showTOC} />
-          <slot name="sidebar" />
-        </aside>
-      </div>
+    </div>
+    
+    <div class="max-w-5xl mx-auto w-full px-4">
+        <Footer />
     </div>
 
-    <!-- Mobile TOC Button (only visible on mobile) -->
+    <!-- Mobile TOC Button (only visible on mobile if needed) -->
     <MobileTOC headings={headings} showTOC={showTOC} />
-
-    <!-- Theme persistence during client-side navigation -->
-    <script define:vars={{ SITE_THEME }} is:inline>
-      document.addEventListener("astro:after-swap", () => {
-        // Get stored theme from localStorage
-        const storedTheme = localStorage.getItem("theme");
-
-        if (storedTheme) {
-          // Apply the stored theme to ensure it persists during navigation
-          document.documentElement.setAttribute("data-theme", storedTheme);
-        }
-      });
-    </script>
 
     <!-- Code copy functionality -->
     <script is:inline>
@@ -99,15 +60,9 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
 
             try {
               await navigator.clipboard.writeText(code);
-
-              // Show success icon
               copyIcon.classList.add("hidden");
               successIcon.classList.remove("hidden");
-
-              // Add success animation
               button.classList.add("copy-success");
-
-              // Reset after animation
               setTimeout(() => {
                 copyIcon.classList.remove("hidden");
                 successIcon.classList.add("hidden");
@@ -122,29 +77,13 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
     </script>
 
     <style is:inline>
-      .btn-copy {
-        position: relative;
-        overflow: hidden;
-      }
-
-      .copy-success {
-        animation: pulse 0.5s ease-in-out;
-      }
-
-      .frosti-code-toolbar-copy-success svg {
-        color: #10b981; /* Success green color */
-      }
-
+      .btn-copy { position: relative; overflow: hidden; }
+      .copy-success { animation: pulse 0.5s ease-in-out; }
+      .frosti-code-toolbar-copy-success svg { color: #10b981; }
       @keyframes pulse {
-        0% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.1);
-        }
-        100% {
-          transform: scale(1);
-        }
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
       }
     </style>
   </body>

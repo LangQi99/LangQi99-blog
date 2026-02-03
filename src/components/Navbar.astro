@@ -1,7 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import ThemeToggle from "./widgets/ThemeToggle.astro";
-import { SITE_TITLE, SITE_MENU } from "../config";
+import { SITE_TITLE, SITE_MENU, USER_AVATAR } from "../config";
 
 // Get current path to determine active link
 const currentPath = Astro.url.pathname;
@@ -28,157 +28,60 @@ type MenuItem = {
 const typedMenu = SITE_MENU as MenuItem[];
 ---
 
-<nav
-  class="navbar fixed px-2 w-full transform transition-transform delay-300 duration-500 ease-in-out text-center z-50 bg-base-100 shadow-lg md:hidden"
-  id="navbar"
->
-  <div class="navbar-start">
-    <label class="btn btn-circle btn-md bg-base-100 swap swap-rotate">
-      <input type="checkbox" id="menu-toggle" />
-      <Icon name="lucide:menu" class="swap-off h-5 w-5" />
-      <Icon name="lucide:x" class="swap-on h-5 w-5" />
-    </label>
-  </div>
-
-  <div class="navbar-center">
-    <a class="btn btn-ghost text-xl hover:scale-105 transition-transform duration-300" href="/">
-      {SITE_TITLE}
+<nav class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between font-mono text-sm">
+    <!-- Terminal Prompt / Home -->
+    <a href="/" class="flex items-center gap-2 hover:bg-gray-100 px-3 py-1 rounded transition-colors duration-200">
+      <span class="text-green-600 font-bold">➜</span>
+      <span class="text-blue-600 font-bold">~</span>
+      <span class="text-gray-600">/</span>
+      <span class="font-bold text-gray-800">blog</span>
     </a>
-  </div>
 
-  <div class="navbar-end">
-    <ThemeToggle className="navbar-theme" />
-  </div>
-
-  <div
-    id="header-menu"
-    class="absolute top-full left-0 w-full transform -translate-x-full transition-transform duration-300 ease-in-out bg-base-100 shadow-lg"
-  >
-    <ul class="menu bg-transparent w-full p-2">
+    <!-- Navigation Links as Terminal Commands -->
+    <div class="hidden md:flex items-center gap-4">
       {
         typedMenu.map((item) => (
-          <li class="w-full relative group">
-            {item.subItems ? (
-              <details open={currentPath.startsWith(item.href)}>
-                <summary class="flex items-center text-lg font-bold p-3 hover:bg-base-200 rounded-lg">
-                  <Icon name={item.svg} class="w-5 h-5 mr-2" />
-                  <span>{item.text}</span>
-                </summary>
-                <ul class="pl-4">
-                  {item.subItems.map((subItem) => (
-                    <li>
-                      <a
-                        class:list={[
-                          "flex items-center p-2 hover:bg-base-200 rounded-lg",
-                          currentPath === subItem.href && "bg-base-200",
-                        ]}
-                        href={subItem.href}
-                        target={subItem.target || "_self"}
-                      >
-                        <Icon name={subItem.svg} class="w-4 h-4 mr-2" />
-                        <span>{subItem.text}</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : (
-              <a
-                class:list={[
-                  "flex items-center text-lg font-bold p-3 hover:bg-base-200 rounded-lg",
-                  currentPath === item.href && "bg-base-200",
-                ]}
-                href={item.href}
-                target={item.target || "_self"}
-              >
-                <Icon name={item.svg} class="w-5 h-5 mr-2" />
-                <span>{item.text}</span>
-              </a>
-            )}
-          </li>
+          <a
+            href={item.href}
+            target={item.target || "_self"}
+            class:list={[
+              "px-2 py-1 hover:text-black transition-colors duration-200",
+              currentPath === item.href ? "text-black font-bold bg-gray-100 rounded" : "text-gray-500",
+            ]}
+          >
+            [{item.text ? item.text.toLowerCase() : ""}]
+          </a>
         ))
       }
-    </ul>
+    </div>
+
+    <!-- Mobile Menu Icon (Simple fallback) -->
+    <div class="md:hidden flex items-center">
+        <!-- Minimal mobile menu specific for IDE theme -->
+         <details class="dropdown dropdown-end">
+          <summary class="btn btn-ghost btn-xs font-mono text-gray-500">// menu</summary>
+          <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52 border border-gray-200">
+             {
+                typedMenu.map((item) => (
+                  <li>
+                    <a href={item.href} class={currentPath === item.href ? "active font-bold" : ""}>
+                      {item.text}
+                    </a>
+                  </li>
+                ))
+              }
+          </ul>
+        </details>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-3">
+      {/* Avatar Widget */}
+      <a href="/about" class="avatar w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors">
+         <img src={USER_AVATAR || "/favicon.svg"} alt="User Avatar" class="w-full h-full object-cover" />
+      </a>
+      <ThemeToggle className="hover:bg-gray-100 p-1 rounded" />
+    </div>
   </div>
 </nav>
-
-<script>
-  document.addEventListener("astro:page-load", () => {
-    let lastScrollY = window.scrollY;
-    const navbar = document.getElementById("navbar");
-    const headerMenu = document.getElementById("header-menu");
-    const menuToggle = document.getElementById("menu-toggle") as HTMLInputElement | null;
-
-    if (!navbar || !headerMenu || !menuToggle) return;
-
-    // Toggle menu visibility
-    menuToggle.addEventListener("change", () => {
-      if (menuToggle.checked) {
-        headerMenu.classList.remove("-translate-x-full");
-        headerMenu.classList.add("translate-x-0");
-      } else {
-        headerMenu.classList.add("-translate-x-full");
-        headerMenu.classList.remove("translate-x-0");
-      }
-    });
-
-    function handleScroll() {
-      if (!navbar || !headerMenu || !menuToggle) return;
-
-      if (window.scrollY > lastScrollY && window.scrollY > 50) {
-        navbar.classList.add("-translate-y-full", "duration-500");
-        navbar.classList.remove("translate-y-0");
-
-        // Close menu when hiding navbar
-        if (menuToggle.checked) {
-          menuToggle.checked = false;
-          headerMenu.classList.add("-translate-x-full");
-          headerMenu.classList.remove("translate-x-0");
-        }
-      } else if (window.scrollY < lastScrollY) {
-        navbar.classList.remove("-translate-y-full");
-        navbar.classList.add("translate-y-0", "duration-300");
-      }
-
-      lastScrollY = window.scrollY;
-    }
-
-    // Throttle scroll event for better performance
-    let ticking = false;
-    window.addEventListener("scroll", () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener("click", (event) => {
-      if (!navbar || !headerMenu || !menuToggle) return;
-
-      const target = event.target as Node;
-      if (!navbar.contains(target) && headerMenu.classList.contains("translate-x-0")) {
-        menuToggle.checked = false;
-        headerMenu.classList.add("-translate-x-full");
-        headerMenu.classList.remove("translate-x-0");
-      }
-    });
-
-    // Close menu when clicking menu items
-    const menuItems = document.querySelectorAll("#header-menu a");
-    menuItems.forEach((item) => {
-      item.addEventListener("click", () => {
-        if (!headerMenu || !menuToggle) return;
-
-        if (menuToggle.checked) {
-          menuToggle.checked = false;
-          headerMenu.classList.add("-translate-x-full");
-          headerMenu.classList.remove("translate-x-0");
-        }
-      });
-    });
-  });
-</script>

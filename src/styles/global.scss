@@ -5,7 +5,14 @@
 
 /* Global styles with nesting support */
 html {
-  @apply scroll-smooth;
+  @apply scroll-smooth bg-white text-black;
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px),
+    linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+body {
+  @apply font-mono;
 }
 
 kbd {
@@ -29,19 +36,19 @@ code {
 }
 
 .btn-category {
-  @apply bg-primary/5 hover:bg-primary text-primary hover:text-primary-content border-none hover:scale-110;
+  @apply bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black hover:border-black rounded-full px-3 py-1 text-xs font-mono transition-colors duration-200;
 }
 
 .btn-tag {
-  @apply bg-secondary/5 hover:bg-secondary text-secondary hover:text-secondary-content border-none hover:scale-110;
+  @apply bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-black hover:border-black rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-mono transition-colors duration-200;
 }
 
 .btn-copy {
-  @apply px-1 text-base-content/80;
+  @apply px-1 text-base-content/80 hover:bg-gray-200 rounded;
 }
 
 .frosti-code {
-  @apply relative my-6 rounded-xl border border-base-300 bg-transparent overflow-hidden;
+  @apply relative my-6 rounded-md border border-gray-300 bg-white overflow-hidden shadow-none;
 
   &-toolbar {
     @apply sticky top-0 z-10 flex justify-between items-center px-4 py-2 bg-base-200 border-b border-base-300;
