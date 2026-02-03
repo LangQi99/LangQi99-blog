@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三数之和 (3Sum) 算法可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .array-item {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Highlight animations */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        
+        .pop-anim {
+            animation: pop 0.3s ease-in-out;
+        }
+
+        /* Smooth shifting for result list */
+        .result-item {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 p-4 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">15</div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">三数之和 (3Sum)</h1>
+                <p class="text-xs text-gray-500">LeetCode 15 - 排序 + 双指针</p>
+            </div>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="https://leetcode.cn/problems/3sum/" target="_blank" class="text-indigo-600 hover:underline text-sm flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                题目链接
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Left: Visualization Area -->
+        <div class="flex-1 flex flex-col p-4 md:p-8 overflow-y-auto relative bg-slate-50">
+            
+            <!-- Controls -->
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">输入数组 (用逗号分隔)</label>
+                        <input type="text" id="inputArray" value="-1, 0, 1, 2, -1, -4, -9, 12 ,2, 4, 3, 6, 7" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none code-font text-sm"
+                            placeholder="e.g. -1,0,1,2,-1,-4">
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button id="btnReset" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"></path><path d="M3 3v9h9"></path></svg>
+                            重置
+                        </button>
+                        <button id="btnStep" class="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            单步
+                        </button>
+                        <button id="btnPlay" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-indigo-200">
+                            <svg id="iconPlay" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <span id="textPlay">自动播放</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2 ml-2">
+                         <span class="text-sm text-gray-500">速度:</span>
+                         <input type="range" id="speedRange" min="1" max="5" value="3" class="w-24 accent-indigo-600 cursor-pointer">
+                    </div>
+                </div>
+                <div id="errorMsg" class="text-red-500 text-xs mt-2 hidden">输入格式错误，请输入整数。</div>
+            </div>
+
+            <!-- Visualization Stage -->
+            <div class="flex-1 flex flex-col justify-center items-center min-h-[300px]">
+                
+                <!-- Status Bar -->
+                <div class="mb-8 text-center h-16">
+                    <h2 id="statusText" class="text-lg md:text-xl font-bold text-gray-800 transition-all">准备就绪</h2>
+                    <p id="subStatusText" class="text-sm text-gray-500 mt-1">点击“开始”或“单步”运行算法</p>
+                </div>
+
+                <!-- Array Visual -->
+                <div id="arrayContainer" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-12 px-4 transition-all duration-500">
+                    <!-- Items will be injected here -->
+                </div>
+
+                <!-- Math Calculation Box -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 w-full max-w-md mx-auto relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-gray-200 transition-colors duration-300" id="calcBorder"></div>
+                    <div class="flex justify-between items-center mb-4 text-sm text-gray-500 font-medium">
+                        <span>当前计算</span>
+                        <span id="sumBadge" class="bg-gray-100 px-2 py-0.5 rounded text-xs">Sum = ?</span>
+                    </div>
+                    
+                    <div class="flex justify-center items-center gap-2 text-xl md:text-2xl font-bold code-font mb-4">
+                        <span id="valI" class="text-gray-300">?</span>
+                        <span class="text-gray-400">+</span>
+                        <span id="valL" class="text-gray-300">?</span>
+                        <span class="text-gray-400">+</span>
+                        <span id="valR" class="text-gray-300">?</span>
+                        <span class="text-gray-400">=</span>
+                        <span id="valSum" class="text-gray-300">?</span>
+                    </div>
+
+                    <div class="h-12 flex items-center justify-center">
+                         <div id="actionFeedback" class="text-sm font-medium text-center text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg opacity-0 transition-opacity duration-300">
+                            等待开始...
+                         </div>
+                    </div>
+                    
+                    <!-- Legend -->
+                    <div class="flex justify-center gap-4 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
+                        <div class="flex items-center gap-1"><div class="w-3 h-3 bg-blue-500 rounded"></div>指针 i</div>
+                        <div class="flex items-center gap-1"><div class="w-3 h-3 bg-green-500 rounded"></div>指针 L</div>
+                        <div class="flex items-center gap-1"><div class="w-3 h-3 bg-red-500 rounded"></div>指针 R</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right: Code & Results -->
+        <div class="w-full md:w-80 lg:w-96 bg-white border-l border-gray-200 flex flex-col h-1/3 md:h-auto shadow-xl z-20">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200">
+                <button class="flex-1 py-3 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50">找到的结果</button>
+            </div>
+
+            <!-- Results List -->
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50" id="resultsContainer">
+                <div class="text-center text-gray-400 text-sm mt-10">
+                    <p>暂无结果</p>
+                    <p class="text-xs mt-1">找到的三元组将显示在这里</p>
+                </div>
+            </div>
+
+            <!-- Logic Explanation -->
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <h3 class="text-sm font-bold text-gray-800 mb-2">当前逻辑</h3>
+                <div class="text-xs text-gray-600 space-y-2 font-medium bg-slate-50 p-3 rounded border border-slate-100" id="logicText">
+                    算法未开始。
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let nums = [];
+        let sortedNums = [];
+        let isPlaying = false;
+        let isPaused = false;
+        let speed = 1000;
+        let currentStepResolver = null;
+        let abortController = new AbortController();
+
+        // DOM Elements
+        const elInput = document.getElementById('inputArray');
+        const elContainer = document.getElementById('arrayContainer');
+        const elResults = document.getElementById('resultsContainer');
+        const elStatus = document.getElementById('statusText');
+        const elSubStatus = document.getElementById('subStatusText');
+        const elBtnPlay = document.getElementById('btnPlay');
+        const elBtnStep = document.getElementById('btnStep');
+        const elBtnReset = document.getElementById('btnReset');
+        const elTextPlay = document.getElementById('textPlay');
+        const elIconPlay = document.getElementById('iconPlay');
+        const elSpeed = document.getElementById('speedRange');
+        
+        // Value Displays
+        const elValI = document.getElementById('valI');
+        const elValL = document.getElementById('valL');
+        const elValR = document.getElementById('valR');
+        const elValSum = document.getElementById('valSum');
+        const elActionFeedback = document.getElementById('actionFeedback');
+        const elLogicText = document.getElementById('logicText');
+        const elCalcBorder = document.getElementById('calcBorder');
+
+        // Initialization
+        init();
+
+        function init() {
+            parseInput();
+            renderArray(-1, -1, -1);
+            setupListeners();
+        }
+
+        function setupListeners() {
+            elInput.addEventListener('change', () => {
+                reset();
+            });
+
+            elBtnReset.addEventListener('click', reset);
+
+            elBtnPlay.addEventListener('click', () => {
+                if (isPlaying) {
+                    // Toggle Pause/Resume
+                    isPaused = !isPaused;
+                    updatePlayButtonState();
+                    if (!isPaused && currentStepResolver) {
+                        currentStepResolver();
+                        currentStepResolver = null;
+                    }
+                } else {
+                    // Start
+                    startAlgorithm();
+                }
+            });
+
+            elBtnStep.addEventListener('click', () => {
+                if (!isPlaying) {
+                    isPaused = true;
+                    startAlgorithm();
+                } else {
+                    if (currentStepResolver) {
+                        isPaused = true; // Ensure we stay paused after step
+                        updatePlayButtonState();
+                        currentStepResolver();
+                        currentStepResolver = null;
+                    }
+                }
+            });
+
+            elSpeed.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                // Map 1-5 to speeds: 2000ms down to 200ms
+                speed = 2200 - (val * 400); 
+            });
+        }
+
+        function updatePlayButtonState() {
+            if (isPlaying) {
+                if (isPaused) {
+                    elTextPlay.innerText = "继续";
+                    elIconPlay.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+                    elBtnPlay.classList.replace('bg-red-500', 'bg-indigo-600');
+                    elBtnPlay.classList.replace('hover:bg-red-600', 'hover:bg-indigo-700');
+                } else {
+                    elTextPlay.innerText = "暂停";
+                    elIconPlay.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+                    elBtnPlay.classList.replace('bg-indigo-600', 'bg-red-500');
+                    elBtnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-red-600');
+                }
+            } else {
+                elTextPlay.innerText = "自动播放";
+                elIconPlay.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+                elBtnPlay.classList.remove('bg-red-500', 'hover:bg-red-600');
+                elBtnPlay.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+        }
+
+        function parseInput() {
+            try {
+                const str = elInput.value;
+                nums = str.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                sortedNums = [...nums]; // Initial state not sorted visually yet
+                document.getElementById('errorMsg').classList.add('hidden');
+            } catch (e) {
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
+        }
+
+        function reset() {
+            abortController.abort(); // Stop current execution
+            abortController = new AbortController();
+            
+            isPlaying = false;
+            isPaused = false;
+            currentStepResolver = null;
+            
+            parseInput();
+            renderArray(-1, -1, -1);
+            
+            // Clear UI
+            elResults.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10"><p>暂无结果</p><p class="text-xs mt-1">找到的三元组将显示在这里</p></div>';
+            elStatus.innerText = "准备就绪";
+            elSubStatus.innerText = "点击“开始”或“单步”运行算法";
+            elValI.innerText = "?"; elValI.className = "text-gray-300";
+            elValL.innerText = "?"; elValL.className = "text-gray-300";
+            elValR.innerText = "?"; elValR.className = "text-gray-300";
+            elValSum.innerText = "?";
+            elActionFeedback.style.opacity = '0';
+            elLogicText.innerText = "算法未开始。";
+            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-gray-200 transition-colors duration-300";
+            
+            updatePlayButtonState();
+        }
+
+        // --- Core Algorithm Logic with Visual Pauses ---
+
+        async function wait() {
+            if (abortController.signal.aborted) throw new Error("Aborted");
+            
+            if (isPaused) {
+                return new Promise(resolve => {
+                    currentStepResolver = resolve;
+                });
+            }
+            return new Promise(resolve => setTimeout(resolve, speed));
+        }
+
+        async function startAlgorithm() {
+            if (isPlaying) return;
+            isPlaying = true;
+            updatePlayButtonState();
+
+            try {
+                // Step 1: Sorting
+                updateStatus("步骤 1: 排序", "双指针算法的前提是数组有序");
+                updateLogic("nums.sort((a, b) => a - b)");
+                sortedNums = [...nums].sort((a, b) => a - b);
+                
+                // Animate Sorting (Simulated visually)
+                elContainer.style.opacity = '0';
+                await new Promise(r => setTimeout(r, 300));
+                renderArray(-1, -1, -1, true); // use sorted array
+                elContainer.style.opacity = '1';
+                await wait();
+
+                const n = sortedNums.length;
+                let foundAny = false;
+
+                // Step 2: Loop i
+                for (let i = 0; i < n - 2; i++) {
+                    if (abortController.signal.aborted) return;
+
+                    updateLogic(`for (let i = 0; i < ${n-2}; i++)`);
+                    renderArray(i, -1, -1, true);
+                    updateStatus(`固定第一个数 i`, `索引: ${i}, 值: ${sortedNums[i]}`);
+                    resetCalcPanel();
+                    updateValue(elValI, sortedNums[i], 'text-blue-600');
+                    await wait();
+
+                    // Check duplicate i
+                    if (i > 0 && sortedNums[i] === sortedNums[i - 1]) {
+                        updateStatus(`跳过重复的 i`, `值 ${sortedNums[i]} 已经处理过`);
+                        updateLogic("if (i > 0 && nums[i] == nums[i-1]) continue");
+                        feedback("跳过 (去重)", "text-orange-600", "bg-orange-50");
+                        await wait();
+                        continue;
+                    }
+
+                    // Ensure i > 0 check stops processing if number is too big (optimization, optional but good for vis)
+                    if (sortedNums[i] > 0) {
+                        updateStatus(`提前结束`, `nums[i] (${sortedNums[i]}) > 0，后续之和不可能为0`);
+                        feedback("结束", "text-gray-600", "bg-gray-100");
+                        await wait();
+                        break;
+                    }
+
+                    let L = i + 1;
+                    let R = n - 1;
+
+                    updateStatus(`初始化双指针`, `L = ${L}, R = ${R}`);
+                    updateLogic("let L = i + 1; let R = n - 1;");
+                    renderArray(i, L, R, true);
+                    updateValue(elValL, sortedNums[L], 'text-green-600');
+                    updateValue(elValR, sortedNums[R], 'text-red-600');
+                    await wait();
+
+                    while (L < R) {
+                        if (abortController.signal.aborted) return;
+                        
+                        updateLogic("while (L < R)");
+                        const sum = sortedNums[i] + sortedNums[L] + sortedNums[R];
+                        
+                        // Highlight Calculation
+                        updateValue(elValI, sortedNums[i], 'text-blue-600');
+                        updateValue(elValL, sortedNums[L], 'text-green-600');
+                        updateValue(elValR, sortedNums[R], 'text-red-600');
+                        elValSum.innerText = sum;
+                        
+                        updateStatus(`计算总和`, `${sortedNums[i]} + ${sortedNums[L]} + ${sortedNums[R]} = ${sum}`);
+                        
+                        // Animation focus
+                        highlightBox(i, 'scale-110');
+                        highlightBox(L, 'scale-110');
+                        highlightBox(R, 'scale-110');
+
+                        if (sum === 0) {
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-yellow-400 transition-colors duration-300";
+                            feedback("找到答案!", "text-yellow-700", "bg-yellow-50");
+                            addResult(sortedNums[i], sortedNums[L], sortedNums[R]);
+                            foundAny = true;
+                            
+                            updateLogic("sum == 0: 记录结果, L++, R--");
+                            await wait();
+
+                            // Skip duplicates logic
+                            while (L < R && sortedNums[L] === sortedNums[L + 1]) {
+                                updateStatus(`跳过重复的 L`, `下一个值也是 ${sortedNums[L]}`);
+                                updateLogic("while (nums[L] == nums[L+1]) L++");
+                                L++;
+                                renderArray(i, L, R, true);
+                                await wait();
+                            }
+                            while (L < R && sortedNums[R] === sortedNums[R - 1]) {
+                                updateStatus(`跳过重复的 R`, `下一个值也是 ${sortedNums[R]}`);
+                                updateLogic("while (nums[R] == nums[R-1]) R--");
+                                R--;
+                                renderArray(i, L, R, true);
+                                await wait();
+                            }
+
+                            L++;
+                            R--;
+                            renderArray(i, L, R, true);
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-gray-200 transition-colors duration-300";
+                            
+                        } else if (sum < 0) {
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-red-400 transition-colors duration-300";
+                            updateStatus(`和偏小 (${sum} < 0)`, `需要更大的数，L 向右移`);
+                            feedback("L 右移 ->", "text-green-700", "bg-green-50");
+                            updateLogic("sum < 0: L++");
+                            await wait();
+                            
+                            L++;
+                            renderArray(i, L, R, true);
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-gray-200 transition-colors duration-300";
+                        } else {
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-blue-400 transition-colors duration-300";
+                            updateStatus(`和偏大 (${sum} > 0)`, `需要更小的数，R 向左移`);
+                            feedback("<- R 左移", "text-red-700", "bg-red-50");
+                            updateLogic("sum > 0: R--");
+                            await wait();
+
+                            R--;
+                            renderArray(i, L, R, true);
+                            elCalcBorder.className = "absolute top-0 left-0 w-1 h-full bg-gray-200 transition-colors duration-300";
+                        }
+                        
+                        await wait();
+                    }
+                }
+
+                updateStatus("完成!", foundAny ? "算法执行完毕。" : "未找到满足条件的三元组。");
+                isPlaying = false;
+                isPaused = false;
+                updatePlayButtonState();
+
+            } catch (e) {
+                if (e.message !== "Aborted") console.error(e);
+            }
+        }
+
+        // --- Visualization Helpers ---
+
+        function renderArray(idxI, idxL, idxR, useSorted = false) {
+            const arr = useSorted ? sortedNums : nums;
+            elContainer.innerHTML = '';
+            
+            arr.forEach((num, index) => {
+                const el = document.createElement('div');
+                let baseClasses = "array-item relative w-12 h-16 md:w-14 md:h-20 bg-white border-2 rounded-lg flex flex-col items-center justify-center shadow-sm z-0";
+                let borderClass = "border-gray-200";
+                let textClass = "text-gray-800 font-bold text-lg md:text-xl code-font";
+                let label = "";
+                let labelColor = "";
+
+                if (index === idxI) {
+                    borderClass = "border-blue-500 bg-blue-50 z-10 scale-110 shadow-md";
+                    textClass = "text-blue-700 font-bold text-xl md:text-2xl code-font";
+                    label = "i";
+                    labelColor = "bg-blue-500";
+                } else if (index === idxL) {
+                    borderClass = "border-green-500 bg-green-50 z-10 scale-110 shadow-md";
+                    textClass = "text-green-700 font-bold text-xl md:text-2xl code-font";
+                    label = "L";
+                    labelColor = "bg-green-500";
+                } else if (index === idxR) {
+                    borderClass = "border-red-500 bg-red-50 z-10 scale-110 shadow-md";
+                    textClass = "text-red-700 font-bold text-xl md:text-2xl code-font";
+                    label = "R";
+                    labelColor = "bg-red-500";
+                }
+
+                el.className = `${baseClasses} ${borderClass}`;
+                el.id = `box-${index}`;
+                
+                el.innerHTML = `
+                    <span class="${textClass}">${num}</span>
+                    <span class="absolute -bottom-6 text-xs text-gray-400 font-mono">${index}</span>
+                    ${label ? `<div class="absolute -top-3 w-6 h-6 ${labelColor} text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm pop-anim">${label}</div>` : ''}
+                `;
+                
+                elContainer.appendChild(el);
+            });
+        }
+
+        function highlightBox(index, scaleClass) {
+            const box = document.getElementById(`box-${index}`);
+            if (box) {
+                // box.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-300');
+                // setTimeout(() => box.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-300'), speed * 0.8);
+            }
+        }
+
+        function updateStatus(main, sub) {
+            elStatus.innerText = main;
+            elSubStatus.innerText = sub;
+        }
+
+        function updateLogic(code) {
+            elLogicText.innerText = code;
+        }
+
+        function updateValue(el, val, colorClass) {
+            el.innerText = val;
+            el.className = `font-bold transition-colors duration-300 ${colorClass}`;
+        }
+
+        function resetCalcPanel() {
+            elValL.innerText = "?"; elValL.className = "text-gray-300";
+            elValR.innerText = "?"; elValR.className = "text-gray-300";
+            elValSum.innerText = "?"; elValSum.className = "text-gray-300";
+            elActionFeedback.style.opacity = '0';
+        }
+
+        function feedback(text, textColor, bgColor) {
+            elActionFeedback.innerText = text;
+            elActionFeedback.className = `text-sm font-bold text-center px-3 py-1.5 rounded-lg transition-opacity duration-300 ${textColor} ${bgColor}`;
+            elActionFeedback.style.opacity = '1';
+        }
+
+        function addResult(a, b, c) {
+            // Remove "No results" if present
+            if (elResults.children[0] && elResults.children[0].innerText.includes("暂无结果")) {
+                elResults.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = "result-item bg-white border border-gray-200 p-3 rounded-lg mb-2 shadow-sm flex items-center justify-between";
+            item.innerHTML = `
+                <div class="flex gap-2 font-mono font-bold text-gray-700">
+                    <span class="bg-gray-100 px-2 rounded">[</span>
+                    <span class="text-blue-600">${a}</span>,
+                    <span class="text-green-600">${b}</span>,
+                    <span class="text-red-600">${c}</span>
+                    <span class="bg-gray-100 px-2 rounded">]</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            `;
+            elResults.appendChild(item);
+            elResults.scrollTop = elResults.scrollHeight;
+        }
+
+    </script>
+</body>
+</html>

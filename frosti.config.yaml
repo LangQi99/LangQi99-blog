@@ -1,8 +1,8 @@
 # 网站的基本信息
 site:
-  tab: LangQi99's Blog # 浏览器标签栏上显示的文本
-  title: 💠 LangQi99's Blog # 网站的标题
-  description: A clean, elegant, and fast static blog template! 🚀 Developed with Astro # 网站的描述，用于SEO等
+  tab: LangQi99的博客 # 浏览器标签栏上显示的文本
+  title: 💠 LangQi99的博客 # 网站的标题
+  description: 一个简洁、优雅且快速的静态博客模板！🚀 由 Astro 开发 # 网站的描述，用于SEO等
   language: zh # 网站的语言，例如 "en" 是英文
   favicon: /favicon.ico # 网站的图标，用于浏览器标签栏和其他地方显示
   theme: # 更多主题 https://daisyui.com/docs/themes/
@@ -14,49 +14,49 @@ site:
     pageSize: 8 # 每页显示的文章数量
   menu: # 菜单配置
     - id: home # 菜单项的唯一标识符
-      text: Home # 菜单项显示的文本
+      text: 首页 # 菜单项显示的文本
       href: / # 菜单项链接的地址
       svg: "material-symbols:home-outline-rounded"
       target: _self
     - id: about
-      text: About
+      text: 关于
       href: /about
       svg: "material-symbols:info-outline-rounded"
       target: _self
     - id: blog
-      text: Blogs
+      text: 博客
       href: /blog
       svg: "material-symbols:book-2-outline-rounded"
       target: _self
       subItems:
         - id: all
-          text: All blogs
+          text: 全部文章
           href: /blog
           svg: "material-symbols:ink-pen-outline-rounded"
           target: _self
         - id: tech
-          text: Tech blogs
+          text: 技术文章
           href: /blog/category/tech
           svg: "material-symbols:deployed-code-outline"
           target: _self
         - id: life
-          text: Life blogs
+          text: 生活随笔
           href: /blog/category/life
           svg: "material-symbols:earthquake-rounded"
           target: _self
         # 子菜单项配置
     - id: project
-      text: Project
+      text: 项目
       href: /project
       svg: "material-symbols:code-blocks-outline"
       target: _self
     - id: friend
-      text: Friend
+      text: 友链
       href: /friend
       svg: "material-symbols:supervisor-account-outline-rounded"
       target: _self
     - id: contact
-      text: Contact
+      text: 联系
       href: "mailto:2032771946@qq.com"
       target: _blank # 在新标签页打开
       svg: "material-symbols:attach-email-outline-rounded"

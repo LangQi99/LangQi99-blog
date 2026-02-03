@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合并 K 个升序链表 (LeetCode 23) 可视化</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --compare-color: #f59e0b;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-reset { background-color: #ef4444; color: white; }
+
+        input[type="range"] {
+            width: 100px;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .visualization-area {
+            flex: 2;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .code-area {
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid #ccc;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* List Visualization Styles */
+        .list-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            min-height: 60px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .list-label {
+            width: 80px;
+            font-weight: bold;
+            color: #6b7280;
+        }
+
+        .nodes-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            position: relative;
+            transition: transform 0.3s, border-color 0.3s, background-color 0.3s;
+            z-index: 1;
+        }
+
+        /* Arrow between nodes */
+        .node:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -18px;
+            color: #9ca3af;
+            font-size: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* States */
+        .node.comparing {
+            border-color: var(--compare-color);
+            background-color: #fffbeb;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px var(--compare-color);
+            z-index: 2;
+        }
+
+        .node.selected {
+            border-color: var(--success-color);
+            background-color: #d1fae5;
+            color: #065f46;
+            z-index: 3;
+        }
+
+        .node.processed {
+            opacity: 0.3;
+            border-color: #d1d5db;
+            background-color: #f3f4f6;
+        }
+
+        .result-section {
+            margin-top: auto;
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 20px;
+        }
+
+        /* Animation specific */
+        .flying-node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #d1fae5;
+            border: 2px solid var(--success-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            z-index: 100;
+            pointer-events: none;
+            transition: all 0.5s ease-in-out;
+            color: #065f46;
+        }
+
+        /* Code Highlighting */
+        .code-line {
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        .highlight-line {
+            background-color: #374151;
+            border-left: 3px solid var(--compare-color);
+        }
+
+        .status-text {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: var(--primary-color);
+            height: 24px;
+        }
+
+        /* Python Syntax Colors */
+        .py-def { color: #569cd6; }
+        .py-class { color: #4ec9b0; }
+        .py-comment { color: #6a9955; }
+        .py-keyword { color: #c586c0; }
+        .py-num { color: #b5cea8; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>合并 K 个升序链表 <small>(LeetCode 23)</small></h1>
+    <div class="controls">
+        <span style="font-size: 14px; color: #666;">速度:</span>
+        <input type="range" id="speedRange" min="1" max="5" value="3">
+        <button id="startBtn" class="btn-primary" onclick="startAnimation()">开始合并</button>
+        <button id="resetBtn" class="btn-reset" onclick="reset()">重置</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="visualization-area" id="visArea">
+        <div id="status" class="status-text">准备就绪...</div>
+        
+        <!-- Input Lists -->
+        <div id="listsContainer">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Result List -->
+        <div class="result-section">
+            <div class="list-row" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <div class="list-label">结果链表</div>
+                <div class="nodes-container" id="resultContainer">
+                    <!-- Results go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="code-area">
+        <h3 style="color: #fff; margin-top:0; border-bottom: 1px solid #444; padding-bottom: 10px;">Python 算法逻辑 (最小堆)</h3>
+        <div id="codeDisplay">
+<div class="code-line" id="line-1"><span class="py-keyword">import</span> heapq</div>
+<div class="code-line" id="line-2"></div>
+<div class="code-line" id="line-3"><span class="py-def">def</span> mergeKLists(lists):</div>
+<div class="code-line" id="line-4">    min_heap = []</div>
+<div class="code-line" id="line-5">    <span class="py-comment"># 1. 将所有链表的头节点放入堆中</span></div>
+<div class="code-line" id="line-6">    <span class="py-keyword">for</span> i, l <span class="py-keyword">in</span> enumerate(lists):</div>
+<div class="code-line" id="line-7">        <span class="py-keyword">if</span> l:</div>
+<div class="code-line" id="line-8">            heapq.heappush(min_heap, (l.val, i, l))</div>
+<div class="code-line" id="line-9">    </div>
+<div class="code-line" id="line-10">    dummy = ListNode(0)</div>
+<div class="code-line" id="line-11">    curr = dummy</div>
+<div class="code-line" id="line-12">    </div>
+<div class="code-line" id="line-13">    <span class="py-comment"># 2. 循环直到堆为空</span></div>
+<div class="code-line" id="line-14">    <span class="py-keyword">while</span> min_heap:</div>
+<div class="code-line" id="line-15">        <span class="py-comment"># 3. 取出最小值 (堆顶)</span></div>
+<div class="code-line" id="line-16">        val, i, node = heapq.heappop(min_heap)</div>
+<div class="code-line" id="line-17">        </div>
+<div class="code-line" id="line-18">        <span class="py-comment"># 4. 加入结果链表</span></div>
+<div class="code-line" id="line-19">        curr.next = node</div>
+<div class="code-line" id="line-20">        curr = curr.next</div>
+<div class="code-line" id="line-21">        </div>
+<div class="code-line" id="line-22">        <span class="py-comment"># 5. 如果被取出的节点还有下一个，放入堆中</span></div>
+<div class="code-line" id="line-23">        <span class="py-keyword">if</span> node.next:</div>
+<div class="code-line" id="line-24">            heapq.heappush(min_heap, (node.next.val, i, node.next))</div>
+<div class="code-line" id="line-25">            </div>
+<div class="code-line" id="line-26">    <span class="py-keyword">return</span> dummy.next</div>
+        </div>
+        <div style="margin-top: 20px; color: #888; font-size: 12px;">
+            <p><strong>逻辑说明：</strong></p>
+            <p>1. 我们维护一个“最小堆”（在演示中体现为只看每行的第一个元素）。</p>
+            <p>2. 每次只比较所有链表当前的头节点。</p>
+            <p>3. 选出最小的，移到结果链表。</p>
+            <p>4. 将被选节点的下一个节点加入比较池。</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initial Data: 3 sorted lists
+    const initialData = [
+        [1, 4, 5],
+        [1, 3, 4],
+        [2, 6]
+    ];
+
+    let lists = [];
+    let isRunning = false;
+    let animationSpeed = 1000;
+    
+    // Setup references
+    const listsContainer = document.getElementById('listsContainer');
+    const resultContainer = document.getElementById('resultContainer');
+    const startBtn = document.getElementById('startBtn');
+    const speedRange = document.getElementById('speedRange');
+    const statusText = document.getElementById('status');
+
+    // DOM Helpers
+    function createNode(value, id) {
+        const div = document.createElement('div');
+        div.className = 'node';
+        div.textContent = value;
+        div.id = id;
+        return div;
+    }
+
+    function init() {
+        listsContainer.innerHTML = '';
+        resultContainer.innerHTML = '';
+        lists = JSON.parse(JSON.stringify(initialData)); // Deep copy
+
+        lists.forEach((list, listIndex) => {
+            const row = document.createElement('div');
+            row.className = 'list-row';
+            
+            const label = document.createElement('div');
+            label.className = 'list-label';
+            label.textContent = `List ${listIndex + 1}`;
+            
+            const nodesDiv = document.createElement('div');
+            nodesDiv.className = 'nodes-container';
+            nodesDiv.id = `list-${listIndex}`;
+
+            list.forEach((val, nodeIndex) => {
+                const node = createNode(val, `node-${listIndex}-${nodeIndex}`);
+                nodesDiv.appendChild(node);
+            });
+
+            row.appendChild(label);
+            row.appendChild(nodesDiv);
+            listsContainer.appendChild(row);
+        });
+        
+        statusText.textContent = "准备就绪。点击“开始合并”";
+        highlightCode(-1);
+    }
+
+    // Animation Logic
+    async function startAnimation() {
+        if (isRunning) return;
+        isRunning = true;
+        startBtn.disabled = true;
+
+        // Pointers for each list (tracking current head index)
+        let pointers = new Array(lists.length).fill(0);
+        let activeListsCount = lists.length;
+
+        // Code: Init Heap
+        statusText.textContent = "1. 初始化：关注所有链表的头节点";
+        highlightCode(6);
+        await wait(1000);
+
+        while (true) {
+            // Find current heads (simulating the Heap)
+            let heads = [];
+            for (let i = 0; i < lists.length; i++) {
+                if (pointers[i] < lists[i].length) {
+                    heads.push({
+                        val: lists[i][pointers[i]],
+                        listIndex: i,
+                        nodeIndex: pointers[i],
+                        elementId: `node-${i}-${pointers[i]}`
+                    });
+                }
+            }
+
+            if (heads.length === 0) break; // All merged
+
+            // Highlight Code: While loop
+            highlightCode(14);
+            statusText.textContent = "2. 在当前所有头节点中寻找最小值...";
+            
+            // Visual: Highlight all candidates
+            heads.forEach(h => {
+                document.getElementById(h.elementId).classList.add('comparing');
+            });
+            await wait(animationSpeed);
+
+            // Find Min
+            heads.sort((a, b) => a.val - b.val);
+            const winner = heads[0];
+
+            // Visual: Select Winner
+            statusText.textContent = `3. 发现最小值: ${winner.val} (来自 List ${winner.listIndex + 1})`;
+            highlightCode(16);
+            
+            // Remove comparing from others, mark winner selected
+            heads.forEach(h => {
+                const el = document.getElementById(h.elementId);
+                el.classList.remove('comparing');
+                if (h === winner) {
+                    el.classList.add('selected');
+                }
+            });
+            await wait(animationSpeed);
+
+            // Move Animation
+            statusText.textContent = `4. 将 ${winner.val} 移动到结果链表`;
+            highlightCode(19);
+            await moveNodeToResult(winner.elementId);
+
+            // Mark original as processed (ghosted)
+            const originalNode = document.getElementById(winner.elementId);
+            originalNode.classList.remove('selected');
+            originalNode.classList.add('processed');
+            originalNode.style.visibility = 'hidden'; // Hide original, keeping space
+
+            // Update Pointer
+            pointers[winner.listIndex]++;
+            
+            // Highlight Code: Push next
+            statusText.textContent = "5. 检查该链表的下一个节点...";
+            highlightCode(24);
+            await wait(animationSpeed / 2);
+        }
+
+        statusText.textContent = "合并完成！";
+        highlightCode(26);
+        isRunning = false;
+        startBtn.disabled = false;
+        startBtn.textContent = "再次运行";
+    }
+
+    async function moveNodeToResult(sourceId) {
+        const sourceEl = document.getElementById(sourceId);
+        const rect = sourceEl.getBoundingClientRect();
+        
+        // Create flying clone
+        const flyer = sourceEl.cloneNode(true);
+        flyer.classList.add('flying-node');
+        flyer.classList.remove('node'); // remove default styling that might conflict
+        flyer.classList.add('node'); // re-add base styling
+        flyer.classList.add('selected');
+        
+        // Set initial position fixed to screen
+        flyer.style.left = rect.left + 'px';
+        flyer.style.top = rect.top + 'px';
+        flyer.style.margin = '0';
+        
+        document.body.appendChild(flyer);
+
+        // Calculate destination
+        // We append a placeholder to result to get coordinates
+        const placeholder = createNode('', 'placeholder');
+        placeholder.style.opacity = 0;
+        resultContainer.appendChild(placeholder);
+        const destRect = placeholder.getBoundingClientRect();
+        
+        // Trigger reflow
+        flyer.getBoundingClientRect();
+
+        // Animate
+        flyer.style.left = destRect.left + 'px';
+        flyer.style.top = destRect.top + 'px';
+
+        await wait(600); // Wait for transition
+
+        // Cleanup
+        flyer.remove();
+        placeholder.remove();
+
+        // Add actual node to result
+        const finalNode = createNode(sourceEl.textContent, `res-${Date.now()}`);
+        finalNode.classList.add('selected'); // Start green
+        resultContainer.appendChild(finalNode);
+        
+        // Fade green to normal
+        setTimeout(() => {
+            finalNode.classList.remove('selected');
+        }, 500);
+    }
+
+    function reset() {
+        location.reload();
+    }
+
+    function highlightCode(lineNum) {
+        // Clear previous
+        document.querySelectorAll('.highlight-line').forEach(el => el.classList.remove('highlight-line'));
+        
+        if(lineNum > 0) {
+            const line = document.getElementById(`line-${lineNum}`);
+            if(line) {
+                line.classList.add('highlight-line');
+                line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }
+
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms / (getSpeedMultiplier())));
+    }
+
+    function getSpeedMultiplier() {
+        const val = parseInt(speedRange.value);
+        return val * 0.5; // 1 -> 0.5x, 5 -> 2.5x
+    }
+
+    // Initialize
+    init();
+
+</script>
+</body>
+</html>

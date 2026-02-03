@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二叉树最近公共祖先 (LCA) 可视化</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --text-main: #333;
+            --text-sub: #666;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --target-p: #f59e0b;
+            --target-q: #ec4899;
+            --lca-color: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .canvas-area {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        canvas {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-start { background-color: var(--primary); color: white; }
+        .btn-start:hover { background-color: #2563eb; }
+        .btn-step { background-color: var(--success); color: white; }
+        .btn-step:hover { background-color: #059669; }
+        .btn-reset { background-color: #ef4444; color: white; }
+        .btn-reset:hover { background-color: #dc2626; }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .log-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e5e7eb;
+            padding-left: 20px;
+            min-width: 300px;
+        }
+
+        .log-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+        }
+
+        #log-list {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #log-list li {
+            padding: 8px;
+            border-bottom: 1px solid #f3f4f6;
+            line-height: 1.4;
+        }
+
+        #log-list li.highlight {
+            background-color: #eff6ff;
+            border-left: 3px solid var(--primary);
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-snippet {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            overflow-x: auto;
+        }
+        
+        .code-highlight {
+            background-color: #3e4451;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>二叉树最近公共祖先 (LeetCode 236)</h1>
+
+    <div class="container">
+        <div class="canvas-area">
+            <canvas id="treeCanvas" width="800" height="500"></canvas>
+            
+            <div class="legend">
+                <div class="legend-item"><div class="dot" style="background:var(--primary)"></div> 正在访问</div>
+                <div class="legend-item"><div class="dot" style="background:var(--target-p)"></div> 目标 P (6)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--target-q)"></div> 目标 Q (4)</div>
+                <div class="legend-item"><div class="dot" style="background:var(--success)"></div> 返回有效节点</div>
+                <div class="legend-item"><div class="dot" style="background:var(--lca-color)"></div> 发现 LCA (5)</div>
+            </div>
+
+            <div class="controls">
+                <button id="btnStart" class="btn-start" onclick="startAuto()">自动播放</button>
+                <button id="btnStep" class="btn-step" onclick="step()">下一步</button>
+                <button id="btnReset" class="btn-reset" onclick="reset()">重置</button>
+                <div style="display:flex; align-items:center; gap:5px; margin-left:10px;">
+                    <label for="speedRange" style="font-size:0.9rem;">速度:</label>
+                    <input type="range" id="speedRange" min="100" max="2000" value="1000" style="width:100px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="log-area">
+            <div class="log-header">算法执行日志</div>
+            <ul id="log-list">
+                <li style="color:#888;">点击“自动播放”或“下一步”开始...</li>
+            </ul>
+            <div class="code-snippet">
+<pre>
+<span id="code-entry">function lowestCommonAncestor(root, p, q) {</span>
+<span id="code-base">  if (!root || root == p || root == q) return root;</span>
+<span id="code-left">  let left = lowestCommonAncestor(root.left, p, q);</span>
+<span id="code-right">  let right = lowestCommonAncestor(root.right, p, q);</span>
+<span id="code-lca">  if (left && right) return root; // LCA!</span>
+<span id="code-return">  return left ? left : right;</span>
+}
+</pre>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- 树的数据结构与配置 ---
+    const canvas = document.getElementById('treeCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 定义树结构：为了演示 LCA，我们构建一个稍微深一点的树
+    // Root: 3
+    // L: 5, R: 1
+    // 5 -> L: 6, R: 2
+    // 1 -> L: 0, R: 8
+    // 2 -> L: 7, R: 4
+    // 目标: p = 6, q = 4.  LCA 应该是 5.
+    
+    const treeData = {
+        val: 3,
+        id: 3,
+        x: 400, y: 50,
+        left: {
+            val: 5, id: 5, x: 250, y: 150,
+            left: { val: 6, id: 6, x: 180, y: 250, left: null, right: null },
+            right: { 
+                val: 2, id: 2, x: 320, y: 250,
+                left: { val: 7, id: 7, x: 280, y: 350, left: null, right: null },
+                right: { val: 4, id: 4, x: 360, y: 350, left: null, right: null }
+            }
+        },
+        right: {
+            val: 1, id: 1, x: 550, y: 150,
+            left: { val: 0, id: 0, x: 480, y: 250, left: null, right: null },
+            right: { val: 8, id: 8, x: 620, y: 250, left: null, right: null }
+        }
+    };
+
+    const targetP = 6;
+    const targetQ = 4;
+    
+    // --- 绘制相关变量 ---
+    const radius = 25;
+    const colors = {
+        default: '#fff',
+        stroke: '#333',
+        visiting: '#3b82f6', // Blue
+        targetP: '#f59e0b', // Orange
+        targetQ: '#ec4899', // Pink
+        found: '#10b981',   // Green (bubbling up)
+        lca: '#8b5cf6',     // Purple
+        nullNode: '#ddd'
+    };
+
+    // 动画状态控制
+    let generator; // 生成器实例
+    let isAutoPlaying = false;
+    let autoPlayTimer = null;
+    
+    // 状态记录 (用于绘制)
+    let currentNodeId = null;
+    let foundNodes = new Set(); // 已经确认找到并返回的路径节点
+    let lcaNodeId = null;
+    let activePath = []; // 当前递归栈路径
+    let returnValues = {}; // 记录每个节点返回的值 (用于显示)
+
+    // --- 核心算法逻辑 (Generator) ---
+    // 使用 Generator 函数可以方便地实现"暂停"和"下一步"
+    function* lcaAlgorithm(node) {
+        if (!node) {
+            log(`遇到 null，返回 null`);
+            yield { type: 'null' };
+            return null;
+        }
+
+        currentNodeId = node.id;
+        activePath.push(node.id);
+        highlightCode('code-entry');
+        log(`访问节点 ${node.val}`);
+        draw();
+        yield { type: 'visit', node: node };
+
+        // 检查 Base Case
+        highlightCode('code-base');
+        if (node.val === targetP || node.val === targetQ) {
+            let targetName = node.val === targetP ? 'P' : 'Q';
+            log(`发现目标 ${targetName} (${node.val})! 返回节点 ${node.val}`);
+            foundNodes.add(node.id);
+            returnValues[node.id] = node.val;
+            draw();
+            yield { type: 'found', node: node };
+            activePath.pop();
+            return node.val;
+        }
+
+        // 递归左子树
+        highlightCode('code-left');
+        log(`节点 ${node.val} 向左递归...`);
+        yield { type: 'go_left', node: node };
+        
+        const leftResult = yield* lcaAlgorithm(node.left);
+        
+        // 恢复当前环境
+        currentNodeId = node.id;
+        highlightCode('code-right');
+        log(`节点 ${node.val} 左侧返回: ${leftResult !== null ? leftResult : 'null'}。准备向右递归...`);
+        draw();
+        yield { type: 'back_to_node', node: node };
+
+        // 递归右子树
+        const rightResult = yield* lcaAlgorithm(node.right);
+
+        // 恢复当前环境
+        currentNodeId = node.id;
+        log(`节点 ${node.val} 右侧返回: ${rightResult !== null ? rightResult : 'null'}`);
+        draw();
+        yield { type: 'back_to_node', node: node };
+
+        // 处理结果
+        highlightCode('code-lca');
+        if (leftResult !== null && rightResult !== null) {
+            lcaNodeId = node.id;
+            log(`🎉 节点 ${node.val} 左侧找到 ${leftResult}, 右侧找到 ${rightResult}。`);
+            log(`>> 因此 ${node.val} 是最近公共祖先 (LCA)!`);
+            highlightCode('code-lca');
+            draw();
+            yield { type: 'lca_found', node: node };
+            
+            activePath.pop();
+            return node.val; // 这里虽然返回了，但对于 LeetCode 逻辑，这就是结果
+        }
+
+        highlightCode('code-return');
+        let result = leftResult !== null ? leftResult : rightResult;
+        
+        if (result !== null) {
+            log(`节点 ${node.val} 收到子树返回 ${result}，继续向上返回 ${result}`);
+            foundNodes.add(node.id); // 标记为路径上的一员
+            returnValues[node.id] = result;
+        } else {
+            log(`节点 ${node.val} 左右均未发现目标，返回 null`);
+        }
+
+        draw();
+        yield { type: 'return', result: result };
+        
+        activePath.pop();
+        return result;
+    }
+
+    // --- 绘制函数 ---
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawTreeRecursive(treeData);
+    }
+
+    function drawTreeRecursive(node) {
+        if (!node) return;
+
+        // 绘制连线
+        if (node.left) drawLine(node, node.left);
+        if (node.right) drawLine(node, node.right);
+
+        // 递归绘制子节点
+        drawTreeRecursive(node.left);
+        drawTreeRecursive(node.right);
+
+        // 绘制节点本身
+        drawNodeCircle(node);
+    }
+
+    function drawLine(parent, child) {
+        ctx.beginPath();
+        ctx.moveTo(parent.x, parent.y);
+        ctx.lineTo(child.x, child.y);
+        
+        // 如果子节点返回了有效值，线变绿
+        if (returnValues[child.id] !== undefined && returnValues[child.id] !== null) {
+            ctx.strokeStyle = colors.found;
+            ctx.lineWidth = 4;
+        } else if (activePath.includes(parent.id) && activePath.includes(child.id) && currentNodeId === child.id) {
+             // 正在向下探索
+             ctx.strokeStyle = colors.visiting;
+             ctx.lineWidth = 3;
+        } else {
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+        }
+        
+        ctx.stroke();
+    }
+
+    function drawNodeCircle(node) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+        
+        // 决定填充颜色
+        let fill = colors.default;
+        let stroke = colors.stroke;
+        let textCol = '#333';
+
+        if (node.id === lcaNodeId) {
+            fill = colors.lca;
+            textCol = '#fff';
+        } else if (node.val === targetP) {
+            fill = colors.targetP;
+            textCol = '#fff';
+        } else if (node.val === targetQ) {
+            fill = colors.targetQ;
+            textCol = '#fff';
+        } else if (node.id === currentNodeId) {
+            fill = colors.visiting;
+            textCol = '#fff';
+        } else if (foundNodes.has(node.id)) {
+            // 这里表示这个节点虽然不是P或Q，但是它返回了有效值（在路径上）
+            fill = '#d1fae5'; // light green
+            stroke = colors.found;
+        }
+
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 绘制数值
+        ctx.fillStyle = textCol;
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node.val, node.x, node.y);
+
+        // 绘制返回值的气泡（如果有）
+        if (returnValues[node.id] !== undefined) {
+            ctx.fillStyle = colors.found;
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(`ret: ${returnValues[node.id]}`, node.x + 35, node.y - 10);
+        }
+    }
+
+    // --- 交互控制逻辑 ---
+
+    function log(message) {
+        const list = document.getElementById('log-list');
+        const li = document.createElement('li');
+        li.innerText = message;
+        // 自动滚动到底部
+        list.appendChild(li);
+        list.scrollTop = list.scrollHeight;
+        
+        // 高亮最新一条
+        const items = list.querySelectorAll('li');
+        items.forEach(i => i.classList.remove('highlight'));
+        li.classList.add('highlight');
+    }
+
+    function highlightCode(id) {
+        document.querySelectorAll('.code-snippet span').forEach(el => el.classList.remove('code-highlight'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('code-highlight');
+    }
+
+    function init() {
+        generator = lcaAlgorithm(treeData);
+        draw();
+        log("准备就绪。寻找 P=6 和 Q=4 的最近公共祖先。");
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStep').disabled = false;
+    }
+
+    function step() {
+        if (!generator) return;
+        
+        const res = generator.next();
+        if (res.done) {
+            isAutoPlaying = false;
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStep').disabled = true;
+            log("--- 算法执行结束 ---");
+            if (autoPlayTimer) clearTimeout(autoPlayTimer);
+            return;
+        }
+        // 如果自动播放中，继续下一步
+        if (isAutoPlaying) {
+            const speed = 2100 - document.getElementById('speedRange').value;
+            autoPlayTimer = setTimeout(step, speed);
+        }
+    }
+
+    function startAuto() {
+        if (isAutoPlaying) return;
+        isAutoPlaying = true;
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStep').disabled = true; // 自动播放时禁用单步
+        step();
+    }
+
+    function reset() {
+        isAutoPlaying = false;
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        
+        currentNodeId = null;
+        foundNodes.clear();
+        lcaNodeId = null;
+        activePath = [];
+        returnValues = {};
+        
+        document.getElementById('log-list').innerHTML = '';
+        document.querySelectorAll('.code-snippet span').forEach(el => el.classList.remove('code-highlight'));
+        
+        init();
+    }
+
+    // 初始化
+    init();
+
+</script>
+</body>
+</html>

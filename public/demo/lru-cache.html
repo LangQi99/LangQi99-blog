@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRU 缓存机制 (双向链表 + 哈希表) 演示</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --bg-color: #f3f4f6;
+            --node-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-radius: 8px;
+            --arrow-color: #9ca3af;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #1f2937;
+            color: white;
+            width: 100%;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+        .subtitle { font-size: 0.9rem; color: #9ca3af; margin-top: 5px; }
+
+        /* Controls */
+        .controls {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 80px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-put { background-color: var(--primary-color); color: white; }
+        .btn-put:hover { background-color: #2563eb; }
+        .btn-get { background-color: var(--secondary-color); color: white; }
+        .btn-get:hover { background-color: #059669; }
+        .btn-reset { background-color: #6b7280; color: white; }
+
+        /* Status Log */
+        .status-box {
+            width: 90%;
+            max-width: 800px;
+            background: #fff;
+            padding: 10px 15px;
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        /* Visualization Container */
+        .viz-container {
+            display: flex;
+            width: 95%;
+            max-width: 1200px;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Hash Map Section */
+        .hash-map-section {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #4b5563;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 5px;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .map-entry {
+            display: flex;
+            justify-content: space-between;
+            background: #f9fafb;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .map-entry.highlight {
+            background-color: #dbeafe;
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        /* Linked List Section */
+        .linked-list-section {
+            flex: 3;
+            min-width: 300px;
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .list-container {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            min-height: 120px;
+        }
+
+        /* The Nodes */
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: var(--node-bg);
+            border: 2px solid #374151;
+            border-radius: 8px;
+            margin: 0 25px;
+            position: relative;
+            transition: all 0.5s ease-in-out;
+            z-index: 10;
+        }
+
+        .node-content {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .node-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .node.sentinel {
+            background-color: #e5e7eb;
+            border-style: dashed;
+            color: #6b7280;
+            width: 60px;
+            height: 60px;
+        }
+
+        .node.new-node {
+            border-color: var(--secondary-color);
+            background-color: #ecfdf5;
+            animation: popIn 0.5s;
+        }
+
+        .node.target {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .node.evict {
+            border-color: var(--danger-color);
+            background-color: #fef2f2;
+            opacity: 0.5;
+        }
+
+        /* Pointers (Arrows) */
+        .pointer {
+            position: absolute;
+            height: 2px;
+            background-color: var(--arrow-color);
+            width: 50px;
+            top: 50%;
+            transition: all 0.5s;
+        }
+
+        /* Custom Arrows between nodes using pseudo elements on a wrapper didn't work well with flex 
+           So we draw lines manually or use CSS on the container gap. 
+           Here is a simpler approach: CSS Arrows attached to nodes.
+        */
+        .arrow-right, .arrow-left {
+            position: absolute;
+            color: var(--arrow-color);
+            font-size: 20px;
+            top: 30%;
+            transform: translateY(-50%);
+        }
+        
+        /* Simulating Double Linked List Pointers visually */
+        .connection {
+            position: absolute;
+            right: -42px; /* distance between nodes */
+            top: 50%;
+            width: 35px;
+            height: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #6b7280;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        
+        .connection::before { content: "→ Next"; font-size: 9px; line-height: 1; margin-bottom: 2px;}
+        .connection::after { content: "← Prev"; font-size: 9px; line-height: 1;}
+
+        /* Hide connection for last element */
+        .node:last-child .connection { display: none; }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .highlight-text {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        /* Legend */
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        
+        .capacity-display {
+            margin-left: 20px;
+            font-weight: bold;
+            color: #4b5563;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>LRU 缓存机制可视化</h1>
+    <div class="subtitle">LeetCode 146: 使用哈希表和双向链表</div>
+</header>
+
+<div class="controls">
+    <label>容量: <input type="number" id="capacityInput" value="3" min="1" max="8" style="width: 40px;"></label>
+    <button onclick="initCache()" class="btn-reset">重置/设置容量</button>
+    <div style="width: 1px; height: 20px; background: #ddd; margin: 0 10px;"></div>
+    <input type="number" id="keyInput" placeholder="Key" style="width: 60px;">
+    <input type="number" id="valInput" placeholder="Value" style="width: 60px;">
+    <button onclick="handlePut()" class="btn-put">Put (插入/更新)</button>
+    <button onclick="handleGet()" class="btn-get">Get (获取)</button>
+    <span class="capacity-display" id="capacityDisplay">Size: 0 / 3</span>
+</div>
+
+<div class="status-box" id="statusBox">
+    系统就绪。请设置容量或进行操作。
+</div>
+
+<div class="viz-container">
+    <!-- Hash Map Visualization -->
+    <div class="hash-map-section">
+        <div class="section-title">哈希表 (HashMap) <br><small>Key -> Node地址</small></div>
+        <div class="map-grid" id="mapGrid">
+            <!-- Map items will be injected here -->
+            <div style="color: #9ca3af; text-align: center; font-style: italic;">(Empty)</div>
+        </div>
+    </div>
+
+    <!-- Linked List Visualization -->
+    <div class="linked-list-section">
+        <div class="section-title">双向链表 (Doubly Linked List) <br><small>Head (最近使用) <---> Tail (最久未使用)</small></div>
+        <div class="list-container" id="listContainer">
+            <!-- Nodes will be injected here -->
+        </div>
+    </div>
+</div>
+
+<div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#e5e7eb; border: 1px dashed #666;"></div> 哨兵节点</div>
+    <div class="legend-item"><div class="dot" style="background:#ecfdf5; border: 1px solid var(--secondary-color);"></div> 新增/活跃</div>
+    <div class="legend-item"><div class="dot" style="background:#eff6ff; border: 1px solid var(--primary-color);"></div> 命中</div>
+    <div class="legend-item"><div class="dot" style="background:#fef2f2; border: 1px solid var(--danger-color);"></div> 即将淘汰</div>
+</div>
+
+<script>
+    // --- 核心数据结构 (The Logic) ---
+
+    class DLinkedNode {
+        constructor(key = 0, value = 0) {
+            this.key = key;
+            this.value = value;
+            this.prev = null;
+            this.next = null;
+            // 用于UI跟踪的唯一ID
+            this.id = Math.random().toString(36).substr(2, 9);
+        }
+    }
+
+    class LRUCache {
+        constructor(capacity) {
+            this.capacity = capacity;
+            this.size = 0;
+            this.map = new Map(); // Key -> Node
+            
+            // 哨兵节点
+            this.head = new DLinkedNode(); // 虚拟头
+            this.tail = new DLinkedNode(); // 虚拟尾
+            
+            this.head.next = this.tail;
+            this.tail.prev = this.head;
+        }
+
+        // 辅助函数：添加节点到头部之后 (MRU位置)
+        _addToHead(node) {
+            node.prev = this.head;
+            node.next = this.head.next;
+            this.head.next.prev = node;
+            this.head.next = node;
+        }
+
+        // 辅助函数：移除节点
+        _removeNode(node) {
+            let prev = node.prev;
+            let next = node.next;
+            prev.next = next;
+            next.prev = prev;
+        }
+
+        // 辅助函数：移动到头部
+        _moveToHead(node) {
+            this._removeNode(node);
+            this._addToHead(node);
+        }
+
+        _removeTail() {
+            let res = this.tail.prev;
+            this._removeNode(res);
+            return res;
+        }
+    }
+
+    // --- UI 控制与动画逻辑 ---
+
+    let lru = null;
+    let isAnimating = false;
+    const ANIMATION_SPEED = 800; // ms per step
+
+    const statusBox = document.getElementById('statusBox');
+    const mapGrid = document.getElementById('mapGrid');
+    const listContainer = document.getElementById('listContainer');
+    const capacityDisplay = document.getElementById('capacityDisplay');
+
+    function log(message, highlight = false) {
+        statusBox.innerHTML = highlight ? `<span class="highlight-text">${message}</span>` : message;
+    }
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function initCache() {
+        const cap = parseInt(document.getElementById('capacityInput').value);
+        if (cap < 1) { alert("容量必须大于0"); return; }
+        
+        lru = new LRUCache(cap);
+        render();
+        log(`LRU 缓存已初始化，容量: ${cap}`);
+    }
+
+    // 初始化
+    initCache();
+
+    // 核心渲染函数
+    function render(highlightKey = null, evictKey = null) {
+        // 1. 更新容量显示
+        capacityDisplay.textContent = `Size: ${lru.size} / ${lru.capacity}`;
+
+        // 2. 渲染 HashMap
+        mapGrid.innerHTML = '';
+        if (lru.map.size === 0) {
+            mapGrid.innerHTML = '<div style="color: #9ca3af; text-align: center; font-style: italic;">(Empty)</div>';
+        } else {
+            lru.map.forEach((node, key) => {
+                const div = document.createElement('div');
+                div.className = 'map-entry';
+                if (key === highlightKey) div.classList.add('highlight');
+                // 显示内存地址概念
+                div.innerHTML = `<span>Key: <b>${key}</b></span> <span>→ Node[${node.key}:${node.value}]</span>`;
+                mapGrid.appendChild(div);
+            });
+        }
+
+        // 3. 渲染双向链表
+        listContainer.innerHTML = '';
+
+        // 收集链表顺序
+        let nodes = [];
+        let curr = lru.head;
+        while(curr) {
+            nodes.push(curr);
+            curr = curr.next;
+        }
+
+        nodes.forEach((node, index) => {
+            const isHead = index === 0;
+            const isTail = index === nodes.length - 1;
+            
+            const div = document.createElement('div');
+            div.className = 'node';
+            
+            // 样式判断
+            if (isHead) {
+                div.classList.add('sentinel');
+                div.innerHTML = '<div class="node-content">Head</div><div class="node-label">Dummy</div>';
+            } else if (isTail) {
+                div.classList.add('sentinel');
+                div.innerHTML = '<div class="node-content">Tail</div><div class="node-label">Dummy</div>';
+            } else {
+                div.innerHTML = `<div class="node-content">${node.key} : ${node.value}</div><div class="node-label">Node</div>`;
+                if (node.key === highlightKey) div.classList.add('target');
+                if (node.key === evictKey) div.classList.add('evict');
+                
+                // 给新加入的节点添加动画标记 (如果是最近操作的)
+                if (highlightKey !== null && node.key === highlightKey && !div.classList.contains('target')) {
+                    div.classList.add('new-node');
+                }
+            }
+
+            // 添加指针箭头（除了最后一个节点）
+            if (!isTail) {
+                const conn = document.createElement('div');
+                conn.className = 'connection';
+                div.appendChild(conn);
+            }
+
+            listContainer.appendChild(div);
+        });
+    }
+
+    // --- 交互操作 ---
+
+    async function handleGet() {
+        if (isAnimating) return;
+        const key = parseInt(document.getElementById('keyInput').value);
+        if (isNaN(key)) return;
+
+        isAnimating = true;
+        log(`Get(${key}): 正在哈希表中查找 Key...`);
+        
+        // 步骤 1: 检查 Map
+        render(key); // 高亮 Map 中的 Key（如果存在）
+        await sleep(ANIMATION_SPEED);
+
+        if (!lru.map.has(key)) {
+            log(`Key ${key} 不存在。返回 -1。`, true);
+            isAnimating = false;
+            render();
+            return;
+        }
+
+        const node = lru.map.get(key);
+        log(`命中! Key ${key} 存在。准备将其移动到头部 (变为最近使用)...`, true);
+        
+        // 步骤 2: 逻辑移动
+        lru._moveToHead(node);
+        
+        // 步骤 3: 渲染移动后的结果
+        await sleep(ANIMATION_SPEED);
+        render(key); // 高亮此时在头部的节点
+        
+        log(`Get(${key}) 完成。值: ${node.value}`);
+        isAnimating = false;
+    }
+
+    async function handlePut() {
+        if (isAnimating) return;
+        const key = parseInt(document.getElementById('keyInput').value);
+        const val = parseInt(document.getElementById('valInput').value);
+        if (isNaN(key) || isNaN(val)) return;
+
+        isAnimating = true;
+        log(`Put(${key}, ${val}): 检查 Key 是否已存在...`);
+        
+        render(key);
+        await sleep(ANIMATION_SPEED);
+
+        if (lru.map.has(key)) {
+            // 情况 1: Key 已存在，更新值并移动
+            const node = lru.map.get(key);
+            log(`Key ${key} 已存在。更新 Value 并移动到头部...`, true);
+            
+            node.value = val;
+            lru._moveToHead(node);
+            
+            await sleep(ANIMATION_SPEED);
+            render(key);
+        } else {
+            // 情况 2: Key 不存在，插入新节点
+            log(`Key ${key} 是新的。创建新节点...`);
+            const newNode = new DLinkedNode(key, val);
+            
+            // 检查容量
+            if (lru.size >= lru.capacity) {
+                // 需要淘汰
+                const tailNode = lru.tail.prev;
+                log(`容量已满 (${lru.capacity})。准备淘汰最久未使用的节点 (Tail 前面的节点 Key: ${tailNode.key})...`, true);
+                
+                // 视觉上先标记要被淘汰的节点
+                render(null, tailNode.key); 
+                await sleep(ANIMATION_SPEED * 1.5);
+                
+                // 逻辑删除
+                lru.map.delete(tailNode.key);
+                lru._removeTail();
+                lru.size--;
+                
+                log(`节点 Key: ${tailNode.key} 已被移除。`);
+                render(); // 刷新去除红色节点
+                await sleep(500);
+            }
+
+            // 插入头部
+            log(`将新节点 (${key}, ${val}) 插入头部...`);
+            lru._addToHead(newNode);
+            lru.map.set(key, newNode);
+            lru.size++;
+            
+            await sleep(500);
+            render(key); // 高亮新节点
+        }
+
+        log(`Put 操作完成。`);
+        isAnimating = false;
+    }
+
+</script>
+
+</body>
+</html>

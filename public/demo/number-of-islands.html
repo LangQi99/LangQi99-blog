@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岛屿数量算法可视化 (DFS)</title>
+    <!-- 引入 Tailwind CSS 进行快速布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义网格动画和样式 */
+        .grid-container {
+            display: grid;
+            gap: 4px;
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 状态颜色 */
+        .water {
+            background-color: #e0f2fe;
+            /* Light Blue */
+            color: #94a3b8;
+            border: 1px solid #bae6fd;
+        }
+
+        .land {
+            background-color: #4ade80;
+            /* Green */
+            color: #14532d;
+            border: 1px solid #22c55e;
+            transform: scale(1);
+        }
+
+        /* 当前扫描光标 */
+        .scanning {
+            border: 3px solid #f59e0b;
+            /* Amber border */
+            z-index: 10;
+        }
+
+        /* 正在进行 DFS 处理 */
+        .processing {
+            background-color: #f87171 !important;
+            /* Red */
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.6);
+        }
+
+        /* 已访问/沉没的陆地 */
+        .sunk {
+            background-color: #1e293b;
+            /* Dark Slate */
+            color: #64748b;
+            border: 1px solid #334155;
+            animation: sinkAnim 0.4s ease-out;
+        }
+
+        @keyframes sinkAnim {
+            0% {
+                transform: scale(1.1);
+                background-color: #f87171;
+            }
+
+            100% {
+                transform: scale(1);
+                background-color: #1e293b;
+            }
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 640px) {
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col items-center py-8 font-sans">
+
+    <!-- 标题区 -->
+    <header class="text-center mb-6 px-4">
+        <h1 class="text-3xl font-extrabold text-slate-800 mb-2">岛屿数量 (Number of Islands)</h1>
+        <p class="text-slate-600">基于深度优先搜索 (DFS) 的可视化演示</p>
+    </header>
+
+    <!-- 控制面板 -->
+    <div
+        class="bg-white p-6 rounded-xl shadow-lg w-full max-w-4xl flex flex-col md:flex-row gap-6 items-start justify-between mb-8">
+
+        <!-- 左侧：设置 -->
+        <div class="flex-1 space-y-4 w-full">
+            <div class="flex gap-4 items-center">
+                <label class="font-semibold text-sm text-slate-500">网格大小:</label>
+                <select id="gridSize"
+                    class="bg-slate-100 border border-slate-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="5">5 x 5</option>
+                    <option value="8" selected>8 x 8</option>
+                    <option value="10">10 x 10</option>
+                </select>
+            </div>
+
+            <div class="flex gap-4 items-center">
+                <label class="font-semibold text-sm text-slate-500">动画速度:</label>
+                <input type="range" id="speedRange" min="10" max="500" value="200" class="w-32 accent-blue-600">
+                <span class="text-xs text-slate-400">快 <-> 慢</span>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mt-2">
+                <button onclick="generateGrid()" id="btnGen"
+                    class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    随机地图
+                </button>
+                <button onclick="startVisualization()" id="btnStart"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-md transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    开始计算
+                </button>
+            </div>
+        </div>
+
+        <!-- 中间：状态显示 -->
+        <div class="flex-1 bg-slate-50 rounded-lg p-4 border border-slate-200 w-full text-center">
+            <div class="text-sm text-slate-500 uppercase tracking-wider mb-1">当前岛屿计数</div>
+            <div id="islandCountDisplay" class="text-5xl font-bold text-blue-600">0</div>
+        </div>
+
+        <!-- 右侧：图例 -->
+        <div class="flex-1 space-y-2 text-sm w-full">
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 rounded bg-green-400 border border-green-500"></div>
+                <span>未发现的陆地 ('1')</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 rounded bg-slate-800 border border-slate-700"></div>
+                <span>已处理/沉没 ('0')</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 rounded bg-blue-50 border border-blue-200"></div>
+                <span>水域 ('0')</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-4 h-4 rounded bg-red-400 border border-red-500"></div>
+                <span>DFS 递归搜索中</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 算法解释器/日志 -->
+    <div id="statusLog" class="h-12 text-center text-lg font-medium text-slate-700 mb-4 transition-all">
+        准备就绪，请点击“开始计算”...
+    </div>
+
+    <!-- 网格区域 -->
+    <div id="gridWrapper" class="relative bg-white p-4 rounded-xl shadow-xl border-4 border-slate-200">
+        <div id="grid" class="grid-container">
+            <!-- 单元格将通过 JS 生成 -->
+        </div>
+    </div>
+
+    <!-- 底部原理说明 -->
+    <div class="max-w-3xl mt-12 px-6 text-slate-600 text-sm leading-relaxed text-center">
+        <h3 class="font-bold text-slate-800 mb-2">算法原理 (DFS)</h3>
+        <p>程序包含两个循环遍历整个网格。当遇到一块“陆地(1)”时，计数器加1，并立即启动 <strong>DFS（深度优先搜索）</strong>。DFS
+            会像病毒扩散一样，将当前格子以及所有相连的陆地全部标记为“已访问(0)”（或者叫沉岛）。这样，当主循环继续扫描到这些格子时，就会跳过它们，从而保证每座岛只被计算一次。</p>
+    </div>
+
+    <script>
+        // 配置与状态
+        let rows = 8;
+        let cols = 8;
+        let gridData = [];
+        let isAnimating = false;
+        let abortController = null; // 用于停止动画
+
+        // DOM 元素
+        const gridEl = document.getElementById('grid');
+        const countDisplay = document.getElementById('islandCountDisplay');
+        const statusLog = document.getElementById('statusLog');
+        const speedInput = document.getElementById('speedRange');
+        const btnStart = document.getElementById('btnStart');
+        const btnGen = document.getElementById('btnGen');
+        const sizeSelect = document.getElementById('gridSize');
+
+        // 初始化
+        window.onload = () => {
+            generateGrid();
+            sizeSelect.addEventListener('change', (e) => {
+                rows = cols = parseInt(e.target.value);
+                generateGrid();
+            });
+        };
+
+        // 获取当前延迟时间 (支持实时调节)
+        const getDelay = () => Math.max(10, 510 - parseInt(speedInput.value));
+
+        // 睡眠函数
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 生成网格数据与UI
+        function generateGrid() {
+            if (isAnimating) return; // 动画中禁止重置
+
+            // 1. 初始化数据 (约40%概率是陆地)
+            gridData = [];
+            for (let r = 0; r < rows; r++) {
+                let row = [];
+                for (let c = 0; c < cols; c++) {
+                    row.push(Math.random() > 0.65 ? 1 : 0);
+                }
+                gridData.push(row);
+            }
+
+            // 2. 渲染 UI
+            renderGrid();
+
+            // 重置状态
+            countDisplay.textContent = '0';
+            countDisplay.classList.remove('text-green-600');
+            countDisplay.classList.add('text-blue-600');
+            statusLog.textContent = '准备就绪，点击“开始计算”';
+            statusLog.className = 'h-12 text-center text-lg font-medium text-slate-700 mb-4';
+        }
+
+        // 渲染网格 DOM
+        function renderGrid() {
+            gridEl.innerHTML = '';
+            gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${gridData[r][c] === 1 ? 'land' : 'water'}`;
+                    cell.id = `cell-${r}-${c}`;
+                    cell.textContent = gridData[r][c];
+
+                    // 点击切换地形 (仅在非动画时)
+                    cell.onclick = () => {
+                        if (isAnimating) return;
+                        gridData[r][c] = gridData[r][c] === 1 ? 0 : 1;
+                        cell.className = `cell ${gridData[r][c] === 1 ? 'land' : 'water'}`;
+                        cell.textContent = gridData[r][c];
+                    };
+
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        // 辅助：获取单元格 DOM
+        const getCell = (r, c) => document.getElementById(`cell-${r}-${c}`);
+
+        // --- 核心算法部分 ---
+
+        async function startVisualization() {
+            if (isAnimating) return;
+            isAnimating = true;
+            toggleControls(false);
+
+            // 重置视觉状态，防止多次点击导致混乱，但保留数据
+            renderGrid();
+
+            let islands = 0;
+            countDisplay.textContent = 0;
+
+            // 创建一个副本用于逻辑判断，避免直接修改原始 gridData 导致下次无法重置
+            // 但为了演示"沉岛"效果，我们在 UI 上会修改它。
+            // 这里我们使用一个 visited 数组来模拟逻辑，UI 上则直接变色。
+            let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+            statusLog.textContent = "开始扫描整个地图...";
+
+            try {
+                // 主循环：扫描每一个格子
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+
+                        // 视觉：高亮当前扫描的格子 (黄色边框)
+                        const cell = getCell(r, c);
+                        cell.classList.add('scanning');
+
+                        await sleep(getDelay() / 2); // 扫描速度稍微快一点
+
+                        if (gridData[r][c] === 1 && !visited[r][c]) {
+                            // 发现新岛屿！
+                            islands++;
+                            countDisplay.textContent = islands;
+
+                            // 视觉反馈
+                            statusLog.textContent = `发现岛屿 #${islands} (坐标 [${r}, ${c}])，开始 DFS 探索...`;
+                            statusLog.className = "h-12 text-center text-lg font-bold text-green-600 mb-4";
+                            countDisplay.classList.add('scale-125'); // 脉冲效果
+                            setTimeout(() => countDisplay.classList.remove('scale-125'), 200);
+
+                            // 开始 DFS "沉岛"
+                            await dfs(r, c, visited);
+
+                            statusLog.textContent = "当前岛屿探索完毕，继续扫描...";
+                            statusLog.className = "h-12 text-center text-lg font-medium text-slate-700 mb-4";
+                        }
+
+                        // 移除扫描高亮
+                        cell.classList.remove('scanning');
+                    }
+                }
+
+                statusLog.textContent = `搜索结束！总共发现 ${islands} 座岛屿。`;
+                statusLog.className = "h-12 text-center text-lg font-bold text-blue-600 mb-4";
+                countDisplay.classList.remove('text-blue-600');
+                countDisplay.classList.add('text-green-600');
+
+            } catch (err) {
+                console.log("Animation stopped or error occurred");
+            } finally {
+                isAnimating = false;
+                toggleControls(true);
+            }
+        }
+
+        // DFS 递归函数
+        async function dfs(r, c, visited) {
+            // 边界检查与条件检查
+            if (r < 0 || c < 0 || r >= rows || c >= cols || gridData[r][c] === 0 || visited[r][c]) {
+                return;
+            }
+
+            // 逻辑处理
+            visited[r][c] = true;
+
+            // 视觉：标记为"处理中" (红色)
+            const cell = getCell(r, c);
+            cell.classList.remove('land');
+            cell.classList.add('processing');
+            cell.textContent = "DFS"; // 标记当前正在处理
+
+            await sleep(getDelay());
+
+            // 视觉：标记为"已沉没/已访问" (深色)
+            cell.classList.remove('processing');
+            cell.classList.add('sunk');
+            cell.textContent = "0"; // 视觉上变成0
+
+            // 递归调用四个方向
+            // 为了视觉效果，我们按顺序 await，这样用户能看到路径
+            // 上
+            await dfs(r - 1, c, visited);
+            // 下
+            await dfs(r + 1, c, visited);
+            // 左
+            await dfs(r, c - 1, visited);
+            // 右
+            await dfs(r, c + 1, visited);
+        }
+
+        // UI 辅助：禁用/启用按钮
+        function toggleControls(enable) {
+            const opacity = enable ? '1' : '0.5';
+            const cursor = enable ? 'pointer' : 'not-allowed';
+
+            [btnStart, btnGen, sizeSelect].forEach(el => {
+                el.disabled = !enable;
+                el.style.opacity = opacity;
+                el.style.cursor = cursor;
+            });
+        }
+
+    </script>
+</body>
+
+</html>

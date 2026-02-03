@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode 415. 字符串相加 - 算法动画演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .digit-box {
+            width: 50px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .digit-active {
+            background-color: #3b82f6;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+        }
+
+        .digit-default {
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .digit-result {
+            background-color: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .pointer {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .highlight-line {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .carry-box {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        #step-description {
+            min-height: 3rem;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-slate-800 p-6 text-white">
+            <h1 class="text-2xl font-bold">LeetCode 415. 字符串相加</h1>
+            <p class="text-slate-400 mt-2">使用双指针模拟竖式加法。从右向左遍历，逐位相加并处理进位。</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            <!-- Animation Area -->
+            <div class="p-6 border-r border-slate-100 flex flex-col items-center justify-center min-h-[500px]">
+                
+                <!-- Input Controls -->
+                <div class="flex gap-4 mb-12">
+                    <input type="text" id="num1-input" value="456" class="border-2 border-slate-200 rounded px-3 py-1 w-24 text-center focus:border-blue-500 outline-none" placeholder="数字1">
+                    <span class="text-2xl font-bold text-slate-400">+</span>
+                    <input type="text" id="num2-input" value="77" class="border-2 border-slate-200 rounded px-3 py-1 w-24 text-center focus:border-blue-500 outline-none" placeholder="数字2">
+                    <button id="reset-btn" class="bg-slate-100 hover:bg-slate-200 px-4 py-1 rounded text-slate-600 transition">重置</button>
+                </div>
+
+                <!-- Carry Visualization -->
+                <div class="flex items-center gap-2 mb-4 h-12">
+                    <span class="text-slate-400 text-sm font-semibold">当前进位 (carry):</span>
+                    <div id="carry-display" class="digit-box carry-box w-10 h-10 text-lg hidden">0</div>
+                    <span id="carry-zero" class="text-slate-300 italic">0</span>
+                </div>
+
+                <!-- Numbers Visualization -->
+                <div class="flex flex-col gap-6 items-end w-full px-12">
+                    <!-- Num 1 -->
+                    <div id="num1-row" class="flex gap-2"></div>
+                    <!-- Num 2 -->
+                    <div id="num2-row" class="flex gap-2"></div>
+                    <!-- Separator -->
+                    <div class="w-full h-1 bg-slate-200 rounded-full"></div>
+                    <!-- Result -->
+                    <div id="res-row" class="flex gap-2 min-h-[60px]"></div>
+                </div>
+
+                <!-- Explanation Box -->
+                <div id="step-description" class="mt-12 p-4 bg-blue-50 text-blue-800 rounded-lg w-full text-center font-medium">
+                    点击“开始”或“下一步”开始演示
+                </div>
+
+                <!-- Play Controls -->
+                <div class="flex gap-4 mt-8">
+                    <button id="prev-btn" class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30" disabled>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 20L9 12L19 4V20Z"/><path d="M5 19V5"/></svg>
+                    </button>
+                    <button id="play-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-full font-bold shadow-lg shadow-blue-200 transition active:scale-95">
+                        开始播放
+                    </button>
+                    <button id="next-btn" class="p-2 rounded-full hover:bg-slate-100">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4L15 12L5 20V4Z"/><path d="M19 5V19"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Code Area -->
+            <div class="bg-slate-50 p-6 overflow-x-auto border-l border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-bold uppercase tracking-widest text-slate-400">JavaScript 实现</span>
+                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">模拟指针</span>
+                </div>
+                <pre class="code-font text-sm leading-relaxed text-slate-700">
+<div id="code-1" class="px-2 py-0.5">let i = num1.length - 1;</div><div id="code-2" class="px-2 py-0.5">let j = num2.length - 1;</div><div id="code-3" class="px-2 py-0.5">let carry = 0;</div><div id="code-4" class="px-2 py-0.5">const res = [];</div><div id="code-5" class="px-2 py-0.5">while (i >= 0 || j >= 0 || carry !== 0) {</div><div id="code-6" class="px-2 py-0.5 ml-4">const n1 = i >= 0 ? num1[i] - '0' : 0;</div><div id="code-7" class="px-2 py-0.5 ml-4">const n2 = j >= 0 ? num2[j] - '0' : 0;</div><div id="code-8" class="px-2 py-0.5 ml-4 font-bold text-blue-600">const sum = n1 + n2 + carry;</div><div id="code-9" class="px-2 py-0.5 ml-4">res.push(sum % 10);</div><div id="code-10" class="px-2 py-0.5 ml-4">carry = Math.floor(sum / 10);</div><div id="code-11" class="px-2 py-0.5 ml-4">i--; j--;</div><div id="code-12" class="px-2 py-0.5">}</div><div id="code-13" class="px-2 py-0.5">return res.reverse().join('');</div>
+                </pre>
+                
+                <div class="mt-8 p-4 bg-white rounded border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm mb-2">复杂度分析</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        <strong>时间复杂度:</strong> O(max(N, M))，其中 N, M 是两字符串长度。我们需要遍历较长的那个字符串。<br><br>
+                        <strong>空间复杂度:</strong> O(1) (除了存储答案用的空间)。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const num1Input = document.getElementById('num1-input');
+        const num2Input = document.getElementById('num2-input');
+        const num1Row = document.getElementById('num1-row');
+        const num2Row = document.getElementById('num2-row');
+        const resRow = document.getElementById('res-row');
+        const playBtn = document.getElementById('play-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const stepDesc = document.getElementById('step-description');
+        const carryDisplay = document.getElementById('carry-display');
+        const carryZero = document.getElementById('carry-zero');
+
+        let history = [];
+        let currentStepIdx = -1;
+        let isPlaying = false;
+        let playInterval = null;
+
+        function initAnimation() {
+            const n1 = num1Input.value.replace(/\D/g, '');
+            const n2 = num2Input.value.replace(/\D/g, '');
+            num1Input.value = n1;
+            num2Input.value = n2;
+
+            num1Row.innerHTML = '';
+            num2Row.innerHTML = '';
+            resRow.innerHTML = '';
+            carryDisplay.classList.add('hidden');
+            carryZero.classList.remove('hidden');
+
+            for (let char of n1) {
+                const div = document.createElement('div');
+                div.className = 'digit-box digit-default';
+                div.textContent = char;
+                num1Row.appendChild(div);
+            }
+
+            for (let char of n2) {
+                const div = document.createElement('div');
+                div.className = 'digit-box digit-default';
+                div.textContent = char;
+                num2Row.appendChild(div);
+            }
+
+            generateSteps(n1, n2);
+            currentStepIdx = -1;
+            updateUI();
+        }
+
+        function generateSteps(num1, num2) {
+            steps = [];
+            let i = num1.length - 1;
+            let j = num2.length - 1;
+            let carry = 0;
+            let res = [];
+
+            // Initial State
+            steps.push({
+                type: 'init',
+                i, j, carry, res: [],
+                desc: '初始化指针 i, j 指向数字末尾，设置进位 carry = 0',
+                codeLine: [1, 2, 3, 4]
+            });
+
+            while (i >= 0 || j >= 0 || carry !== 0) {
+                const n1 = i >= 0 ? parseInt(num1[i]) : 0;
+                const n2 = j >= 0 ? parseInt(num2[j]) : 0;
+                
+                steps.push({
+                    type: 'calculate-prep',
+                    i, j, carry, res: [...res],
+                    desc: `提取数字：num1[${i}] → ${i >= 0 ? n1 : '0(溢出)'}, num2[${j}] → ${j >= 0 ? n2 : '0(溢出)'}`,
+                    codeLine: [6, 7]
+                });
+
+                const sum = n1 + n2 + carry;
+                const digit = sum % 10;
+                const nextCarry = Math.floor(sum / 10);
+
+                steps.push({
+                    type: 'sum',
+                    i, j, carry, n1, n2, sum,
+                    res: [...res],
+                    desc: `计算：${n1} + ${n2} + ${carry}(进位) = ${sum}`,
+                    codeLine: [8]
+                });
+
+                res.unshift(digit);
+                
+                steps.push({
+                    type: 'digit',
+                    i, j, carry, digit,
+                    res: [...res],
+                    desc: `取个位数 ${digit} 放入结果，更新进位为 ${nextCarry}`,
+                    codeLine: [9, 10]
+                });
+
+                carry = nextCarry;
+                i--;
+                j--;
+
+                steps.push({
+                    type: 'move',
+                    i, j, carry,
+                    res: [...res],
+                    desc: '移动指针 i, j 到下一位',
+                    codeLine: [11]
+                });
+            }
+
+            steps.push({
+                type: 'finish',
+                i, j, carry,
+                res: [...res],
+                desc: '遍历结束，返回最终字符串结果',
+                codeLine: [13]
+            });
+        }
+
+        function updateUI() {
+            const step = steps[currentStepIdx] || { i: -1, j: -1, carry: 0, res: [], desc: '点击下一步开始演示', codeLine: [] };
+            
+            // Clear styles
+            document.querySelectorAll('.digit-box').forEach(el => {
+                el.classList.remove('digit-active', 'ring-4', 'ring-blue-400');
+            });
+            document.querySelectorAll('[id^="code-"]').forEach(el => el.classList.remove('highlight-line'));
+
+            // Highlight Code
+            step.codeLine.forEach(lineId => {
+                const el = document.getElementById(`code-${lineId}`);
+                if (el) el.classList.add('highlight-line');
+            });
+
+            // Update Description
+            stepDesc.textContent = step.desc;
+
+            // Update Pointers
+            const n1Boxes = num1Row.querySelectorAll('.digit-box');
+            if (step.i >= 0 && step.i < n1Boxes.length) {
+                n1Boxes[step.i].classList.add('digit-active');
+            }
+
+            const n2Boxes = num2Row.querySelectorAll('.digit-box');
+            if (step.j >= 0 && step.j < n2Boxes.length) {
+                n2Boxes[step.j].classList.add('digit-active');
+            }
+
+            // Update Carry
+            if (step.carry > 0 || step.type === 'sum') {
+                carryDisplay.textContent = step.carry;
+                carryDisplay.classList.remove('hidden');
+                carryZero.classList.add('hidden');
+            } else {
+                carryDisplay.classList.add('hidden');
+                carryZero.classList.remove('hidden');
+            }
+
+            // Update Result Row
+            resRow.innerHTML = '';
+            step.res.forEach((val, idx) => {
+                const div = document.createElement('div');
+                div.className = 'digit-box digit-result';
+                div.textContent = val;
+                resRow.appendChild(div);
+            });
+
+            // Button states
+            prevBtn.disabled = currentStepIdx <= 0;
+            nextBtn.disabled = currentStepIdx >= steps.length - 1;
+            
+            if (currentStepIdx >= steps.length - 1) {
+                stopPlay();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIdx < steps.length - 1) {
+                currentStepIdx++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIdx > 0) {
+                currentStepIdx--;
+                updateUI();
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlay();
+            } else {
+                if (currentStepIdx >= steps.length - 1) currentStepIdx = -1;
+                isPlaying = true;
+                playBtn.textContent = '停止';
+                playBtn.classList.replace('bg-blue-600', 'bg-red-500');
+                playInterval = setInterval(nextStep, 1000);
+            }
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            playBtn.textContent = '开始播放';
+            playBtn.classList.replace('bg-red-500', 'bg-blue-600');
+            clearInterval(playInterval);
+        }
+
+        nextBtn.addEventListener('click', () => { stopPlay(); nextStep(); });
+        prevBtn.addEventListener('click', () => { stopPlay(); prevStep(); });
+        playBtn.addEventListener('click', togglePlay);
+        resetBtn.addEventListener('click', () => { stopPlay(); initAnimation(); });
+        
+        num1Input.addEventListener('change', initAnimation);
+        num2Input.addEventListener('change', initAnimation);
+
+        window.onload = initAnimation;
+    </script>
+</body>
+</html>

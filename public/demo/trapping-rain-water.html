@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接雨水算法可视化 (双指针法)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center p-4">
+
+    <!-- 标题区 -->
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">🌊 接雨水算法可视化</h1>
+        <p class="text-gray-600">使用 <span class="font-mono bg-gray-200 px-1 rounded text-pink-600">双指针法 (Two
+                Pointers)</span> 的动态演示</p>
+    </header>
+
+    <!-- 主界面布局 -->
+    <main class="w-full max-w-5xl bg-white shadow-xl rounded-2xl overflow-hidden flex flex-col lg:flex-row">
+
+        <!-- 左侧：可视化画布 -->
+        <div class="flex-1 p-6 relative bg-gray-900 flex flex-col items-center justify-center min-h-[400px]">
+            <canvas id="visualizer" width="800" height="400" class="w-full h-full object-contain"></canvas>
+
+            <!-- 图例 -->
+            <div
+                class="absolute top-4 right-4 bg-gray-800/80 p-3 rounded-lg text-xs text-white backdrop-blur-sm border border-gray-700">
+                <div class="flex items-center gap-2 mb-1"><span class="w-3 h-3 bg-gray-400 block"></span> 柱子 (Height)
+                </div>
+                <div class="flex items-center gap-2 mb-1"><span class="w-3 h-3 bg-blue-500 block"></span> 雨水 (Water)
+                </div>
+                <div class="flex items-center gap-2 mb-1"><span class="w-3 h-3 bg-red-500 block"></span> 左指针 (Left)
+                </div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-500 block"></span> 右指针 (Right)</div>
+            </div>
+        </div>
+
+        <!-- 右侧：控制与解释 -->
+        <div class="w-full lg:w-96 border-l border-gray-200 flex flex-col">
+
+            <!-- 状态面板 -->
+            <div class="p-6 bg-blue-50 border-b border-blue-100">
+                <h2 class="text-lg font-bold text-blue-800 mb-4">当前状态</h2>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <div class="text-gray-500">左侧最高 (LeftMax)</div>
+                        <div class="text-2xl font-mono font-bold text-red-600" id="stat-lmax">0</div>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <div class="text-gray-500">右侧最高 (RightMax)</div>
+                        <div class="text-2xl font-mono font-bold text-green-600" id="stat-rmax">0</div>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm col-span-2 border-l-4 border-blue-500">
+                        <div class="text-gray-500">当前接水总量 (Total)</div>
+                        <div class="text-3xl font-mono font-bold text-blue-600" id="stat-total">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤解释 -->
+            <div class="flex-1 p-6 overflow-y-auto max-h-[300px] bg-white">
+                <h3 class="font-bold text-gray-700 mb-2">算法逻辑讲解:</h3>
+                <div id="log-container" class="space-y-3 text-sm">
+                    <div class="p-3 bg-gray-100 rounded border border-gray-200 text-gray-500 italic">
+                        点击“开始演示”或“单步执行”开始...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="p-6 bg-gray-50 border-t border-gray-200">
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="viz.reset()"
+                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition font-medium">重置数据</button>
+                    <button id="btn-play" onclick="viz.togglePlay()"
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow transition font-bold flex items-center gap-2">
+                        <span id="icon-play">▶</span> 自动播放
+                    </button>
+                    <button onclick="viz.step()"
+                        class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded transition">单步执行</button>
+                </div>
+
+                <div class="mt-4 flex items-center gap-3">
+                    <span class="text-xs text-gray-500">速度:</span>
+                    <input type="range" min="100" max="2000" step="100" value="800" id="speed-range"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 代码参考 -->
+    <section class="mt-8 max-w-5xl w-full">
+        <div class="bg-gray-800 text-gray-300 rounded-lg p-6 shadow-lg overflow-x-auto">
+            <h3 class="text-white font-bold mb-4 border-b border-gray-700 pb-2">核心算法代码 (JavaScript)</h3>
+            <pre class="font-mono text-sm leading-relaxed"><code class="language-javascript"><span class="text-pink-400">let</span> left = 0, right = height.length - 1;
+<span class="text-pink-400">let</span> leftMax = 0, rightMax = 0;
+<span class="text-pink-400">let</span> ans = 0;
+
+<span class="text-blue-400">while</span> (left < right) {
+    leftMax = Math.max(leftMax, height[left]);
+    rightMax = Math.max(rightMax, height[right]);
+
+    <span class="text-gray-500">// 谁小移谁，这是核心逻辑</span>
+    <span class="text-blue-400">if</span> (height[left] < height[right]) {
+        ans += leftMax - height[left]; <span class="text-green-400">// 左边矮，瓶颈在左边，此时右边必有高墙挡水</span>
+        left++;
+    } <span class="text-blue-400">else</span> {
+        ans += rightMax - height[right];
+        right--;
+    }
+}</code></pre>
+        </div>
+    </section>
+
+    <script>
+        class RainWaterVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('visualizer');
+                this.ctx = this.canvas.getContext('2d');
+                this.logContainer = document.getElementById('log-container');
+
+                // 配置
+                this.barWidth = 40;
+                this.gap = 5;
+                this.data = [];
+                this.water = []; // 存储每个位置的水量
+
+                // 状态
+                this.left = 0;
+                this.right = 0;
+                this.leftMax = 0;
+                this.rightMax = 0;
+                this.totalWater = 0;
+                this.isFinished = false;
+                this.isPlaying = false;
+                this.timer = null;
+                this.speed = 800;
+
+                // 监听速度条
+                document.getElementById('speed-range').addEventListener('input', (e) => {
+                    this.speed = 2100 - e.target.value; // 反转：值越大速度越快(间隔越小)
+                    if (this.isPlaying) {
+                        this.pause();
+                        this.play();
+                    }
+                });
+
+                this.reset();
+                this.adjustCanvasSize();
+                window.addEventListener('resize', () => this.adjustCanvasSize());
+            }
+
+            // 初始化随机数据
+            generateData() {
+                // 经典测试用例形状，稍微随机化
+                const basePattern = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1];
+                this.data = [];
+                for (let i = 0; i < 15; i++) {
+                    // 随机高度 0-6
+                    this.data.push(Math.floor(Math.random() * 6));
+                }
+                // 确保两端不是极高，视觉上好看点
+                if (this.data[0] > 2) this.data[0] = 1;
+                if (this.data[this.data.length - 1] > 2) this.data[this.data.length - 1] = 1;
+            }
+
+            reset() {
+                this.pause();
+                this.generateData();
+                this.water = new Array(this.data.length).fill(0);
+                this.left = 0;
+                this.right = this.data.length - 1;
+                this.leftMax = 0;
+                this.rightMax = 0;
+                this.totalWater = 0;
+                this.isFinished = false;
+
+                this.updateStats();
+                this.log("系统", "数据已重置。准备开始...", "neutral");
+                this.draw();
+            }
+
+            adjustCanvasSize() {
+                const parent = this.canvas.parentElement;
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+                this.draw();
+            }
+
+            togglePlay() {
+                if (this.isPlaying) this.pause();
+                else this.play();
+            }
+
+            play() {
+                if (this.isFinished) return;
+                this.isPlaying = true;
+                document.getElementById('btn-play').innerHTML = '<span class="font-bold">||</span> 暂停';
+                document.getElementById('btn-play').classList.replace('bg-blue-600', 'bg-yellow-500');
+                document.getElementById('btn-play').classList.replace('hover:bg-blue-700', 'hover:bg-yellow-600');
+
+                const loop = () => {
+                    this.step();
+                    if (this.isPlaying && !this.isFinished) {
+                        this.timer = setTimeout(loop, this.speed);
+                    } else {
+                        this.pause();
+                    }
+                };
+                loop();
+            }
+
+            pause() {
+                this.isPlaying = false;
+                clearTimeout(this.timer);
+                document.getElementById('btn-play').innerHTML = '<span>▶</span> 继续播放';
+                document.getElementById('btn-play').classList.replace('bg-yellow-500', 'bg-blue-600');
+                document.getElementById('btn-play').classList.replace('hover:bg-yellow-600', 'hover:bg-blue-700');
+            }
+
+            step() {
+                if (this.isFinished) return;
+
+                // 核心算法逻辑
+                if (this.left <= this.right) {
+                    // 更新最大值显示
+                    const hLeft = this.data[this.left];
+                    const hRight = this.data[this.right];
+
+                    this.leftMax = Math.max(this.leftMax, hLeft);
+                    this.rightMax = Math.max(this.rightMax, hRight);
+
+                    let msg = "";
+                    let type = "info";
+
+                    // 比较左右高度，决定处理哪一边
+                    if (hLeft < hRight) {
+                        // 处理左边
+                        const amount = this.leftMax - hLeft;
+                        if (amount > 0) {
+                            this.water[this.left] = amount;
+                            this.totalWater += amount;
+                            msg = `左侧(${hLeft}) < 右侧(${hRight})。左侧形成低洼。<br>左墙最大(${this.leftMax}) - 当前(${hLeft}) = 接水 <b class="text-blue-600">${amount}</b>`;
+                            type = "success";
+                        } else {
+                            msg = `左侧(${hLeft}) < 右侧(${hRight})。<br>更新左侧最大值为 ${this.leftMax}。无法接水。`;
+                        }
+                        this.left++;
+                    } else {
+                        // 处理右边
+                        const amount = this.rightMax - hRight;
+                        if (amount > 0) {
+                            this.water[this.right] = amount;
+                            this.totalWater += amount;
+                            msg = `右侧(${hRight}) <= 左侧(${hLeft})。右侧形成低洼。<br>右墙最大(${this.rightMax}) - 当前(${hRight}) = 接水 <b class="text-blue-600">${amount}</b>`;
+                            type = "success";
+                        } else {
+                            msg = `右侧(${hRight}) <= 左侧(${hLeft})。<br>更新右侧最大值为 ${this.rightMax}。无法接水。`;
+                        }
+                        this.right--;
+                    }
+
+                    this.log("计算中", msg, type);
+                    this.updateStats();
+                    this.draw();
+                } else {
+                    this.isFinished = true;
+                    this.log("完成", `计算结束！总接水量为: ${this.totalWater}`, "finish");
+                    this.draw();
+                }
+            }
+
+            log(title, content, type) {
+                const div = document.createElement('div');
+                let borderClass = 'border-l-4 border-gray-400';
+                let bgClass = 'bg-gray-50';
+
+                if (type === 'success') { borderClass = 'border-l-4 border-blue-500'; bgClass = 'bg-blue-50'; }
+                if (type === 'finish') { borderClass = 'border-l-4 border-green-500'; bgClass = 'bg-green-50'; }
+
+                div.className = `p-3 rounded shadow-sm text-sm mb-2 animate-fade-in ${borderClass} ${bgClass}`;
+                div.innerHTML = `<div class="font-bold text-gray-700 text-xs mb-1">${title}</div><div class="text-gray-600 leading-snug">${content}</div>`;
+
+                this.logContainer.prepend(div);
+                // 保持最多显示50条
+                if (this.logContainer.children.length > 50) {
+                    this.logContainer.lastChild.remove();
+                }
+            }
+
+            updateStats() {
+                document.getElementById('stat-lmax').innerText = this.leftMax;
+                document.getElementById('stat-rmax').innerText = this.rightMax;
+                document.getElementById('stat-total').innerText = this.totalWater;
+            }
+
+            draw() {
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const ctx = this.ctx;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // 计算绘制参数
+                const n = this.data.length;
+                const maxVal = Math.max(6, ...this.data) + 2; // Y轴最大值，留点空间
+
+                // 动态计算柱子宽度，居中
+                const availWidth = w - 60; // 左右留白
+                const itemW = availWidth / n;
+                const barW = itemW * 0.7; // 柱子占70%
+                const gap = itemW * 0.3;
+                const startX = 30;
+
+                const unitH = (h - 60) / maxVal; // 底部留白
+
+                // 绘制基线
+                ctx.beginPath();
+                ctx.strokeStyle = '#374151';
+                ctx.lineWidth = 2;
+                ctx.moveTo(10, h - 30);
+                ctx.lineTo(w - 10, h - 30);
+                ctx.stroke();
+
+                for (let i = 0; i < n; i++) {
+                    const x = startX + i * itemW + gap / 2;
+                    const val = this.data[i];
+                    const waterVal = this.water[i] || 0;
+
+                    const barHeight = val * unitH;
+                    const waterHeight = waterVal * unitH;
+                    const yBase = h - 30;
+
+                    // 1. 绘制柱子
+                    ctx.fillStyle = '#9CA3AF'; // 默认灰色
+
+                    // 高亮正在处理的柱子 (如果是当前left或right)
+                    // 注意：由于step中先增加left/right，所以实际上可视化的当前指针需要微调逻辑
+                    // 简单起见，如果 i 等于 left 或 right，给特殊颜色
+                    let isPointer = false;
+                    if (!this.isFinished) {
+                        if (i === this.left) {
+                            ctx.fillStyle = '#EF4444'; // Red for left
+                            isPointer = true;
+                        } else if (i === this.right) {
+                            ctx.fillStyle = '#10B981'; // Green for right
+                            isPointer = true;
+                        }
+                    }
+
+                    // 柱子矩形
+                    ctx.fillRect(x, yBase - barHeight, barW, barHeight);
+
+                    // 柱子文字
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    if (val > 0) ctx.fillText(val, x + barW / 2, yBase - 5);
+
+                    // 索引文字
+                    ctx.fillStyle = '#6B7280';
+                    ctx.font = '10px Arial';
+                    ctx.fillText(i, x + barW / 2, yBase + 15);
+
+                    // 2. 绘制水
+                    if (waterVal > 0) {
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.8)'; // Blue
+                        ctx.fillRect(x, yBase - barHeight - waterHeight, barW, waterHeight);
+
+                        // 水量文字
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.fillText(`+${waterVal}`, x + barW / 2, yBase - barHeight - waterHeight / 2 + 4);
+                    }
+
+                    // 3. 绘制指针标记 (箭头效果)
+                    if (isPointer) {
+                        ctx.beginPath();
+                        ctx.moveTo(x + barW / 2, yBase + 20);
+                        ctx.lineTo(x + barW / 2 - 5, yBase + 30);
+                        ctx.lineTo(x + barW / 2 + 5, yBase + 30);
+                        ctx.fillStyle = i === this.left ? '#EF4444' : '#10B981';
+                        ctx.fill();
+
+                        ctx.font = 'bold 14px Arial';
+                        ctx.fillText(i === this.left ? 'L' : 'R', x + barW / 2, yBase + 45);
+                    }
+                }
+            }
+        }
+
+        // 启动
+        const viz = new RainWaterVisualizer();
+    </script>
+</body>
+
+</html>

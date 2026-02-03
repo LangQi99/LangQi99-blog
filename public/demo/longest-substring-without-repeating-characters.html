@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无重复字符的最长子串 - 算法可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .char-box {
+            transition: all 0.3s ease;
+        }
+
+        /* Duplicate shake animation */
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            50% {
+                transform: translateX(5px);
+            }
+
+            75% {
+                transform: translateX(-5px);
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">无重复字符的最长子串</h1>
+        <p class="text-gray-600">算法策略：滑动窗口 (Sliding Window)</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-4xl">
+
+        <!-- Input Section -->
+        <div class="flex flex-col sm:flex-row gap-4 mb-8 items-center justify-center">
+            <div class="flex-1 w-full">
+                <label class="block text-sm font-medium text-gray-700 mb-1">测试字符串</label>
+                <div class="flex gap-2">
+                    <input type="text" id="inputString" value="abcabcbb" maxlength="15"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono tracking-widest"
+                        placeholder="输入字符串...">
+                    <button onclick="initVisualization()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors whitespace-nowrap">
+                        重置/加载
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="relative mb-8 py-8 overflow-x-auto bg-gray-50 border border-gray-100 rounded-lg">
+            <!-- Centering wrapper: Uses flex to center the inner content block -->
+            <div class="flex justify-center min-w-fit px-8">
+
+                <!-- Content Block: Wraps Indices, Boxes, and Pointers. 
+                     Using flex-col without items-center ensures left edges align perfectly. -->
+                <div class="relative flex flex-col">
+
+                    <!-- Indices -->
+                    <div id="indicesContainer" class="flex gap-2 mb-2"></div>
+
+                    <!-- Character Boxes -->
+                    <div id="boxesContainer" class="flex gap-2 mb-4 relative z-10"></div>
+
+                    <!-- Pointers Track -->
+                    <!-- Position relative allows absolute children to position relative to THIS container's top-left -->
+                    <div class="relative h-20">
+                        <div id="leftPointer"
+                            class="absolute top-0 w-12 flex flex-col items-center transition-all duration-300 text-red-500 font-bold"
+                            style="left: 0;">
+                            <i class="fas fa-arrow-up text-2xl mb-1"></i>
+                            <span class="text-sm whitespace-nowrap">L (左)</span>
+                        </div>
+                        <div id="rightPointer"
+                            class="absolute top-0 w-12 flex flex-col items-center transition-all duration-300 text-green-600 font-bold"
+                            style="left: 0;">
+                            <i class="fas fa-arrow-up text-2xl mb-1"></i>
+                            <span class="text-sm whitespace-nowrap">R (右)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Stats -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">变量状态</h3>
+                <div class="space-y-2 text-sm font-mono">
+                    <div class="flex justify-between">
+                        <span>当前窗口长度 (R-L+1):</span>
+                        <span id="currentLenVal" class="font-bold text-blue-600">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>最大长度 (Max):</span>
+                        <span id="maxLenVal" class="font-bold text-green-600 text-lg">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Set Visualization -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">Hash Set (窗口内字符)</h3>
+                <div id="setContainer" class="flex flex-wrap gap-2 min-h-[40px]">
+                    <!-- Set items go here -->
+                </div>
+            </div>
+
+            <!-- Explanation Log -->
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 md:col-span-1">
+                <h3 class="font-bold text-blue-800 mb-2">当前操作说明</h3>
+                <p id="logText" class="text-blue-900 text-sm leading-relaxed">
+                    点击“开始”或“单步”来运行算法。
+                </p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col items-center gap-4 bg-gray-100 p-4 rounded-lg">
+            <div class="flex gap-4">
+                <button id="btnPlay" onclick="togglePlay()"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full w-32 flex justify-center items-center gap-2 shadow transition-transform active:scale-95">
+                    <i class="fas fa-play"></i> <span>自动播放</span>
+                </button>
+                <button id="btnStep" onclick="step()"
+                    class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-6 py-2 rounded-full w-32 flex justify-center items-center gap-2 shadow transition-transform active:scale-95">
+                    <i class="fas fa-step-forward"></i> <span>单步</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4 w-full max-w-md">
+                <span class="text-sm text-gray-500"><i class="fas fa-rabbit"></i> 速度</span>
+                <input type="range" id="speedRange" min="100" max="2000" value="1000"
+                    class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                <span class="text-sm text-gray-500"><i class="fas fa-turtle"></i></span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Variables
+        let str = "";
+        let left = 0;
+        let right = 0;
+        let maxLen = 0;
+        let charSet = new Set();
+        let isPlaying = false;
+        let timer = null;
+        let isFinished = false;
+
+        // UI References
+        const inputString = document.getElementById('inputString');
+        const boxesContainer = document.getElementById('boxesContainer');
+        const indicesContainer = document.getElementById('indicesContainer');
+        const leftPointer = document.getElementById('leftPointer');
+        const rightPointer = document.getElementById('rightPointer');
+        const setContainer = document.getElementById('setContainer');
+        const currentLenVal = document.getElementById('currentLenVal');
+        const maxLenVal = document.getElementById('maxLenVal');
+        const logText = document.getElementById('logText');
+        const btnPlay = document.getElementById('btnPlay');
+        const speedRange = document.getElementById('speedRange');
+
+        // Layout constants (box width + gap)
+        const BOX_WIDTH = 48; // w-12 is 3rem = 48px
+        const GAP = 8; // gap-2 is 0.5rem = 8px
+        const TOTAL_ITEM_WIDTH = BOX_WIDTH + GAP;
+
+        function initVisualization() {
+            // Stop existing animation
+            stop();
+
+            // Reset logic
+            str = inputString.value || "abcabcbb";
+            left = 0;
+            right = 0;
+            maxLen = 0;
+            charSet = new Set();
+            isFinished = false;
+
+            // Clear UI
+            boxesContainer.innerHTML = '';
+            indicesContainer.innerHTML = '';
+            setContainer.innerHTML = '';
+
+            // Generate Grid
+            for (let i = 0; i < str.length; i++) {
+                // Character Box
+                const box = document.createElement('div');
+                box.className = `char-box w-12 h-12 flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg text-xl font-bold text-gray-700 shadow-sm`;
+                box.id = `box-${i}`;
+                box.innerText = str[i];
+                boxesContainer.appendChild(box);
+
+                // Index Number
+                const idx = document.createElement('div');
+                idx.className = `w-12 text-center text-xs text-gray-400 font-mono`;
+                idx.innerText = i;
+                indicesContainer.appendChild(idx);
+            }
+
+            // Reset Pointers
+            updatePointersUI();
+            updateStatsUI();
+            logText.innerText = "准备就绪。算法将使用滑动窗口策略寻找不包含重复字符的最长子串。";
+            logText.className = "text-gray-600 text-sm leading-relaxed";
+
+            // Initial highlight of first char intent
+            if (str.length > 0) {
+                highlightRightIntent();
+            }
+        }
+
+        function updatePointersUI() {
+            // Calculate pixel positions
+            // Center the pointers under the boxes
+
+            const leftPos = (left * TOTAL_ITEM_WIDTH);
+            const rightPos = (right * TOTAL_ITEM_WIDTH);
+
+            leftPointer.style.transform = `translateX(${leftPos}px)`;
+            rightPointer.style.transform = `translateX(${rightPos}px)`;
+
+            // Update box styling based on window
+            for (let i = 0; i < str.length; i++) {
+                const box = document.getElementById(`box-${i}`);
+
+                // Reset basic style
+                box.className = `char-box w-12 h-12 flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg text-xl font-bold text-gray-700 shadow-sm`;
+
+                // Highlight Window
+                if (i >= left && i < right) { // Current Valid Window
+                    box.classList.add('bg-blue-100', 'border-blue-400');
+                } else if (i === right) { // Current Focus
+                    box.classList.add('border-green-500', 'ring-2', 'ring-green-200');
+                }
+            }
+        }
+
+        function updateStatsUI() {
+            const currentLen = Math.max(0, right - left);
+            currentLenVal.innerText = charSet.size;
+            maxLenVal.innerText = maxLen;
+
+            // Render Set
+            setContainer.innerHTML = '';
+            charSet.forEach(char => {
+                const badge = document.createElement('span');
+                badge.className = 'set-item bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded border border-purple-200';
+                badge.innerText = char;
+                setContainer.appendChild(badge);
+            });
+        }
+
+        function highlightRightIntent() {
+            if (right < str.length) {
+                const box = document.getElementById(`box-${right}`);
+                if (box) box.classList.add('bg-yellow-50');
+            }
+        }
+
+        function step() {
+            if (isFinished) {
+                logText.innerHTML = `<span class="text-green-600 font-bold">🎉 算法结束！</span> 最长子串长度为: ${maxLen}`;
+                stop();
+                return;
+            }
+
+            if (right >= str.length) {
+                isFinished = true;
+                logText.innerHTML = `<span class="text-green-600 font-bold">遍历完成。</span> 最终结果为 ${maxLen}`;
+                stop();
+                return;
+            }
+
+            const char = str[right];
+            const boxRight = document.getElementById(`box-${right}`);
+
+            // Logic: Check if char is in set
+            if (!charSet.has(char)) {
+                // Case 1: No Duplicate
+                charSet.add(char);
+                const currentLen = right - left + 1;
+
+                let log = `字符 <strong class="text-green-600">'${char}'</strong> 不在窗口中。<br/>`;
+                log += `👉 添加到集合，右指针向右移动。`;
+
+                if (currentLen > maxLen) {
+                    maxLen = currentLen;
+                    log += `<br/>🌟 <strong>发现新纪录!</strong> 最大长度更新为 ${maxLen}。`;
+                    // Highlight update
+                    maxLenVal.parentElement.classList.add('animate-bounce');
+                    setTimeout(() => maxLenVal.parentElement.classList.remove('animate-bounce'), 500);
+                }
+
+                logText.innerHTML = log;
+                right++;
+            } else {
+                // Case 2: Duplicate Found
+                const charLeft = str[left];
+
+                // Visual feedback for collision
+                if (boxRight) {
+                    boxRight.classList.add('bg-red-100', 'border-red-500', 'shake');
+                    setTimeout(() => boxRight.classList.remove('shake'), 500);
+                }
+
+                logText.innerHTML = `字符 <strong class="text-red-500">'${char}'</strong> 重复了！<br/>` +
+                    `✋ 无法扩展。从集合中移除左边的 <strong class="text-red-700">'${charLeft}'</strong>，左指针收缩。`;
+
+                charSet.delete(charLeft);
+                left++;
+            }
+
+            updatePointersUI();
+            updateStatsUI();
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stop();
+            } else {
+                start();
+            }
+        }
+
+        function start() {
+            if (isFinished) initVisualization(); // Restart if done
+            isPlaying = true;
+            btnPlay.innerHTML = '<i class="fas fa-pause"></i> <span>暂停</span>';
+            btnPlay.classList.replace('bg-green-600', 'bg-yellow-500');
+            btnPlay.classList.replace('hover:bg-green-700', 'hover:bg-yellow-600');
+
+            // Initial call then interval
+            runLoop();
+        }
+
+        function stop() {
+            isPlaying = false;
+            clearTimeout(timer);
+            btnPlay.innerHTML = '<i class="fas fa-play"></i> <span>自动播放</span>';
+            btnPlay.classList.replace('bg-yellow-500', 'bg-green-600');
+            btnPlay.classList.replace('hover:bg-yellow-600', 'hover:bg-green-700');
+        }
+
+        function runLoop() {
+            if (!isPlaying) return;
+
+            step();
+
+            if (!isFinished) {
+                const val = parseInt(speedRange.value);
+                const delay = 2100 - val;
+
+                timer = setTimeout(runLoop, delay);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initVisualization);
+
+    </script>
+</body>
+
+</html>

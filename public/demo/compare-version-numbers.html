@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode 165 比较版本号 - 动画教学</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .revision-box {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .active-pointer {
+            border-color: #3b82f6;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+        }
+        .comparing {
+            background-color: #fef3c7;
+            border-color: #f59e0b;
+        }
+        .match-success {
+            background-color: #d1fae5;
+            border-color: #10b981;
+        }
+        .match-fail {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .thinking {
+            animation: pulse-subtle 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">LeetCode 165: 比较版本号</h1>
+            <p class="text-slate-500 text-lg">通过可视化动画掌握双指针比较逻辑</p>
+        </header>
+
+        <!-- Inputs -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">版本号 1 (version1)</label>
+                    <input type="text" id="v1Input" value="1.01.2" 
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">版本号 2 (version2)</label>
+                    <input type="text" id="v2Input" value="1.1" 
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                </div>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button id="startBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-full font-semibold transition-colors shadow-lg shadow-blue-200">
+                    开始演示
+                </button>
+                <button id="resetBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-8 py-2 rounded-full font-semibold transition-colors">
+                    重置
+                </button>
+            </div>
+        </div>
+
+        <!-- Animation Canvas -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 min-h-[400px] relative overflow-hidden">
+            
+            <!-- Step Description -->
+            <div id="statusUpdate" class="mb-8 text-center min-h-[3rem]">
+                <p class="text-lg font-medium text-blue-600" id="stepText">准备就绪，点击开始按钮查看算法过程。</p>
+            </div>
+
+            <!-- Visualization Rows -->
+            <div class="space-y-12 relative">
+                <!-- V1 Row -->
+                <div class="flex items-center gap-4">
+                    <div class="w-24 font-bold text-slate-400 uppercase tracking-wider text-sm">Version 1</div>
+                    <div id="v1Container" class="flex gap-3 flex-wrap">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+
+                <!-- Comparison Sign -->
+                <div class="flex justify-center h-8">
+                    <div id="compSign" class="text-4xl font-bold text-slate-300 opacity-0 transition-all duration-500">?</div>
+                </div>
+
+                <!-- V2 Row -->
+                <div class="flex items-center gap-4">
+                    <div class="w-24 font-bold text-slate-400 uppercase tracking-wider text-sm">Version 2</div>
+                    <div id="v2Container" class="flex gap-3 flex-wrap">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Overlay -->
+            <div id="finalResult" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10 animate-in fade-in duration-500">
+                <div id="resultCircle" class="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white mb-4">
+                    0
+                </div>
+                <h2 id="resultTitle" class="text-2xl font-bold mb-2">结果为 0</h2>
+                <p id="resultDesc" class="text-slate-600 text-center px-8">两个版本号相同</p>
+                <button onclick="location.reload()" class="mt-6 text-blue-600 font-semibold hover:underline">再次尝试</button>
+            </div>
+        </div>
+
+        <!-- Logic Card -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <h3 class="font-bold text-blue-800 mb-1">1. 分割 (Split)</h3>
+                <p class="text-sm text-blue-600 italic">"1.01" -> ["1", "01"]</p>
+                <p class="text-xs text-slate-500 mt-2">使用点号作为分隔符提取每一级修订号。</p>
+            </div>
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                <h3 class="font-bold text-amber-800 mb-1">2. 转换 (Int)</h3>
+                <p class="text-sm text-amber-600 italic">"01" -> 1</p>
+                <p class="text-xs text-slate-500 mt-2">将字符串转为整数，自动忽略前导零。</p>
+            </div>
+            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <h3 class="font-bold text-emerald-800 mb-1">3. 补齐 (Pad)</h3>
+                <p class="text-sm text-emerald-600 italic">"1" vs "1.0" -> 0 vs 0</p>
+                <p class="text-xs text-slate-500 mt-2">如果数组长度不一致，缺失的部分视为 0。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const v1Input = document.getElementById('v1Input');
+        const v2Input = document.getElementById('v2Input');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const v1Container = document.getElementById('v1Container');
+        const v2Container = document.getElementById('v2Container');
+        const stepText = document.getElementById('stepText');
+        const compSign = document.getElementById('compSign');
+
+        let isRunning = false;
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function createBox(val, idPrefix, index) {
+            const div = document.createElement('div');
+            div.id = `${idPrefix}-${index}`;
+            div.className = `revision-box w-16 h-16 rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center bg-white shadow-sm`;
+            div.innerHTML = `
+                <span class="text-xs text-slate-400 font-mono">${index}</span>
+                <span class="text-xl font-bold text-slate-700">${val}</span>
+            `;
+            return div;
+        }
+
+        async function runComparison() {
+            if (isRunning) return;
+            isRunning = true;
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50');
+
+            const s1 = v1Input.value;
+            const s2 = v2Input.value;
+
+            // Step 1: Split
+            stepText.innerText = "第一步：将字符串按 '.' 分割成数组";
+            const v1Arr = s1.split('.');
+            const v2Arr = s2.split('.');
+            
+            v1Container.innerHTML = '';
+            v2Container.innerHTML = '';
+            
+            v1Arr.forEach((v, i) => v1Container.appendChild(createBox(v, 'v1', i)));
+            v2Arr.forEach((v, i) => v2Container.appendChild(createBox(v, 'v2', i)));
+            
+            await sleep(1500);
+
+            const n1 = v1Arr.length;
+            const n2 = v2Arr.length;
+            const maxLen = Math.max(n1, n2);
+
+            for (let i = 0; i < maxLen; i++) {
+                // Highlight current index
+                const box1 = document.getElementById(`v1-${i}`);
+                const box2 = document.getElementById(`v2-${i}`);
+
+                // If index exceeds, show virtual zero
+                let val1Str = i < n1 ? v1Arr[i] : "0";
+                let val2Str = i < n2 ? v2Arr[i] : "0";
+
+                if (!box1) {
+                    const b = createBox("0", "v1", i);
+                    b.classList.add('opacity-40', 'border-dashed');
+                    v1Container.appendChild(b);
+                }
+                if (!box2) {
+                    const b = createBox("0", "v2", i);
+                    b.classList.add('opacity-40', 'border-dashed');
+                    v2Container.appendChild(b);
+                }
+
+                const b1 = document.getElementById(`v1-${i}`);
+                const b2 = document.getElementById(`v2-${i}`);
+
+                b1.classList.add('active-pointer', 'comparing');
+                b2.classList.add('active-pointer', 'comparing');
+                
+                stepText.innerText = `正在比较第 ${i} 位修订号：${val1Str} vs ${val2Str}`;
+                await sleep(1000);
+
+                const num1 = parseInt(val1Str);
+                const num2 = parseInt(val2Str);
+
+                stepText.innerText = `转换成整数（去掉前导零）：${num1} vs ${num2}`;
+                b1.querySelector('span:last-child').innerText = num1;
+                b2.querySelector('span:last-child').innerText = num2;
+                await sleep(800);
+
+                compSign.style.opacity = "1";
+                if (num1 > num2) {
+                    compSign.innerText = ">";
+                    compSign.className = "text-4xl font-bold text-emerald-500 transition-all duration-500 scale-125";
+                    b1.classList.replace('comparing', 'match-success');
+                    b2.classList.replace('comparing', 'match-fail');
+                    await sleep(1000);
+                    showFinalResult(1, "Version 1 更大", "因为在 index " + i + " 处，" + num1 + " > " + num2);
+                    return;
+                } else if (num1 < num2) {
+                    compSign.innerText = "<";
+                    compSign.className = "text-4xl font-bold text-red-500 transition-all duration-500 scale-125";
+                    b1.classList.replace('comparing', 'match-fail');
+                    b2.classList.replace('comparing', 'match-success');
+                    await sleep(1000);
+                    showFinalResult(-1, "Version 2 更大", "因为在 index " + i + " 处，" + num1 + " < " + num2);
+                    return;
+                } else {
+                    compSign.innerText = "=";
+                    compSign.className = "text-4xl font-bold text-blue-400 transition-all duration-500";
+                    stepText.innerText = `当前位相等，继续比较下一位...`;
+                    await sleep(800);
+                    b1.classList.remove('active-pointer', 'comparing');
+                    b2.classList.remove('active-pointer', 'comparing');
+                    compSign.style.opacity = "0";
+                }
+            }
+
+            showFinalResult(0, "完全相同", "所有对应的修订号在转换成整数后均相等。");
+        }
+
+        function showFinalResult(code, title, desc) {
+            const overlay = document.getElementById('finalResult');
+            const circle = document.getElementById('resultCircle');
+            const rTitle = document.getElementById('resultTitle');
+            const rDesc = document.getElementById('resultDesc');
+
+            overlay.classList.remove('hidden');
+            circle.innerText = code;
+            rTitle.innerText = title;
+            rDesc.innerText = desc;
+
+            if (code === 1) circle.className = "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white mb-4 bg-emerald-500";
+            else if (code === -1) circle.className = "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white mb-4 bg-red-500";
+            else circle.className = "w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white mb-4 bg-blue-500";
+        }
+
+        startBtn.addEventListener('click', runComparison);
+        resetBtn.addEventListener('click', () => location.reload());
+
+        // Initial View
+        window.onload = () => {
+            const v1Arr = v1Input.value.split('.');
+            const v2Arr = v2Input.value.split('.');
+            v1Arr.forEach((v, i) => v1Container.appendChild(createBox(v, 'v1', i)));
+            v2Arr.forEach((v, i) => v2Container.appendChild(createBox(v, 'v2', i)));
+        };
+    </script>
+</body>
+</html>

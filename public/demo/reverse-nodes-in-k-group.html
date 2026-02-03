@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K个一组翻转链表 - 算法可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f3f4f6;
+            overflow: hidden;
+            /* Prevent scrolling during animation */
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 节点样式 */
+        .node {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            transition: all 0.5s ease-in-out;
+            z-index: 10;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .node.dummy {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+            border-style: dashed;
+            font-size: 0.8rem;
+        }
+
+        .node.highlight {
+            background-color: #bfdbfe;
+            border-color: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .node.processed {
+            background-color: #d1fae5;
+            border-color: #059669;
+        }
+
+        /* 指针标签样式 */
+        .pointer-label {
+            position: absolute;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: all 0.5s ease-in-out;
+            z-index: 20;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .ptr-dummy {
+            background-color: #6b7280;
+        }
+
+        .ptr-pre {
+            background-color: #8b5cf6;
+        }
+
+        /* Purple */
+        .ptr-end {
+            background-color: #ef4444;
+        }
+
+        /* Red */
+        .ptr-start {
+            background-color: #f59e0b;
+        }
+
+        /* Amber */
+        .ptr-next {
+            background-color: #10b981;
+        }
+
+        /* Emerald */
+        .ptr-cur {
+            background-color: #ec4899;
+        }
+
+        /* Pink */
+
+        /* SVG 连线层 */
+        #connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        path {
+            stroke: #9ca3af;
+            stroke-width: 2;
+            fill: none;
+            transition: d 0.5s ease-in-out;
+        }
+
+        path.arrow-head {
+            fill: #9ca3af;
+            stroke: none;
+        }
+
+        /* 代码高亮 */
+        .code-line {
+            padding: 2px 8px;
+            border-radius: 2px;
+            color: #374151;
+        }
+
+        .code-line.active {
+            background-color: #fef3c7;
+            color: #b45309;
+            font-weight: bold;
+            border-left: 3px solid #f59e0b;
+        }
+
+        /* 布局控制 */
+        .canvas-area {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col p-4 gap-4">
+
+    <!-- 顶部控制栏 -->
+    <header class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+                </path>
+            </svg>
+            K个一组翻转链表
+        </h1>
+
+        <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-2">
+                <label>链表长度:</label>
+                <input type="number" id="listSize" value="8" min="3" max="12" class="border rounded px-2 py-1 w-16">
+            </div>
+            <div class="flex items-center gap-2">
+                <label>K值:</label>
+                <input type="number" id="kValue" value="3" min="2" max="6" class="border rounded px-2 py-1 w-16">
+            </div>
+            <div class="flex items-center gap-2">
+                <label>速度:</label>
+                <input type="range" id="speedRange" min="1" max="5" value="3" class="w-24">
+            </div>
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="controller.reset()"
+                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition">重置</button>
+            <button onclick="controller.step()" id="btnStep"
+                class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded font-medium transition">单步</button>
+            <button onclick="controller.togglePlay()" id="btnPlay"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition w-24">开始</button>
+        </div>
+    </header>
+
+    <!-- 主体内容 -->
+    <div class="flex flex-1 gap-4 h-full overflow-hidden">
+
+        <!-- 左侧：可视化区域 -->
+        <div class="flex-[2] flex flex-col gap-4">
+            <div class="canvas-area" id="canvasContainer">
+                <svg id="connections"></svg>
+                <!-- 节点将通过JS生成在这里 -->
+            </div>
+
+            <!-- 状态解释栏 -->
+            <div class="bg-white p-4 rounded-lg shadow-sm flex-1 overflow-y-auto">
+                <h3 class="font-bold text-gray-700 mb-2">当前状态 / 解释</h3>
+                <div id="statusText" class="text-lg text-blue-600 font-medium leading-relaxed">
+                    准备就绪，点击“开始”或“单步”执行算法。
+                </div>
+                <div class="mt-4 text-sm text-gray-500">
+                    <p>颜色图例：</p>
+                    <div class="flex gap-4 mt-1">
+                        <span class="flex items-center gap-1"><span
+                                class="w-3 h-3 bg-gray-200 border border-gray-400 rounded-full"></span>Dummy</span>
+                        <span class="flex items-center gap-1"><span
+                                class="w-3 h-3 bg-blue-100 border border-blue-500 rounded-full"></span>当前组</span>
+                        <span class="flex items-center gap-1"><span
+                                class="w-3 h-3 bg-green-100 border border-green-600 rounded-full"></span>已完成</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：代码跟踪 -->
+        <div
+            class="flex-1 bg-gray-800 text-gray-300 rounded-lg p-4 overflow-y-auto font-mono text-sm shadow-inner flex flex-col">
+            <h3 class="text-gray-400 font-bold mb-3 border-b border-gray-700 pb-2">算法伪代码</h3>
+            <div id="codePanel" class="space-y-1">
+                <div id="line1" class="code-line">function reverseKGroup(head, k):</div>
+                <div id="line2" class="code-line"> dummy = new Node(0, head)</div>
+                <div id="line3" class="code-line"> pre = dummy, end = dummy</div>
+                <div id="line4" class="code-line"> while end.next != null:</div>
+                <div id="line5" class="code-line"> for i in 0..k: end = end.next</div>
+                <div id="line6" class="code-line"> if end == null: break</div>
+                <div id="line7" class="code-line"> start = pre.next</div>
+                <div id="line8" class="code-line"> nextGroup = end.next</div>
+                <div id="line9" class="code-line"> end.next = null // 断开链接</div>
+                <div id="line10" class="code-line"> pre.next = reverse(start)</div>
+                <div id="line11" class="code-line"> start.next = nextGroup // 连接后面</div>
+                <div id="line12" class="code-line"> pre = start</div>
+                <div id="line13" class="code-line"> end = start</div>
+                <div id="line14" class="code-line"> return dummy.next</div>
+
+                <div class="mt-4 pt-4 border-t border-gray-700 text-gray-500">
+                    <div id="line-sub1" class="code-line">function reverse(head):</div>
+                    <div id="line-sub2" class="code-line"> pre = null, cur = head</div>
+                    <div id="line-sub3" class="code-line"> while cur != null:</div>
+                    <div id="line-sub4" class="code-line"> nxt = cur.next</div>
+                    <div id="line-sub5" class="code-line"> cur.next = pre</div>
+                    <div id="line-sub6" class="code-line"> pre = cur, cur = nxt</div>
+                    <div id="line-sub7" class="code-line"> return pre</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 链表节点类
+         */
+        class ListNode {
+            constructor(val, id) {
+                this.val = val;
+                this.id = id;
+                this.next = null;
+                // 可视化属性
+                this.x = 0;
+                this.y = 0;
+                this.type = 'normal'; // 'normal', 'dummy', 'highlight', 'processed'
+            }
+        }
+
+        /**
+         * 动画控制器
+         */
+        class Visualizer {
+            constructor() {
+                this.nodes = []; // 存储所有节点对象
+                this.pointers = {}; // 存储指针位置 { name: nodeIndex }
+                this.container = document.getElementById('canvasContainer');
+                this.svgLayer = document.getElementById('connections');
+                this.statusEl = document.getElementById('statusText');
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.speed = 1000;
+                this.resolveStep = null; // 用于单步控制
+                this.abortController = null; // 用于中断异步流程
+
+                // 布局常量
+                this.nodeRadius = 25;
+                this.startX = 60;
+                this.startY = 150;
+                this.gapX = 80;
+
+                this.initListener();
+            }
+
+            initListener() {
+                document.getElementById('speedRange').addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    this.speed = 2500 - (val * 400); // 1=2100ms, 5=500ms
+                });
+            }
+
+            /**
+             * 暂停/等待函数
+             */
+            async wait(durationMultiplier = 1) {
+                if (this.abortController && this.abortController.signal.aborted) {
+                    throw new Error('Reset');
+                }
+
+                // 如果正在播放
+                if (this.isPlaying) {
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            if (this.abortController && this.abortController.signal.aborted) return;
+                            resolve();
+                        }, this.speed * durationMultiplier);
+                    });
+                }
+
+                // 如果是单步模式，等待点击
+                return new Promise(resolve => {
+                    this.resolveStep = resolve;
+                });
+            }
+
+            /**
+             * 外部调用的单步执行
+             */
+            step() {
+                if (this.resolveStep) {
+                    const resolve = this.resolveStep;
+                    this.resolveStep = null;
+                    resolve();
+                } else if (!this.isPlaying && !this.running) {
+                    // 还没开始，启动
+                    this.startAlgorithm(true);
+                } else {
+                    // 正在自动播放中，暂停
+                    this.isPlaying = false;
+                    document.getElementById('btnPlay').textContent = "继续";
+                    document.getElementById('btnPlay').classList.replace('bg-red-600', 'bg-blue-600');
+                    document.getElementById('btnPlay').classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+                }
+            }
+
+            /**
+             * 播放/暂停切换
+             */
+            togglePlay() {
+                if (this.running) {
+                    this.isPlaying = !this.isPlaying;
+                    if (this.isPlaying && this.resolveStep) {
+                        // 如果之前卡在单步等待中，立即释放
+                        this.step();
+                    }
+                } else {
+                    this.startAlgorithm(false);
+                }
+                this.updatePlayButton();
+            }
+
+            updatePlayButton() {
+                const btn = document.getElementById('btnPlay');
+                if (this.isPlaying) {
+                    btn.textContent = "暂停";
+                    btn.classList.replace('bg-blue-600', 'bg-red-600');
+                    btn.classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
+                } else {
+                    btn.textContent = this.running ? "继续" : "开始";
+                    btn.classList.replace('bg-red-600', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+                }
+            }
+
+            /**
+             * 高亮代码行
+             */
+            highlightCode(lineId) {
+                document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active'));
+                if (lineId) {
+                    const el = document.getElementById(lineId);
+                    if (el) {
+                        el.classList.add('active');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            }
+
+            /**
+             * 初始化/重置
+             */
+            reset() {
+                if (this.abortController) this.abortController.abort();
+                this.abortController = new AbortController();
+
+                this.running = false;
+                this.isPlaying = false;
+                this.resolveStep = null;
+                this.updatePlayButton();
+                this.pointers = {};
+
+                // 构建链表
+                const size = parseInt(document.getElementById('listSize').value);
+                this.nodes = [];
+
+                // Dummy Node
+                let dummy = new ListNode('dummy', 'node-dummy');
+                dummy.type = 'dummy';
+                this.nodes.push(dummy);
+
+                // Normal Nodes
+                let prev = dummy;
+                for (let i = 1; i <= size; i++) {
+                    let node = new ListNode(i, `node-${i}`);
+                    this.nodes.push(node);
+                    prev.next = node;
+                    prev = node;
+                }
+
+                // 初始化位置
+                this.layoutNodes();
+                this.render();
+                this.highlightCode(null);
+                this.statusEl.textContent = "链表已重置。准备开始。";
+            }
+
+            /**
+             * 计算节点位置（简单的线性布局，支持逻辑上的断开）
+             */
+            layoutNodes() {
+                // 简单的策略：遍历链表确定逻辑顺序，然后安排坐标
+                // 注意：在翻转过程中，next 指针会乱，所以我们主要根据当前节点的数组索引来画图，
+                // 但为了体现链表结构，我们还是尽量把相连的画在一起。
+
+                // 为了简化动画逻辑，我们采用固定网格位：
+                // 节点在屏幕上的物理位置，主要由它在 nodes 数组中的索引决定，
+                // 或者由当前的逻辑顺序决定？
+
+                // 更好的方案：完全基于当前的逻辑链表顺序来排版。
+                // 如果链表断开了，就分成几段画。
+
+                let currentX = this.startX;
+                let currentY = this.startY;
+
+                // 1. 找到 dummy
+                let head = this.nodes[0]; // dummy always index 0
+
+                // 辅助集合防止死循环（虽然翻转中可能有环，但算法保证暂时无环或我们在控制下）
+                let visited = new Set();
+
+                // 这里的逻辑是：我们根据 this.nodes 的顺序画，还是根据 .next 链画？
+                // 翻转链表时，如果根据 .next 画，节点位置会飞来飞去，这很好。
+                // 但如果断开了，后面的节点就画不出来了。
+
+                // 折中方案：
+                // 主链（通过 dummy 可达的）排第一行。
+                // 断开的片段（如 nextGroup）如果还没连上，排在稍远的地方。
+                // 正在翻转的子链，排在中间。
+
+                // 为了简单且稳健，我们使用“数组索引”作为默认位置基础，
+                // 但是翻转后，我们交换数组中的位置来体现“翻转”。
+                // 不，这样太复杂。
+
+                // **最终方案**：
+                // 使用 nodes 数组的顺序作为 X 轴位置。
+                // 只有当真正完成翻转步骤时，我们才在可视化层面上交换节点的位置。
+
+                this.nodes.forEach((node, index) => {
+                    node.x = this.startX + index * this.gapX;
+                    node.y = this.startY;
+                });
+            }
+
+            /**
+             * 重新排列数组以匹配链表逻辑顺序（用于产生动画效果）
+             * 当我们在算法中做 reverse 时，物理位置也应该变化。
+             */
+            reorderNodesVisual(startNode, endNode) {
+                // 这个函数仅仅是为了让节点飞到新的视觉位置
+                // 找到 startNode 到 endNode 这一段在 this.nodes 数组里的范围
+                // 然后逆序排列它们在数组中的位置，从而在 layoutNodes 中获得新的 x 坐标
+
+                const startIndex = this.nodes.findIndex(n => n === startNode);
+                const endIndex = this.nodes.findIndex(n => n === endNode);
+
+                if (startIndex === -1 || endIndex === -1) return;
+
+                // 简单的冒泡或交换逻辑来更新数组顺序
+                // 提取子数组
+                // 注意：这里假设在KGroup算法中，这一段在数组中是连续的，通常是的。
+
+                // 原地反转数组片段
+                let left = startIndex;
+                let right = endIndex;
+                while (left < right) {
+                    [this.nodes[left], this.nodes[right]] = [this.nodes[right], this.nodes[left]];
+                    left++;
+                    right--;
+                }
+
+                this.layoutNodes(); // 更新坐标
+            }
+
+            /**
+             * 核心渲染循环
+             */
+            render() {
+                // 1. 绘制/更新节点 DOM
+                this.nodes.forEach(node => {
+                    let el = document.getElementById(node.id);
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = node.id;
+                        el.className = `node ${node.type === 'dummy' ? 'dummy' : ''}`;
+                        el.textContent = node.type === 'dummy' ? 'D' : node.val;
+                        this.container.appendChild(el);
+                    }
+
+                    // 应用样式类
+                    el.className = `node ${node.type === 'dummy' ? 'dummy' : ''} ${node.type === 'highlight' ? 'highlight' : ''} ${node.type === 'processed' ? 'processed' : ''}`;
+
+                    // 位置
+                    el.style.left = `${node.x}px`;
+                    el.style.top = `${node.y}px`;
+                });
+
+                // 2. 绘制连线 SVG
+                let pathsHtml = '';
+
+                // 绘制链表本身的 next 指针
+                this.nodes.forEach(node => {
+                    if (node.next) {
+                        const startX = node.x + 50; // node width
+                        const startY = node.y + 25;
+                        const target = node.next;
+                        const endX = target.x;
+                        const endY = target.y + 25;
+
+                        // 贝塞尔曲线控制点，防止重叠
+                        const dist = Math.abs(endX - startX);
+                        const controlOffset = dist > 100 ? 50 : 20;
+
+                        // 如果是指向左边的（回指），曲线要大一点向下
+                        const isBackward = endX < startX;
+                        const cpY = isBackward ? startY + 60 : startY;
+
+                        const d = `M ${startX} ${startY} C ${startX + controlOffset} ${cpY}, ${endX - controlOffset} ${cpY}, ${endX} ${endY}`;
+
+                        // 箭头
+                        // 简单的三角形 marker 比较难搞颜色，直接画一个小 path
+                        // 这里简化，只画线，箭头用 unicode 放在线上? 不好看。
+                        // 手动计算箭头坐标太麻烦，直接用 SVG marker defs 也可以，但这里直接用一个小圆点或者短线表示方向
+
+                        // 为了美观，添加一个小箭头在终点
+                        // 简单起见，不画箭头头了，因为节点有序号，顺序很清楚。
+                        // 或者：
+                        pathsHtml += `<path d="${d}" stroke="${isBackward ? '#ef4444' : '#9ca3af'}" />`;
+
+                        // 添加一个小箭头头部
+                        if (isBackward) {
+                            pathsHtml += `<circle cx="${endX + 2}" cy="${endY}" r="3" fill="#ef4444" />`;
+                        } else {
+                            pathsHtml += `<circle cx="${endX - 2}" cy="${endY}" r="3" fill="#9ca3af" />`;
+                        }
+                    }
+                });
+
+                this.svgLayer.innerHTML = pathsHtml;
+
+                // 3. 绘制外部指针 (pre, cur, etc.)
+                // 清除旧的
+                document.querySelectorAll('.pointer-label').forEach(el => el.remove());
+
+                for (const [name, node] of Object.entries(this.pointers)) {
+                    if (!node) continue;
+
+                    const el = document.createElement('div');
+                    el.className = `pointer-label ptr-${name}`; // ptr-pre, ptr-end...
+                    el.textContent = name;
+                    this.container.appendChild(el);
+
+                    // 计算位置：放在节点上方或下方
+                    // 错开位置防止重叠
+                    let offset = -30;
+                    if (name === 'start') offset = 60;
+                    if (name === 'next') offset = -50;
+                    if (name === 'cur') offset = 60; // used in sub-function
+
+                    el.style.left = `${node.x + 10}px`;
+                    el.style.top = `${node.y + offset}px`;
+                }
+            }
+
+            /**
+             * 算法逻辑入口
+             */
+            async startAlgorithm(autoPlay) {
+                if (this.running) {
+                    if (autoPlay) this.isPlaying = true;
+                    this.updatePlayButton();
+                    return;
+                }
+
+                this.running = true;
+                this.isPlaying = autoPlay;
+                this.updatePlayButton();
+
+                try {
+                    const k = parseInt(document.getElementById('kValue').value);
+                    const dummy = this.nodes[0];
+
+                    this.pointers['dummy'] = dummy;
+                    this.render();
+
+                    await this.reverseKGroup(dummy, k);
+
+                    this.statusEl.textContent = "算法执行完毕！";
+                    this.highlightCode(null);
+                    this.pointers = {};
+                    this.render();
+
+                    // 结束状态
+                    this.running = false;
+                    this.isPlaying = false;
+                    this.updatePlayButton();
+
+                } catch (e) {
+                    if (e.message === 'Reset') {
+                        console.log('Algorithm aborted');
+                    } else {
+                        console.error(e);
+                        this.statusEl.textContent = "发生错误: " + e.message;
+                    }
+                }
+            }
+
+            /**
+             * 主算法逻辑
+             */
+            async reverseKGroup(head, k) {
+                this.highlightCode('line1');
+                this.statusEl.textContent = `开始算法: k=${k}`;
+                await this.wait();
+
+                // line 3: pre = dummy, end = dummy
+                let pre = this.nodes[0];
+                let end = this.nodes[0];
+                this.pointers['pre'] = pre;
+                this.pointers['end'] = end;
+                this.highlightCode('line3');
+                this.render();
+                await this.wait();
+
+                while (true) {
+                    // line 4 check
+                    this.highlightCode('line4');
+                    if (!end.next) {
+                        this.statusEl.textContent = "end.next 为空，循环结束";
+                        await this.wait();
+                        break;
+                    }
+
+                    // line 5: move end k times
+                    this.highlightCode('line5');
+                    this.statusEl.textContent = `尝试向后移动 end 指针 ${k} 次...`;
+                    let i = 0;
+                    let notEnoughNodes = false;
+
+                    // Group highlighting logic
+                    let groupNodes = [];
+
+                    for (; i < k; i++) {
+                        if (!end.next) {
+                            notEnoughNodes = true;
+                            break;
+                        }
+                        end = end.next;
+                        groupNodes.push(end);
+
+                        this.pointers['end'] = end;
+                        // 临时高亮正在计数的节点
+                        end.type = 'highlight';
+                        this.render();
+                        this.statusEl.textContent = `计数: ${i + 1}/${k}`;
+                        await this.wait(0.5); // 快一点
+                    }
+
+                    // line 6
+                    this.highlightCode('line6');
+                    if (notEnoughNodes) {
+                        this.statusEl.textContent = `剩余节点不足 ${k} 个，保持原样，结束。`;
+                        // 恢复颜色
+                        groupNodes.forEach(n => n.type = 'normal');
+                        this.render();
+                        await this.wait();
+                        break;
+                    }
+                    this.statusEl.textContent = `找到一组 ${k} 个节点，准备翻转。`;
+                    await this.wait();
+
+                    // line 7: start = pre.next
+                    let start = pre.next;
+                    this.pointers['start'] = start;
+                    this.highlightCode('line7');
+                    this.render();
+                    await this.wait();
+
+                    // line 8: nextGroup = end.next
+                    let nextGroup = end.next;
+                    this.pointers['next'] = nextGroup; // display as 'next'
+                    this.highlightCode('line8');
+                    this.render();
+                    await this.wait();
+
+                    // line 9: end.next = null
+                    this.statusEl.textContent = "断开当前组与后续节点的连接";
+                    end.next = null;
+                    this.highlightCode('line9');
+                    this.render();
+                    await this.wait();
+
+                    // line 10: pre.next = reverse(start)
+                    this.statusEl.textContent = "调用 reverse 函数翻转当前组...";
+                    this.highlightCode('line10');
+                    // 进入子过程
+                    let newHead = await this.reverseList(start);
+
+                    // 翻转完成后，start 变成了尾部，newHead 是头部 (即原来的 end)
+                    // 这里的 newHead 其实就是原来的 end 变量指向的对象
+
+                    // 视觉上重新排列节点位置 (关键动画)
+                    this.statusEl.textContent = "子链表翻转完成。更新视图布局...";
+                    this.reorderNodesVisual(start, end);
+                    this.render();
+                    await this.wait();
+
+                    // 连接头部
+                    this.statusEl.textContent = "将 pre 连接到翻转后的新头部";
+                    pre.next = newHead;
+                    this.render();
+                    await this.wait();
+
+                    // line 11: start.next = nextGroup
+                    this.statusEl.textContent = "将翻转后的尾部 (start) 连接到下一组";
+                    this.highlightCode('line11');
+                    start.next = nextGroup;
+                    this.render();
+                    await this.wait();
+
+                    // 标记这组已处理
+                    groupNodes.forEach(n => n.type = 'processed');
+
+                    // line 12: pre = start
+                    this.statusEl.textContent = "移动 pre 指针到当前组的尾部";
+                    this.highlightCode('line12');
+                    pre = start;
+                    this.pointers['pre'] = pre;
+                    // 清除 start, next 指针显示以免混乱，保留 end (稍后重置)
+                    delete this.pointers['start'];
+                    delete this.pointers['next'];
+                    this.render();
+                    await this.wait();
+
+                    // line 13: end = start (重置 end 位置以便下一次循环)
+                    this.statusEl.textContent = "重置 end 指针";
+                    this.highlightCode('line13');
+                    end = pre;
+                    this.pointers['end'] = end;
+                    this.render();
+                    await this.wait();
+                }
+
+                return this.nodes[0].next;
+            }
+
+            /**
+             * 子过程：标准链表翻转
+             */
+            async reverseList(head) {
+                // 此时只关注 sub-code 面板
+                // head 是这一段的开始
+                let pre = null;
+                let cur = head;
+
+                // 这里的 pre cur 只是局部变量，我们在视觉上用 ptr-pre (复用) 可能会混淆
+                // 让我们临时改用 cur 指针显示
+
+                this.highlightCode('line-sub1');
+                await this.wait();
+
+                // line sub 2
+                this.highlightCode('line-sub2');
+                // 我们不显示 null 指针，只显示 cur
+                this.pointers['cur'] = cur;
+                this.render();
+                await this.wait();
+
+                while (cur) {
+                    this.highlightCode('line-sub3');
+                    await this.wait(0.5);
+
+                    // line sub 4: nxt = cur.next
+                    this.highlightCode('line-sub4');
+                    let nxt = cur.next;
+                    // 这里不需要显示 nxt 指针，不然屏幕太乱，只在逻辑中保存
+
+                    // line sub 5: cur.next = pre
+                    this.highlightCode('line-sub5');
+                    this.statusEl.textContent = `翻转: ${cur.val} 指向 ${pre ? pre.val : 'null'}`;
+                    cur.next = pre;
+                    this.render(); // 箭头会变向
+                    await this.wait();
+
+                    // line sub 6: pre = cur, cur = nxt
+                    this.highlightCode('line-sub6');
+                    pre = cur;
+                    cur = nxt;
+
+                    this.pointers['cur'] = cur; // 如果 cur null，render 会忽略
+                    this.render();
+                    await this.wait(0.5);
+                }
+
+                delete this.pointers['cur'];
+                return pre;
+            }
+        }
+
+        // 启动应用
+        const controller = new Visualizer();
+        controller.reset();
+
+    </script>
+</body>
+
+</html>
