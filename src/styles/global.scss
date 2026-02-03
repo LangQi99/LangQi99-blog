@@ -6,15 +6,15 @@
 /* Global styles with nesting support */
 html {
   @apply scroll-smooth bg-white text-gray-900;
-  /* Graph paper pattern - refined */
-  background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
 }
 
 body {
-  @apply font-mono;
+  @apply font-mono bg-white;
+  /* Graph paper pattern - increased visibility */
+  background-size: 20px 20px;
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
 }
 
 kbd {
