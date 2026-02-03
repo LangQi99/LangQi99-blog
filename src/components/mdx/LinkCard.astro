@@ -50,7 +50,7 @@ import { Icon } from "astro-icon/components";
             />
           ) : (
             <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-base-300 to-base-100">
-              <Icon name={icon} class="w-8 h-8 text-primary opacity-80" aria-hidden="true" />
+              <Icon name={icon} class="w-8 h-8 text-orange-500 opacity-80" aria-hidden="true" />
             </div>
           )
         }
@@ -58,7 +58,7 @@ import { Icon } from "astro-icon/components";
       <div class="flex-1 space-y-2 w-full">
         <div class="flex items-center gap-2 flex-wrap">
           <h2 class="card-title text-xl">{title}</h2>
-          {badge && <div class="badge badge-secondary badge-md font-medium">{badge}</div>}
+          {badge && <div class="badge bg-orange-100 text-orange-700 border-orange-200 badge-md font-medium">{badge}</div>}
         </div>
 
         {
