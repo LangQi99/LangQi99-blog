@@ -24,7 +24,7 @@ site:
       svg: "material-symbols:info-outline-rounded"
       target: _self
     - id: blog
-      text: 博客
+      text: Blog
       href: /blog
       svg: "material-symbols:book-2-outline-rounded"
       target: _self

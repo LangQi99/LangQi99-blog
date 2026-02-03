@@ -1,0 +1,126 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import MainCard from "@/components/MainCard.astro";
+import FeatureCard from "@/components/mdx/FeatureCard.astro";
+import GitHubStats from "@/components/mdx/GitHubStats.astro";
+import PostCard from "@components/PostCard.astro";
+import Pagination from "@components/widgets/Pagination.astro";
+import CardGroup from "@components/temple/CardGroup.astro";
+import { Icon } from "astro-icon/components";
+import { t } from "@config";
+import { generatePageLinks } from "@utils/blogUtils";
+import { getMainBlogPaginationPaths } from "@utils/paginationUtils";
+import type { Post, Page } from "@interfaces/data";
+
+export async function getStaticPaths({ paginate }: { paginate: any }) {
+  return getMainBlogPaginationPaths({ paginate });
+}
+
+const { page }: { page: Page } = Astro.props;
+const totalPages = Math.ceil(page.total / page.size);
+const pageLinks = generatePageLinks(totalPages);
+const isFirstPage = page.currentPage === 1;
+---
+
+<BaseLayout title={isFirstPage ? "Home" : `Blog - Page ${page.currentPage}`}>
+  
+  {/* Hero Section - Only on First Page */}
+  {isFirstPage && (
+    <MainCard title="~/README.md" description="LangQi99/blog" extraClasses="min-h-[60vh] mb-16">
+      <div class="space-y-8 font-mono">
+        <!-- Hero Section -->
+        <section class="py-6">
+          <div class="flex flex-col items-start text-left">
+            
+            <div class="mb-6 text-gray-400 text-sm">
+              <span class="text-purple-600">import</span> <span class="text-yellow-600">{`{ Welcome }`}</span> <span class="text-purple-600">from</span> <span class="text-green-600">'@universe/blog'</span>;
+              <br/>
+              <span class="text-gray-400">// <span class="text-orange-400">TODO:</span> Explore the universe of code</span>
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-black">
+              <span class="text-blue-600">const</span> <span class="text-yellow-600">author</span> = <span class="text-green-600">'LangQi99'</span>;
+            </h1>
+            
+            <p class="text-xl text-gray-600 max-w-3xl mb-8 border-l-2 border-gray-200 pl-4">
+               A minimal, responsive, and <span class="text-purple-600 font-bold">feature-rich</span> Astro blog theme designed for <span class="text-pink-500 font-bold">&lt;Developers /&gt;</span> who value data density.
+            </p>
+
+            <div class="flex flex-wrap gap-4">
+              <a href="#blog-posts" class="btn-category group !text-sm !px-4 !py-2">
+                <Icon name="lucide:arrow-down" class="w-4 h-4 text-purple-600" />
+                <span class="text-black font-bold">./read_posts.sh</span>
+              </a>
+              <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn-category group !text-sm !px-4 !py-2 !border-gray-400">
+                 <Icon name="lucide:github" class="w-4 h-4 text-black" />
+                <span class="text-gray-600">git clone repo</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- GitHub Stats -->
+        <section class="py-6">
+          <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Icon name="lucide:github" class="w-6 h-6 text-primary" />
+            <span>Featured Repositories</span>
+          </h2>
+          <GitHubStats username="LangQi99" repositoryName="NetworkStealer" showLanguages={true} showContributors={true} />
+        </section>
+      </div>
+    </MainCard>
+  )}
+
+  <div id="blog-posts" class="scroll-mt-20">
+      <!-- Command Line Toolbar -->
+      <div class="flex flex-wrap items-center gap-4 mb-8 bg-gray-50/80 backdrop-blur-sm p-4 rounded-md border border-gray-200 sticky top-[70px] z-40 transition-all duration-300">
+        <div class="font-mono text-sm text-gray-500 mr-2">$ ./blog_tools.sh</div>
+        
+        <!-- Archives -->
+        <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded hover:border-accent hover:shadow-sm transition-all duration-200">
+          <span class="text-accent font-bold group-hover:text-accent-focus">$</span>
+          <span class="font-mono text-sm text-gray-700 group-hover:text-black">ls -R /archives</span>
+        </a>
+
+        <!-- Categories -->
+        <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded hover:border-primary hover:shadow-sm transition-all duration-200">
+          <span class="text-primary font-bold group-hover:text-primary-focus">#</span>
+          <span class="font-mono text-sm text-gray-700 group-hover:text-black">find /categories</span>
+        </a>
+
+        <!-- Tags -->
+        <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded hover:border-secondary hover:shadow-sm transition-all duration-200">
+          <span class="text-secondary font-bold group-hover:text-secondary-focus">@</span>
+          <span class="font-mono text-sm text-gray-700 group-hover:text-black">cat /tags</span>
+        </a>
+
+        <!-- Search -->
+        <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded hover:border-info hover:shadow-sm transition-all duration-200">
+          <Icon name="lucide:search" class="w-4 h-4 text-gray-400 group-hover:text-info" />
+          <span class="font-mono text-sm text-gray-700 group-hover:text-black">grep</span>
+        </a>
+      </div>
+
+      <!-- Blog Post List -->
+      <CardGroup cols="1" gap="6">
+        {
+          page.data.map((blog: Post) => (
+            <PostCard
+              title={blog.data.title}
+              image={blog.data.image}
+              description={blog.data.description}
+              url={"/blog/" + blog.slug}
+              pubDate={blog.data.pubDate}
+              badge={blog.data.badge}
+              categories={blog.data.categories}
+              tags={blog.data.tags}
+              word={blog.remarkPluginFrontmatter.totalCharCount}
+              time={blog.remarkPluginFrontmatter.readingTime}
+            />
+          ))
+        }
+      </CardGroup>
+      <Pagination page={page} totalPages={totalPages} pageLinks={pageLinks} baseUrl={``} />
+  </div>
+
+</BaseLayout>
