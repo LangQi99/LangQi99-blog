@@ -39,20 +39,31 @@ const typedMenu = SITE_MENU as MenuItem[];
     </a>
 
     <!-- Navigation Links as Terminal Commands -->
-    <div class="hidden md:flex items-center gap-4">
+    <div class="hidden md:flex items-center gap-6">
       {
-        typedMenu.map((item) => (
+        typedMenu.map((item) => {
+          const isHome = item.href === '/';
+          const prefix = isHome ? '~/' : './';
+          const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+          
+          return (
           <a
             href={item.href}
             target={item.target || "_self"}
             class:list={[
-              "px-2 py-1 hover:text-black transition-colors duration-200",
-              currentPath === item.href ? "text-black font-bold bg-gray-100 rounded" : "text-gray-500",
+              "relative group px-1 text-gray-500 hover:text-black transition-colors duration-200",
+              isActive ? "!text-black font-bold" : ""
             ]}
           >
-            [{item.text ? item.text.toLowerCase() : ""}]
+            {/* Hover Block Cursor */}
+            <span class="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-4 bg-black opacity-0 group-hover:opacity-100 transition-opacity duration-150"></span>
+            
+            <span class="font-mono">
+              <span class={isActive ? "text-green-600" : "text-gray-400 group-hover:text-green-600 transition-colors"}>{prefix}</span>
+              {item.text ? item.text.toLowerCase() : ""}
+            </span>
           </a>
-        ))
+        )})
       }
     </div>
 
