@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树基础交互演示</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --text-main: #333;
+            --text-sub: #666;
+            --primary: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --purple: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--text-main);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn:hover {
+            background: #fff7ed;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .canvas-area {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        canvas {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #ea580c; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover:not(:disabled) { background-color: #059669; }
+        .btn-info { background-color: var(--info); color: white; }
+        .btn-info:hover:not(:disabled) { background-color: #2563eb; }
+        .btn-warning { background-color: var(--warning); color: white; }
+        .btn-warning:hover:not(:disabled) { background-color: #d97706; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
+
+        .log-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e5e7eb;
+            padding-left: 20px;
+            min-width: 280px;
+            max-width: 350px;
+        }
+
+        .log-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        #log-list {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+        }
+
+        #log-list li {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            line-height: 1.4;
+        }
+
+        #log-list li.highlight {
+            background-color: #fff7ed;
+            border-left: 3px solid var(--primary);
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .info-panel {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-panel h3 {
+            margin: 0 0 8px 0;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .info-panel p {
+            margin: 4px 0;
+            color: var(--text-sub);
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: contents;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            .log-area {
+                border-left: none;
+                border-top: 1px solid #e5e7eb;
+                padding-left: 0;
+                padding-top: 20px;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>🌲 树基础交互演示</h1>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('definition')">树的定义</button>
+    <button class="tab-btn" onclick="switchTab('terms')">树的术语</button>
+    <button class="tab-btn" onclick="switchTab('types')">特殊树类型</button>
+    <button class="tab-btn" onclick="switchTab('traversal')">树遍历</button>
+</div>
+
+<div class="container">
+    <!-- 定义面板 -->
+    <div id="definition-panel" class="tab-content active">
+        <div class="canvas-area">
+            <canvas id="definitionCanvas" width="700" height="450"></canvas>
+            <div class="legend">
+                <div class="legend-item"><div class="dot" style="background:var(--info)"></div> 普通节点</div>
+                <div class="legend-item"><div class="dot" style="background:var(--warning)"></div> 选中根节点</div>
+                <div class="legend-item"><div class="dot" style="background:var(--success)"></div> 当前根</div>
+            </div>
+            <div class="controls">
+                <button class="btn-primary" onclick="toggleRootMode()">切换根节点模式</button>
+                <button class="btn-info" onclick="animateToRooted()">演示转有根树</button>
+                <button class="btn-danger" onclick="resetDefinition()">重置</button>
+            </div>
+        </div>
+        <div class="log-area">
+            <div class="log-header">📋 说明</div>
+            <div class="info-panel">
+                <h3>无根树 vs 有根树</h3>
+                <p><strong>无根树：</strong>没有固定的根节点，所有节点地位平等。</p>
+                <p><strong>有根树：</strong>指定一个节点作为根，形成层级结构。</p>
+                <p style="margin-top:10px;"><strong>操作提示：</strong></p>
+                <p>• 点击节点选择作为根</p>
+                <p>• 点击"演示转有根树"观看动画</p>
+            </div>
+            <ul id="definition-log" class="log-area" style="margin-top:15px;">
+                <li style="color:#888;">当前显示：无根树</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 术语面板 -->
+    <div id="terms-panel" class="tab-content">
+        <div class="canvas-area">
+            <canvas id="termsCanvas" width="700" height="450"></canvas>
+            <div class="legend">
+                <div class="legend-item"><div class="dot" style="background:var(--primary)"></div> 根节点</div>
+                <div class="legend-item"><div class="dot" style="background:var(--success)"></div> 叶节点</div>
+                <div class="legend-item"><div class="dot" style="background:var(--warning)"></div> 内部节点</div>
+            </div>
+            <div class="controls">
+                <select id="termSelect" onchange="highlightTerm()">
+                    <option value="root">根节点 (Root)</option>
+                    <option value="leaf">叶节点 (Leaf)</option>
+                    <option value="parent">父节点 (Parent)</option>
+                    <option value="child">子节点 (Child)</option>
+                    <option value="sibling">兄弟节点 (Sibling)</option>
+                    <option value="ancestor">祖先 (Ancestor)</option>
+                    <option value="descendant">后代 (Descendant)</option>
+                    <option value="depth">深度 (Depth)</option>
+                    <option value="subtree">子树 (Subtree)</option>
+                </select>
+                <button class="btn-primary" onclick="animateTerm()">动画演示</button>
+            </div>
+        </div>
+        <div class="log-area">
+            <div class="log-header">📖 术语解释</div>
+            <div id="term-explanation" class="info-panel">
+                <h3>根节点 (Root)</h3>
+                <p>树的顶端节点，没有父节点。是整棵树的起点。</p>
+                <p>如图中橙色节点所示。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 类型面板 -->
+    <div id="types-panel" class="tab-content">
+        <div class="canvas-area">
+            <canvas id="typesCanvas" width="700" height="450"></canvas>
+            <div class="controls">
+                <button class="btn-primary" onclick="showTreeType('chain')">链 (Chain)</button>
+                <button class="btn-success" onclick="showTreeType('star')">星形 (Star)</button>
+                <button class="btn-info" onclick="showTreeType('full')">完整二叉树</button>
+                <button class="btn-warning" onclick="showTreeType('complete')">完全二叉树</button>
+                <button class="btn-danger" onclick="showTreeType('perfect')">完美二叉树</button>
+            </div>
+        </div>
+        <div class="log-area">
+            <div class="log-header">📚 树类型说明</div>
+            <div id="type-explanation" class="info-panel">
+                <h3>选择一种树类型</h3>
+                <p>点击左侧按钮查看不同类型的树结构。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遍历面板 -->
+    <div id="traversal-panel" class="tab-content">
+        <div class="canvas-area">
+            <canvas id="traversalCanvas" width="700" height="450"></canvas>
+            <div class="legend">
+                <div class="legend-item"><div class="dot" style="background:var(--info)"></div> 未访问</div>
+                <div class="legend-item"><div class="dot" style="background:var(--warning)"></div> 正在访问</div>
+                <div class="legend-item"><div class="dot" style="background:var(--success)"></div> 已访问</div>
+            </div>
+            <div class="controls">
+                <select id="traversalType">
+                    <option value="preorder">先序遍历 (根→左→右)</option>
+                    <option value="inorder">中序遍历 (左→根→右)</option>
+                    <option value="postorder">后序遍历 (左→右→根)</option>
+                    <option value="bfs">层序遍历 (BFS)</option>
+                </select>
+                <button class="btn-primary" onclick="startTraversal()">开始遍历</button>
+                <button class="btn-success" onclick="stepTraversal()">下一步</button>
+                <button class="btn-danger" onclick="resetTraversal()">重置</button>
+                <div style="display:flex; align-items:center; gap:5px; margin-left:10px;">
+                    <label for="speedRange" style="font-size:0.9rem;">速度:</label>
+                    <input type="range" id="speedRange" min="200" max="2000" value="800" style="width:100px;">
+                </div>
+            </div>
+        </div>
+        <div class="log-area">
+            <div class="log-header">📝 遍历序列</div>
+            <ul id="traversal-log">
+                <li style="color:#888;">点击"开始遍历"观看动画</li>
+            </ul>
+            <div class="info-panel" style="margin-top:10px;">
+                <h3>遍历结果</h3>
+                <p id="traversal-result">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================== 全局变量 =====================
+let currentTab = 'definition';
+let animationFrame = null;
+
+// ===================== 标签切换 =====================
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(panel => panel.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById(`${tab}-panel`).classList.add('active');
+
+    // 初始化对应面板
+    if (tab === 'definition') initDefinition();
+    else if (tab === 'terms') initTerms();
+    else if (tab === 'types') initTypes();
+    else if (tab === 'traversal') initTraversal();
+}
+
+// ===================== 定义面板 =====================
+const defCanvas = document.getElementById('definitionCanvas');
+const defCtx = defCanvas.getContext('2d');
+
+let defNodes = [];
+let defEdges = [];
+let selectedRoot = null;
+let isRooted = false;
+let rootModeActive = false;
+
+function initDefinition() {
+    // 创建一个示例树（无根树形态）
+    defNodes = [
+        { id: 0, x: 350, y: 80, label: 'A' },
+        { id: 1, x: 200, y: 180, label: 'B' },
+        { id: 2, x: 500, y: 180, label: 'C' },
+        { id: 3, x: 100, y: 280, label: 'D' },
+        { id: 4, x: 250, y: 280, label: 'E' },
+        { id: 5, x: 400, y: 280, label: 'F' },
+        { id: 6, x: 550, y: 280, label: 'G' },
+        { id: 7, x: 150, y: 380, label: 'H' },
+        { id: 8, x: 450, y: 380, label: 'I' },
+    ];
+
+    defEdges = [
+        [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [5, 8]
+    ];
+
+    selectedRoot = null;
+    isRooted = false;
+    rootModeActive = false;
+    drawDefinition();
+}
+
+defCanvas.addEventListener('click', (e) => {
+    if (!rootModeActive) return;
+
+    const rect = defCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    for (let node of defNodes) {
+        const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+        if (dist < 25) {
+            selectedRoot = node.id;
+            logDefinition(`选中节点 ${node.label} 作为根`);
+            drawDefinition();
+            break;
+        }
+    }
+});
+
+function toggleRootMode() {
+    rootModeActive = !rootModeActive;
+    logDefinition(rootModeActive ? '根节点选择模式已开启，点击节点选择根' : '根节点选择模式已关闭');
+}
+
+function animateToRooted() {
+    if (selectedRoot === null) {
+        logDefinition('请先选择一个根节点！');
+        return;
+    }
+
+    isRooted = true;
+    logDefinition(`开始转换为以 ${defNodes[selectedRoot].label} 为根的有根树`);
+
+    // 简单动画：闪烁效果
+    let flash = 0;
+    const flashInterval = setInterval(() => {
+        flash++;
+        drawDefinition(flash % 2 === 0);
+        if (flash > 6) {
+            clearInterval(flashInterval);
+            drawDefinition();
+            logDefinition('转换完成！树现在是有根树');
+        }
+    }, 200);
+}
+
+function resetDefinition() {
+    initDefinition();
+    document.getElementById('definition-log').innerHTML = '<li style="color:#888;">当前显示：无根树</li>';
+}
+
+function drawDefinition(flash = false) {
+    defCtx.clearRect(0, 0, defCanvas.width, defCanvas.height);
+
+    // 绘制边
+    for (let [u, v] of defEdges) {
+        defCtx.beginPath();
+        defCtx.moveTo(defNodes[u].x, defNodes[u].y);
+        defCtx.lineTo(defNodes[v].x, defNodes[v].y);
+        defCtx.strokeStyle = '#ccc';
+        defCtx.lineWidth = 2;
+        defCtx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of defNodes) {
+        defCtx.beginPath();
+        defCtx.arc(node.x, node.y, 25, 0, 2 * Math.PI);
+
+        let fill = '#3b82f6';
+        let textColor = '#fff';
+
+        if (node.id === selectedRoot) {
+            fill = flash ? '#fbbf24' : '#f97316';
+        }
+
+        defCtx.fillStyle = fill;
+        defCtx.fill();
+        defCtx.strokeStyle = '#333';
+        defCtx.lineWidth = 2;
+        defCtx.stroke();
+
+        defCtx.fillStyle = textColor;
+        defCtx.font = 'bold 16px Arial';
+        defCtx.textAlign = 'center';
+        defCtx.textBaseline = 'middle';
+        defCtx.fillText(node.label, node.x, node.y);
+    }
+
+    // 显示标题
+    defCtx.fillStyle = '#333';
+    defCtx.font = 'bold 18px Arial';
+    defCtx.textAlign = 'center';
+    defCtx.fillText(isRooted ? '有根树 (Rooted Tree)' : '无根树 (Unrooted Tree)', 350, 30);
+}
+
+function logDefinition(msg) {
+    const log = document.getElementById('definition-log');
+    const li = document.createElement('li');
+    li.textContent = msg;
+    log.appendChild(li);
+    log.scrollTop = log.scrollHeight;
+}
+
+// ===================== 术语面板 =====================
+const termsCanvas = document.getElementById('termsCanvas');
+const termsCtx = termsCanvas.getContext('2d');
+
+let termsNodes = [];
+let termsEdges = [];
+
+const termExplanations = {
+    root: { title: '根节点 (Root)', desc: '树的顶端节点，没有父节点。是整棵树的起点。', highlight: [0] },
+    leaf: { title: '叶节点 (Leaf)', desc: '没有子节点的节点。位于树的末端。', highlight: [3, 4, 6, 7, 8] },
+    parent: { title: '父节点 (Parent)', desc: '节点 B 是节点 D、E 的父节点。\n父节点是直接上级节点。', highlight: [1] },
+    child: { title: '子节点 (Child)', desc: '节点 D、E 是节点 B 的子节点。\n子节点是直接下级节点。', highlight: [3, 4] },
+    sibling: { title: '兄弟节点 (Sibling)', desc: '节点 D、E 是兄弟节点。\n具有相同父节点的节点互为兄弟。', highlight: [3, 4] },
+    ancestor: { title: '祖先 (Ancestor)', desc: '节点 H 的祖先是 A、B、D。\n从该节点到根路径上的所有节点。', highlight: [0, 1, 3, 7] },
+    descendant: { title: '后代 (Descendant)', desc: '节点 B 的后代是 D、E、H。\n以该节点为根的子树中的所有节点。', highlight: [1, 3, 4, 7] },
+    depth: { title: '深度 (Depth)', desc: '节点 H 的深度是 3（A→B→D→H）\n节点到根节点的路径边数。', highlight: [0, 1, 3, 7] },
+    subtree: { title: '子树 (Subtree)', desc: '以节点 B 为根的子树包含 B、D、E、H。\n删除与父节点连线后的独立树。', highlight: [1, 3, 4, 7] }
+};
+
+function initTerms() {
+    termsNodes = [
+        { id: 0, x: 350, y: 60, label: 'A', depth: 0 },
+        { id: 1, x: 200, y: 160, label: 'B', depth: 1 },
+        { id: 2, x: 500, y: 160, label: 'C', depth: 1 },
+        { id: 3, x: 100, y: 260, label: 'D', depth: 2 },
+        { id: 4, x: 250, y: 260, label: 'E', depth: 2 },
+        { id: 5, x: 400, y: 260, label: 'F', depth: 2 },
+        { id: 6, x: 550, y: 260, label: 'G', depth: 2 },
+        { id: 7, x: 100, y: 360, label: 'H', depth: 3 },
+        { id: 8, x: 400, y: 360, label: 'I', depth: 3 },
+    ];
+
+    termsEdges = [
+        [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [5, 8]
+    ];
+
+    highlightTerm();
+}
+
+function highlightTerm() {
+    const term = document.getElementById('termSelect').value;
+    const info = termExplanations[term];
+
+    document.getElementById('term-explanation').innerHTML = `
+        <h3>${info.title}</h3>
+        <p style="white-space: pre-line">${info.desc}</p>
+    `;
+
+    drawTerms(info.highlight);
+}
+
+function animateTerm() {
+    const term = document.getElementById('termSelect').value;
+    const info = termExplanations[term];
+
+    let step = 0;
+    const interval = setInterval(() => {
+        const highlighted = info.highlight.slice(0, step + 1);
+        drawTerms(highlighted);
+        step++;
+        if (step >= info.highlight.length) {
+            clearInterval(interval);
+        }
+    }, 400);
+}
+
+function drawTerms(highlighted = []) {
+    termsCtx.clearRect(0, 0, termsCanvas.width, termsCanvas.height);
+
+    // 绘制边
+    for (let [u, v] of termsEdges) {
+        termsCtx.beginPath();
+        termsCtx.moveTo(termsNodes[u].x, termsNodes[u].y);
+        termsCtx.lineTo(termsNodes[v].x, termsNodes[v].y);
+        termsCtx.strokeStyle = '#ddd';
+        termsCtx.lineWidth = 2;
+        termsCtx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of termsNodes) {
+        termsCtx.beginPath();
+        termsCtx.arc(node.x, node.y, 25, 0, 2 * Math.PI);
+
+        let fill = '#3b82f6';
+        let textColor = '#fff';
+
+        if (highlighted.includes(node.id)) {
+            fill = '#f97316';
+        }
+
+        // 判断节点类型
+        const children = termsEdges.filter(e => e[0] === node.id);
+        if (children.length === 0 && !highlighted.includes(node.id)) {
+            fill = '#10b981'; // 叶节点
+        } else if (node.id === 0 && !highlighted.includes(node.id)) {
+            fill = '#f97316'; // 根节点
+        }
+
+        termsCtx.fillStyle = fill;
+        termsCtx.fill();
+        termsCtx.strokeStyle = '#333';
+        termsCtx.lineWidth = 2;
+        termsCtx.stroke();
+
+        termsCtx.fillStyle = textColor;
+        termsCtx.font = 'bold 16px Arial';
+        termsCtx.textAlign = 'center';
+        termsCtx.textBaseline = 'middle';
+        termsCtx.fillText(node.label, node.x, node.y);
+
+        // 显示深度
+        if (highlighted.includes(node.id)) {
+            termsCtx.fillStyle = '#666';
+            termsCtx.font = '12px Arial';
+            termsCtx.fillText(`深:${node.depth}`, node.x, node.y + 40);
+        }
+    }
+}
+
+// ===================== 类型面板 =====================
+const typesCanvas = document.getElementById('typesCanvas');
+const typesCtx = typesCanvas.getContext('2d');
+
+function initTypes() {
+    showTreeType('chain');
+}
+
+function showTreeType(type) {
+    typesCtx.clearRect(0, 0, typesCanvas.width, typesCanvas.height);
+
+    let nodes = [];
+    let edges = [];
+    let title = '';
+    let explanation = '';
+
+    switch (type) {
+        case 'chain':
+            title = '链 (Chain)';
+            explanation = '所有节点度数不超过 2 的树。<br>最"瘦长"的树结构，形成一条线性路径。';
+            for (let i = 0; i < 7; i++) {
+                nodes.push({ x: 100 + i * 80, y: 225, label: String(i + 1) });
+                if (i > 0) edges.push([i - 1, i]);
+            }
+            break;
+
+        case 'star':
+            title = '星形 (Star)';
+            explanation = '除了一个中心节点外，其余节点只与中心相连。<br>最"扁平"的树结构，中心节点度数最大。';
+            nodes.push({ x: 350, y: 225, label: 'C' });
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * 60 - 90) * Math.PI / 180;
+                nodes.push({ x: 350 + 120 * Math.cos(angle), y: 225 + 120 * Math.sin(angle), label: String.fromCharCode(65 + i) });
+                edges.push([0, i + 1]);
+            }
+            break;
+
+        case 'full':
+            title = '完整二叉树 (Full Binary Tree)';
+            explanation = '每个节点要么有 0 个子节点，要么有 2 个子节点。<br>不存在只有一个子节点的节点。';
+            nodes = [
+                { x: 350, y: 80, label: '1' },
+                { x: 220, y: 180, label: '2' },
+                { x: 480, y: 180, label: '3' },
+                { x: 150, y: 280, label: '4' },
+                { x: 290, y: 280, label: '5' },
+            ];
+            edges = [[0, 1], [0, 2], [1, 3], [1, 4]];
+            break;
+
+        case 'complete':
+            title = '完全二叉树 (Complete Binary Tree)';
+            explanation = '除最后一层外全满，最后一层节点靠左排列。<br>适合用数组存储，堆就是一种完全二叉树。';
+            nodes = [
+                { x: 350, y: 60, label: '1' },
+                { x: 220, y: 150, label: '2' },
+                { x: 480, y: 150, label: '3' },
+                { x: 150, y: 240, label: '4' },
+                { x: 290, y: 240, label: '5' },
+                { x: 410, y: 240, label: '6' },
+                { x: 150, y: 330, label: '7' },
+                { x: 290, y: 330, label: '8' },
+            ];
+            edges = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [3, 6], [4, 7]];
+            break;
+
+        case 'perfect':
+            title = '完美二叉树 (Perfect Binary Tree)';
+            explanation = '所有叶节点深度相同，所有非叶节点都有两个子节点。<br>节点总数 = 2^(h+1) - 1，其中 h 是树高。';
+            nodes = [
+                { x: 350, y: 60, label: '1' },
+                { x: 220, y: 160, label: '2' },
+                { x: 480, y: 160, label: '3' },
+                { x: 150, y: 260, label: '4' },
+                { x: 290, y: 260, label: '5' },
+                { x: 410, y: 260, label: '6' },
+                { x: 550, y: 260, label: '7' },
+                { x: 100, y: 360, label: '8' },
+                { x: 190, y: 360, label: '9' },
+                { x: 250, y: 360, label: '10' },
+                { x: 330, y: 360, label: '11' },
+                { x: 390, y: 360, label: '12' },
+                { x: 470, y: 360, label: '13' },
+                { x: 530, y: 360, label: '14' },
+                { x: 600, y: 360, label: '15' },
+            ];
+            edges = [
+                [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6],
+                [3, 7], [3, 8], [4, 9], [4, 10], [5, 11], [5, 12], [6, 13], [6, 14]
+            ];
+            break;
+    }
+
+    // 绘制
+    typesCtx.fillStyle = '#333';
+    typesCtx.font = 'bold 20px Arial';
+    typesCtx.textAlign = 'center';
+    typesCtx.fillText(title, 350, 30);
+
+    for (let [u, v] of edges) {
+        typesCtx.beginPath();
+        typesCtx.moveTo(nodes[u].x, nodes[u].y);
+        typesCtx.lineTo(nodes[v].x, nodes[v].y);
+        typesCtx.strokeStyle = '#ccc';
+        typesCtx.lineWidth = 2;
+        typesCtx.stroke();
+    }
+
+    for (let node of nodes) {
+        typesCtx.beginPath();
+        typesCtx.arc(node.x, node.y, 22, 0, 2 * Math.PI);
+        typesCtx.fillStyle = '#f97316';
+        typesCtx.fill();
+        typesCtx.strokeStyle = '#333';
+        typesCtx.lineWidth = 2;
+        typesCtx.stroke();
+
+        typesCtx.fillStyle = '#fff';
+        typesCtx.font = 'bold 14px Arial';
+        typesCtx.textAlign = 'center';
+        typesCtx.textBaseline = 'middle';
+        typesCtx.fillText(node.label, node.x, node.y);
+    }
+
+    document.getElementById('type-explanation').innerHTML = `
+        <h3>${title}</h3>
+        <p>${explanation}</p>
+    `;
+}
+
+// ===================== 遍历面板 =====================
+const travCanvas = document.getElementById('traversalCanvas');
+const travCtx = travCanvas.getContext('2d');
+
+let travNodes = [];
+let travEdges = [];
+let visited = [];
+let visitOrder = [];
+let traversalGenerator = null;
+let isAutoPlaying = false;
+let autoPlayTimer = null;
+let currentNode = null;
+
+function initTraversal() {
+    travNodes = [
+        { id: 0, x: 350, y: 60, label: 'A' },
+        { id: 1, x: 200, y: 160, label: 'B' },
+        { id: 2, x: 500, y: 160, label: 'C' },
+        { id: 3, x: 100, y: 260, label: 'D' },
+        { id: 4, x: 250, y: 260, label: 'E' },
+        { id: 5, x: 400, y: 260, label: 'F' },
+        { id: 6, x: 550, y: 260, label: 'G' },
+        { id: 7, x: 100, y: 360, label: 'H' },
+        { id: 8, x: 400, y: 360, label: 'I' },
+    ];
+
+    // 构建树结构
+    travNodes[0].left = 1;
+    travNodes[0].right = 2;
+    travNodes[1].left = 3;
+    travNodes[1].right = 4;
+    travNodes[2].left = 5;
+    travNodes[2].right = 6;
+    travNodes[3].left = 7;
+    travNodes[3].right = null;
+    travNodes[5].left = 8;
+    travNodes[5].right = null;
+
+    travEdges = [
+        [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [5, 8]
+    ];
+
+    visited = new Array(travNodes.length).fill(false);
+    visitOrder = [];
+    currentNode = null;
+
+    drawTraversal();
+}
+
+function* preorderTraversal(nodeId) {
+    if (nodeId === null || nodeId === undefined) return;
+
+    yield { type: 'visit', nodeId };
+    visited[nodeId] = true;
+    visitOrder.push(travNodes[nodeId].label);
+    logTraversal(`访问 ${travNodes[nodeId].label}`);
+    updateResult();
+
+    const node = travNodes[nodeId];
+    yield* preorderTraversal(node.left);
+    yield* preorderTraversal(node.right);
+}
+
+function* inorderTraversal(nodeId) {
+    if (nodeId === null || nodeId === undefined) return;
+
+    const node = travNodes[nodeId];
+    yield* inorderTraversal(node.left);
+
+    yield { type: 'visit', nodeId };
+    visited[nodeId] = true;
+    visitOrder.push(travNodes[nodeId].label);
+    logTraversal(`访问 ${travNodes[nodeId].label}`);
+    updateResult();
+
+    yield* inorderTraversal(node.right);
+}
+
+function* postorderTraversal(nodeId) {
+    if (nodeId === null || nodeId === undefined) return;
+
+    const node = travNodes[nodeId];
+    yield* postorderTraversal(node.left);
+    yield* postorderTraversal(node.right);
+
+    yield { type: 'visit', nodeId };
+    visited[nodeId] = true;
+    visitOrder.push(travNodes[nodeId].label);
+    logTraversal(`访问 ${travNodes[nodeId].label}`);
+    updateResult();
+}
+
+function* bfsTraversal() {
+    const queue = [0];
+    const visitedSet = new Set();
+
+    while (queue.length > 0) {
+        const nodeId = queue.shift();
+        if (visitedSet.has(nodeId)) continue;
+
+        yield { type: 'visit', nodeId };
+        visited[nodeId] = true;
+        visitedSet.add(nodeId);
+        visitOrder.push(travNodes[nodeId].label);
+        logTraversal(`访问 ${travNodes[nodeId].label}`);
+        updateResult();
+
+        const node = travNodes[nodeId];
+        if (node.left !== null && node.left !== undefined) queue.push(node.left);
+        if (node.right !== null && node.right !== undefined) queue.push(node.right);
+    }
+}
+
+function startTraversal() {
+    const type = document.getElementById('traversalType').value;
+
+    visited = new Array(travNodes.length).fill(false);
+    visitOrder = [];
+    currentNode = null;
+    document.getElementById('traversal-log').innerHTML = '';
+    document.getElementById('traversal-result').textContent = '-';
+
+    switch (type) {
+        case 'preorder':
+            traversalGenerator = preorderTraversal(0);
+            logTraversal('开始先序遍历 (根→左→右)');
+            break;
+        case 'inorder':
+            traversalGenerator = inorderTraversal(0);
+            logTraversal('开始中序遍历 (左→根→右)');
+            break;
+        case 'postorder':
+            traversalGenerator = postorderTraversal(0);
+            logTraversal('开始后序遍历 (左→右→根)');
+            break;
+        case 'bfs':
+            traversalGenerator = bfsTraversal();
+            logTraversal('开始层序遍历 (BFS)');
+            break;
+    }
+
+    isAutoPlaying = true;
+    stepTraversal();
+}
+
+function stepTraversal() {
+    if (!traversalGenerator) return;
+
+    const result = traversalGenerator.next();
+
+    if (result.done) {
+        isAutoPlaying = false;
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        logTraversal('遍历完成！');
+        return;
+    }
+
+    if (result.value) {
+        currentNode = result.value.nodeId;
+        drawTraversal();
+    }
+
+    if (isAutoPlaying) {
+        const speed = 2200 - document.getElementById('speedRange').value;
+        autoPlayTimer = setTimeout(stepTraversal, speed);
+    }
+}
+
+function resetTraversal() {
+    isAutoPlaying = false;
+    if (autoPlayTimer) clearTimeout(autoPlayTimer);
+    traversalGenerator = null;
+
+    visited = new Array(travNodes.length).fill(false);
+    visitOrder = [];
+    currentNode = null;
+
+    document.getElementById('traversal-log').innerHTML = '<li style="color:#888;">点击"开始遍历"观看动画</li>';
+    document.getElementById('traversal-result').textContent = '-';
+
+    drawTraversal();
+}
+
+function drawTraversal() {
+    travCtx.clearRect(0, 0, travCanvas.width, travCanvas.height);
+
+    // 绘制边
+    for (let [u, v] of travEdges) {
+        travCtx.beginPath();
+        travCtx.moveTo(travNodes[u].x, travNodes[u].y);
+        travCtx.lineTo(travNodes[v].x, travNodes[v].y);
+
+        if (visited[u] && visited[v]) {
+            travCtx.strokeStyle = '#10b981';
+            travCtx.lineWidth = 3;
+        } else {
+            travCtx.strokeStyle = '#ddd';
+            travCtx.lineWidth = 2;
+        }
+        travCtx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of travNodes) {
+        travCtx.beginPath();
+        travCtx.arc(node.x, node.y, 25, 0, 2 * Math.PI);
+
+        let fill = '#3b82f6';
+        let textColor = '#fff';
+
+        if (visited[node.id]) {
+            fill = '#10b981';
+        }
+        if (node.id === currentNode) {
+            fill = '#f59e0b';
+        }
+
+        travCtx.fillStyle = fill;
+        travCtx.fill();
+        travCtx.strokeStyle = '#333';
+        travCtx.lineWidth = 2;
+        travCtx.stroke();
+
+        travCtx.fillStyle = textColor;
+        travCtx.font = 'bold 16px Arial';
+        travCtx.textAlign = 'center';
+        travCtx.textBaseline = 'middle';
+        travCtx.fillText(node.label, node.x, node.y);
+    }
+}
+
+function logTraversal(msg) {
+    const log = document.getElementById('traversal-log');
+    const li = document.createElement('li');
+    li.textContent = msg;
+    log.appendChild(li);
+    log.scrollTop = log.scrollHeight;
+}
+
+function updateResult() {
+    document.getElementById('traversal-result').textContent = visitOrder.join(' → ');
+}
+
+// ===================== 初始化 =====================
+initDefinition();
+</script>
+
+</body>
+</html>
