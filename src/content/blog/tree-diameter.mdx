@@ -1,0 +1,201 @@
+---
+title: "树的直径：最长路径的求解"
+description: "介绍树上任意两节点间最长路径（直径）的两种 O(n) 求解方法及其重要性质。"
+pubDate: "Mar 27 2026"
+categories:
+  - tech
+tags:
+  - algorithm
+  - data-structure
+  - tree
+  - visualization
+---
+
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TreeDiameterDFS from "../../components/mdx/tree/TreeDiameterDFS.astro";
+import TreeDiameterDP from "../../components/mdx/tree/TreeDiameterDP.astro";
+import TreeDiameterMidpoint from "../../components/mdx/tree/TreeDiameterMidpoint.astro";
+
+**树的直径**（Tree Diameter）是树上任意两节点之间最长的简单路径。它是树论中最基础也最重要的问题之一，广泛应用于网络设计、路径规划等领域。
+
+## 求解方法
+
+求树的直径有两种时间复杂度为 $O(n)$ 的经典方法：
+
+### 方法一：两次 DFS
+
+**思路**：从任意节点出发找到最远点 $z$，再从 $z$ 出发找到最远点 $z'$，则 $z$ 到 $z'$ 的路径即为直径。
+
+**原理证明**：
+1. 设直径端点为 $u, v$
+2. 从任意点 $y$ 出发，最远点 $z$ 一定是 $u$ 或 $v$ 之一（否则可构造更长的路径，矛盾）
+3. 再从 $z$ 出发找最远点，得到另一个端点
+
+<TreeDiameterDFS />
+
+<Info>
+两次 DFS 方法**方便记录直径路径**——只需在第二次 DFS 时记录前驱节点即可。
+</Info>
+
+<Warning>
+两次 DFS 方法**不适用于负权边**！当边权存在负数时，证明的正确性会失效。
+</Warning>
+
+### 方法二：树形 DP
+
+**思路**：对每个节点，计算从它向下延伸的最长链 $d_1$ 和次长链 $d_2$（两条链不能共享边），直径即为所有 $d_1 + d_2$ 的最大值。
+
+**状态转移**：
+$$d_1[u] = \max(d_1[v] + w(u,v)) \quad \text{对所有子节点 } v$$
+$$d_2[u] = \text{次大值}$$
+
+<TreeDiameterDP />
+
+<Info>
+树形 DP 方法**适用于负权边**，因为它是自底向上计算，考虑了所有可能的路径组合。
+</Info>
+
+### 方法对比
+
+| 特性 | 两次 DFS | 树形 DP |
+|------|----------|---------|
+| 时间复杂度 | $O(n)$ | $O(n)$ |
+| 空间复杂度 | $O(n)$ | $O(n)$ |
+| **负权边** | ❌ 不支持 | ✅ 支持 |
+| **记录路径** | ✅ 简单 | ⚠️ 稍复杂 |
+| 实现难度 | 简单 | 中等 |
+
+## 重要性质：中点重合
+
+当树上所有边权均为正数时，一个优美的性质成立：
+
+> **所有直径的中点必定重合。**
+
+**证明（反证法）**：
+设两条直径 $u \to v$ 和 $u' \to v'$ 的中点分别为 $m$ 和 $m'$，且 $m \neq m'$。
+
+由于两条直径长度相等，我们可以构造一条更长的路径：
+- 从 $m$ 出发沿直径到 $u$
+- 再从 $u$ 通过公共部分到 $u'$
+- 最后从 $u'$ 沿另一条直径到 $v'$
+
+这样构造的路径长度必然大于原直径，矛盾！
+
+<TreeDiameterMidpoint />
+
+## 代码实现
+
+### 两次 DFS（C++）
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+vector<int> adj[N];
+int dist[N], parent[N];
+
+void dfs(int u, int fa, int d) {
+    dist[u] = d;
+    parent[u] = fa;
+    for (int v : adj[u]) {
+        if (v != fa) dfs(v, u, d + 1);
+    }
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    // 第一次 DFS
+    dfs(1, -1, 0);
+    int z = max_element(dist + 1, dist + n + 1) - dist;
+
+    // 第二次 DFS
+    dfs(z, -1, 0);
+    int z2 = max_element(dist + 1, dist + n + 1) - dist;
+
+    cout << "直径长度: " << dist[z2] << endl;
+
+    // 输出直径路径
+    vector<int> path;
+    for (int u = z2; u != -1; u = parent[u]) {
+        path.push_back(u);
+    }
+    // path 即为直径路径
+
+    return 0;
+}
+```
+
+### 树形 DP（C++）
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+vector<pair<int,int>> adj[N]; // (邻点, 边权)
+int d1[N], d2[N]; // 最长链、次长链
+int diameter = 0;
+
+void dp(int u, int fa) {
+    d1[u] = d2[u] = 0;
+
+    for (auto [v, w] : adj[u]) {
+        if (v == fa) continue;
+
+        dp(v, u);
+
+        int d = d1[v] + w;
+        if (d > d1[u]) {
+            d2[u] = d1[u];
+            d1[u] = d;
+        } else if (d > d2[u]) {
+            d2[u] = d;
+        }
+    }
+
+    diameter = max(diameter, d1[u] + d2[u]);
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    for (int i = 1; i < n; i++) {
+        int u, v, w = 1;
+        cin >> u >> v;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    dp(1, -1);
+    cout << "直径长度: " << diameter << endl;
+
+    return 0;
+}
+```
+
+## 练习题推荐
+
+| 题目 | 难度 | 说明 |
+|------|------|------|
+| [洛谷 B4016 树的直径](https://www.luogu.com.cn/problem/B4016) | ⭐ | 入门题，求直径长度 |
+| [洛谷 P2491 消防](https://www.luogu.com.cn/problem/P2491) | ⭐⭐⭐ | SDOI2011，直径上的最优选点 |
+| [洛谷 P3629 巡逻](https://www.luogu.com.cn/problem/P3629) | ⭐⭐⭐ | APIO2010，加边后的直径变化 |
+| [LeetCode 1245. 树的直径](https://leetcode.cn/problems/tree-diameter/) | ⭐⭐ | 无向树的直径 |
+
+## 总结
+
+1. **两次 DFS** 实现简单，方便记录路径，但不支持负权边
+2. **树形 DP** 更通用，支持负权边，是竞赛中的首选方法
+3. **中点重合** 是正权树的重要性质，可用于优化和证明

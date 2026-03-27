@@ -1,0 +1,312 @@
+---
+// 树的直径演示：树形DP方法
+---
+
+<div class="tree-diameter-dp-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">树形 DP 求直径</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="dpCanvas"></canvas>
+    <div class="formula">
+      <code>diameter = max(d₁ + d₂)</code>
+      <span class="note">d₁=最长链, d₂=次长链</span>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="startDpBtn">▶ 开始演示</button>
+      <button class="btn" id="stepDpBtn">下一步</button>
+      <button class="btn danger" id="resetDpBtn">重置</button>
+    </div>
+    <div class="dp-table" id="dpTable">
+      <div class="row header">
+        <span>节点</span>
+        <span>d₁</span>
+        <span>d₂</span>
+        <span>d₁+d₂</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tree-diameter-dp-demo {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #f59e0b;
+  }
+  .tree-diameter-dp-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-diameter-dp-demo .badge {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-diameter-dp-demo .title {
+    font-weight: 600;
+    color: #92400e;
+  }
+  .tree-diameter-dp-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-diameter-dp-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-diameter-dp-demo .formula {
+    text-align: center;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .tree-diameter-dp-demo .formula code {
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #92400e;
+  }
+  .tree-diameter-dp-demo .formula .note {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-left: 10px;
+  }
+  .tree-diameter-dp-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .tree-diameter-dp-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .tree-diameter-dp-demo .btn.primary {
+    background: #f59e0b;
+    color: white;
+  }
+  .tree-diameter-dp-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .tree-diameter-dp-demo .dp-table {
+    margin-top: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.8rem;
+  }
+  .tree-diameter-dp-demo .dp-table .row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .tree-diameter-dp-demo .dp-table .row:last-child {
+    border-bottom: none;
+  }
+  .tree-diameter-dp-demo .dp-table .row span {
+    padding: 8px;
+    text-align: center;
+  }
+  .tree-diameter-dp-demo .dp-table .row.header {
+    background: #fef3c7;
+    font-weight: 600;
+  }
+  .tree-diameter-dp-demo .dp-table .row.active {
+    background: #fff7ed;
+  }
+  .tree-diameter-dp-demo .dp-table .row.max {
+    background: #dcfce7;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('dpCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 480;
+  canvas.height = 220;
+
+  // 树结构（以0为根）
+  const nodes = [
+    { id: 0, x: 240, y: 40, label: 'A', children: [1, 2] },
+    { id: 1, x: 120, y: 100, label: 'B', children: [3, 4] },
+    { id: 2, x: 360, y: 100, label: 'C', children: [5, 6] },
+    { id: 3, x: 60, y: 160, label: 'D', children: [7] },
+    { id: 4, x: 160, y: 160, label: 'E', children: [] },
+    { id: 5, x: 300, y: 160, label: 'F', children: [] },
+    { id: 6, x: 420, y: 160, label: 'G', children: [8] },
+    { id: 7, x: 60, y: 210, label: 'H', children: [] },
+    { id: 8, x: 420, y: 210, label: 'I', children: [] },
+  ];
+
+  const edges = [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6], [3,7], [6,8]];
+
+  // DP数据
+  let dp = {}; // { id: { d1, d2, sum } }
+  let processingNode = null;
+  let processedNodes = [];
+  let maxNode = null;
+  let dpOrder = [7, 8, 3, 4, 1, 5, 6, 2, 0]; // 后序遍历顺序
+  let currentStep = -1;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(([u, v]) => {
+      const isDiameter = dp[u] && dp[v] && processedNodes.includes(u) && processedNodes.includes(v);
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.strokeStyle = isDiameter ? '#f97316' : '#e5e7eb';
+      ctx.lineWidth = isDiameter ? 3 : 2;
+      ctx.stroke();
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 18, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (processedNodes.includes(node.id)) fill = '#a3e635';
+      if (node.id === processingNode) fill = '#fbbf24';
+      if (node.id === maxNode) fill = '#f97316';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示DP值
+      if (dp[node.id]) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '9px Arial';
+        ctx.fillText(`${dp[node.id].d1},${dp[node.id].d2}`, node.x, node.y + 26);
+      }
+    });
+  }
+
+  function updateDPTable() {
+    const table = document.getElementById('dpTable');
+    let html = `
+      <div class="row header">
+        <span>节点</span>
+        <span>d₁</span>
+        <span>d₂</span>
+        <span>d₁+d₂</span>
+      </div>
+    `;
+
+    let maxSum = 0;
+    processedNodes.forEach(id => {
+      if (dp[id].sum > maxSum) maxSum = dp[id].sum;
+    });
+
+    processedNodes.forEach(id => {
+      const d = dp[id];
+      const isActive = id === processingNode;
+      const isMax = d.sum === maxSum && maxSum > 0;
+      html += `
+        <div class="row ${isActive ? 'active' : ''} ${isMax ? 'max' : ''}">
+          <span>${nodes[id].label}</span>
+          <span>${d.d1}</span>
+          <span>${d.d2}</span>
+          <span><strong>${d.sum}</strong></span>
+        </div>
+      `;
+    });
+
+    table.innerHTML = html;
+  }
+
+  function computeDP(nodeId) {
+    const node = nodes[nodeId];
+
+    if (node.children.length === 0) {
+      return { d1: 0, d2: 0, sum: 0 };
+    }
+
+    const childDepths = node.children.map(cid => {
+      const childDP = dp[cid];
+      return childDP ? childDP.d1 + 1 : 0;
+    });
+
+    childDepths.sort((a, b) => b - a);
+
+    const d1 = childDepths[0] || 0;
+    const d2 = childDepths[1] || 0;
+
+    return { d1, d2, sum: d1 + d2 };
+  }
+
+  function step() {
+    if (currentStep >= dpOrder.length - 1) return;
+
+    currentStep++;
+    processingNode = dpOrder[currentStep];
+
+    dp[processingNode] = computeDP(processingNode);
+    processedNodes.push(processingNode);
+
+    // 检查是否是最大值
+    if (!maxNode || dp[processingNode].sum > dp[maxNode].sum) {
+      maxNode = processingNode;
+    }
+
+    draw();
+    updateDPTable();
+  }
+
+  function autoRun() {
+    if (currentStep >= dpOrder.length - 1) return;
+
+    step();
+    setTimeout(autoRun, 500);
+  }
+
+  document.getElementById('startDpBtn').addEventListener('click', () => {
+    if (currentStep < dpOrder.length - 1) {
+      autoRun();
+    }
+  });
+
+  document.getElementById('stepDpBtn').addEventListener('click', step);
+
+  document.getElementById('resetDpBtn').addEventListener('click', () => {
+    dp = {};
+    processingNode = null;
+    processedNodes = [];
+    maxNode = null;
+    currentStep = -1;
+    draw();
+    updateDPTable();
+  });
+
+  draw();
+</script>
