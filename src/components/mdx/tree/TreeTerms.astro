@@ -1,0 +1,193 @@
+---
+// 树的术语演示
+---
+
+<div class="tree-terms-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">树的术语可视化</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="treeTermsCanvas"></canvas>
+    <div class="term-buttons">
+      <button data-term="root">根节点</button>
+      <button data-term="leaf">叶节点</button>
+      <button data-term="parent">父节点</button>
+      <button data-term="child">子节点</button>
+      <button data-term="sibling">兄弟节点</button>
+      <button data-term="ancestor">祖先</button>
+      <button data-term="descendant">后代</button>
+      <button data-term="depth">深度</button>
+      <button data-term="subtree">子树</button>
+    </div>
+    <div class="explanation" id="termExplanation">
+      <strong>点击上方按钮</strong>查看不同术语的图示说明
+    </div>
+  </div>
+</div>
+
+<style>
+  .tree-terms-demo {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #3b82f6;
+  }
+  .tree-terms-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-terms-demo .badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-terms-demo .title {
+    font-weight: 600;
+    color: #1e40af;
+  }
+  .tree-terms-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-terms-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-terms-demo .term-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .tree-terms-demo .term-buttons button {
+    padding: 5px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    background: white;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tree-terms-demo .term-buttons button:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+  .tree-terms-demo .term-buttons button.active {
+    border-color: #3b82f6;
+    background: #3b82f6;
+    color: white;
+  }
+  .tree-terms-demo .explanation {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    color: #475569;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('treeTermsCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 400;
+  canvas.height = 200;
+
+  const nodes = [
+    { id: 0, x: 200, y: 30, label: 'A', depth: 0 },
+    { id: 1, x: 100, y: 80, label: 'B', depth: 1 },
+    { id: 2, x: 300, y: 80, label: 'C', depth: 1 },
+    { id: 3, x: 50, y: 130, label: 'D', depth: 2 },
+    { id: 4, x: 130, y: 130, label: 'E', depth: 2 },
+    { id: 5, x: 250, y: 130, label: 'F', depth: 2 },
+    { id: 6, x: 350, y: 130, label: 'G', depth: 2 },
+    { id: 7, x: 50, y: 180, label: 'H', depth: 3 },
+    { id: 8, x: 250, y: 180, label: 'I', depth: 3 },
+  ];
+
+  const edges = [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6], [3,7], [5,8]];
+
+  const explanations = {
+    root: { highlight: [0], text: '<strong>根节点 (Root)</strong>：树的顶端节点 A，没有父节点' },
+    leaf: { highlight: [4, 6, 7, 8], text: '<strong>叶节点 (Leaf)</strong>：没有子节点的节点 E, G, H, I' },
+    parent: { highlight: [1], text: '<strong>父节点 (Parent)</strong>：B 是 D 和 E 的父节点' },
+    child: { highlight: [3, 4], text: '<strong>子节点 (Child)</strong>：D 和 E 是 B 的子节点' },
+    sibling: { highlight: [3, 4], text: '<strong>兄弟节点 (Sibling)</strong>：D 和 E 有相同的父节点 B' },
+    ancestor: { highlight: [0, 1, 3, 7], text: '<strong>祖先 (Ancestor)</strong>：H 的祖先是 A, B, D（从 H 到根的路径）' },
+    descendant: { highlight: [1, 3, 4, 7], text: '<strong>后代 (Descendant)</strong>：B 的后代是 D, E, H（子树中的所有节点）' },
+    depth: { highlight: [0, 1, 3, 7], text: '<strong>深度 (Depth)</strong>：H 的深度是 3（从根 A 到 H 的边数）' },
+    subtree: { highlight: [1, 3, 4, 7], text: '<strong>子树 (Subtree)</strong>：以 B 为根的子树包含 B, D, E, H' },
+  };
+
+  let currentHighlight = [];
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    for (let [u, v] of edges) {
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.strokeStyle = currentHighlight.includes(u) && currentHighlight.includes(v) ? '#f97316' : '#e5e7eb';
+      ctx.lineWidth = currentHighlight.includes(u) && currentHighlight.includes(v) ? 3 : 2;
+      ctx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of nodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (currentHighlight.includes(node.id)) fill = '#f97316';
+      else if (node.id === 0) fill = '#f97316';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示深度
+      if (currentHighlight.includes(node.id)) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px Arial';
+        ctx.fillText(`深:${node.depth}`, node.x, node.y + 26);
+      }
+    }
+  }
+
+  document.querySelectorAll('.tree-terms-demo [data-term]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-terms-demo [data-term]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const term = btn.dataset.term;
+      const info = explanations[term];
+      currentHighlight = info.highlight;
+      document.getElementById('termExplanation').innerHTML = info.text;
+      draw();
+    });
+  });
+
+  draw();
+</script>
