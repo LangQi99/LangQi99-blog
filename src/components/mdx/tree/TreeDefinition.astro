@@ -218,7 +218,7 @@
   function setRootedTargets(rootId) {
     buildRootedTree(rootId);
 
-    const levelY = [35, 115, 195, 275, 355]; // 根节点在最顶层
+    const levelY = [60, 140, 220, 300, 380]; // 每层的Y坐标
 
     // 使用递归计算x位置
     function assignX(id, left, right) {
@@ -264,7 +264,7 @@
 
     // 绘制层级线（有根树模式）
     if (selectedRoot !== null) {
-      const levelY = [35, 115, 195, 275];
+      const levelY = [60, 140, 220, 300];
       ctx.setLineDash([4, 4]);
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
@@ -280,10 +280,10 @@
       ctx.fillStyle = '#94a3b8';
       ctx.font = '10px Arial';
       ctx.textAlign = 'right';
-      ctx.fillText('depth 0', 45, 31);
-      ctx.fillText('depth 1', 45, 111);
-      ctx.fillText('depth 2', 45, 191);
-      ctx.fillText('depth 3', 45, 271);
+      ctx.fillText('depth 0', 45, 56);
+      ctx.fillText('depth 1', 45, 136);
+      ctx.fillText('depth 2', 45, 216);
+      ctx.fillText('depth 3', 45, 296);
     }
 
     // 绘制边
