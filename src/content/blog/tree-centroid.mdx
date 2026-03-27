@@ -1,0 +1,226 @@
+---
+title: "树的重心：均匀分割树的关键节点"
+description: "系统介绍树的重心概念、等价定义、核心性质、线性求法以及经典应用。"
+pubDate: "Mar 27 2026"
+categories:
+  - tech
+tags:
+  - algorithm
+  - data-structure
+  - tree
+  - visualization
+---
+
+import Info from "../../components/mdx/Info.astro";
+import Warning from "../../components/mdx/Warning.astro";
+import TreeCentroidDef from "../../components/mdx/tree/TreeCentroidDef.astro";
+import TreeCentroidDist from "../../components/mdx/tree/TreeCentroidDist.astro";
+import TreeCentroidDFS from "../../components/mdx/tree/TreeCentroidDFS.astro";
+import TreeCentroidTwo from "../../components/mdx/tree/TreeCentroidTwo.astro";
+
+**树的重心**（Tree Centroid）是树论中的核心概念之一。删去重心后，树会被相对均匀地分割成若干部分，这一性质使其成为**点分治**（重心分解）算法的基础。
+
+## 定义
+
+如果在树中删去某个节点 $v$ 后，得到的每个连通分量的大小**均不超过原树节点总数的一半**，那么节点 $v$ 就是整棵树的重心。
+
+**重量**：删去某节点后，得到的最大连通分量的大小称为该节点的重量。重心即重量不超过 $n/2$ 的节点。
+
+<TreeCentroidDef />
+
+## 等价定义与性质
+
+### 等价定义
+
+重心有多种等价的描述方式：
+
+| 等价定义 | 说明 |
+|----------|------|
+| **连通分量极值** | 删去重心得到的最大连通分量是所有删点方案中最小的 |
+| **距离和最小** | 树中所有节点到重心的距离之和最小 |
+| **有根树视角** | 以重心为根时，任意真子树大小都不超过 $n/2$ |
+
+<TreeCentroidDist />
+
+### 核心性质
+
+**性质 1：重心数量**
+
+> 一棵树最多有两个重心；如果有两个重心，它们必定相邻。
+
+<TreeCentroidTwo />
+
+**性质 2：动态稳定性**
+
+> 添加或删除一个叶子节点，新树的重心最多移动一条边的距离。
+
+这一性质在动态维护重心时非常有用。
+
+**性质 3：合并性质**
+
+> 将两棵树通过一条边合并，新树的重心必在原来两棵重心之间的路径上。
+
+## 重心的求法
+
+### 方法：一次 DFS
+
+通过一次 DFS 统计每个节点的子树大小，同时计算删去该节点后各连通块的最大值。
+
+**算法流程**：
+1. DFS 遍历，计算每个节点 $u$ 的子树大小 `size[u]`
+2. 对于节点 $u$，删去它后的连通块有：
+   - 各子树：`size[v]`（$v$ 是 $u$ 的子节点）
+   - 向上的部分：`n - size[u]`
+3. 取这些值的最大值作为 $u$ 的重量
+4. 重量 $\le n/2$ 的节点即为重心
+
+<TreeCentroidDFS />
+
+<Info>
+DFS 方法的时间复杂度为 $O(n)$，是最常用且高效的重心求法。
+</Info>
+
+## 代码实现
+
+### C++ 模板
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+vector<int> adj[N];
+int size_[N];      // 子树大小
+int max_part[N];   // 删去该节点后的最大连通块
+int n;
+vector<int> centroids;
+
+void dfs(int u, int fa) {
+    size_[u] = 1;
+    max_part[u] = 0;
+
+    for (int v : adj[u]) {
+        if (v == fa) continue;
+        dfs(v, u);
+        size_[u] += size_[v];
+        max_part[u] = max(max_part[u], size_[v]);
+    }
+
+    // 向上的连通块
+    max_part[u] = max(max_part[u], n - size_[u]);
+
+    // 判断是否为重心
+    if (max_part[u] <= n / 2) {
+        centroids.push_back(u);
+    }
+}
+
+int main() {
+    cin >> n;
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    dfs(1, -1);
+
+    cout << "重心: ";
+    for (int c : centroids) {
+        cout << c << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+```
+
+### 换根 DP 方法
+
+利用「距离和最小」的性质，通过两次 DFS 计算：
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+vector<int> adj[N];
+int n, size_[N], dep[N];
+long long dp[N];  // dp[u] = 以u为根的距离和
+
+void dfs1(int u, int fa) {
+    size_[u] = 1;
+    dp[u] = dep[u];
+    for (int v : adj[u]) {
+        if (v == fa) continue;
+        dep[v] = dep[u] + 1;
+        dfs1(v, u);
+        size_[u] += size_[v];
+        dp[u] += dp[v];
+    }
+}
+
+void dfs2(int u, int fa) {
+    for (int v : adj[u]) {
+        if (v == fa) continue;
+        dp[v] = dp[u] - size_[v] + (n - size_[v]);
+        dfs2(v, u);
+    }
+}
+
+int main() {
+    cin >> n;
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    dfs1(1, -1);
+    dfs2(1, -1);
+
+    // 距离和最小的节点即为重心
+    int centroid = min_element(dp + 1, dp + n + 1) - dp;
+    cout << "重心: " << centroid << endl;
+
+    return 0;
+}
+```
+
+## 经典应用
+
+### 点分治（重心分解）
+
+重心最重要的应用是**点分治**算法。每次选择子树的重心作为分治中心，可以保证：
+
+- 每层分治后子树大小不超过原来的一半
+- 递归深度为 $O(\log n)$
+- 总时间复杂度 $O(n \log n)$
+
+### 例题：CF 359B Kay and Snowflake
+
+求每棵子树的重心。
+
+**关键性质**：子树的重心一定在其直接子节点子树的重心到该节点本身的路径上。
+
+利用这一性质可以 $O(n)$ 求出所有子树的重心。
+
+## 练习题推荐
+
+| 题目 | 难度 | 说明 |
+|------|------|------|
+| [洛谷 P1364 医院设置](https://www.luogu.com.cn/problem/P1364) | ⭐ | 距离和最小应用 |
+| [CF 715C Digit Tree](https://codeforces.com/problemset/problem/715/C) | ⭐⭐⭐ | 点分治经典题 |
+| [洛谷 P2634 聪聪可可](https://www.luogu.com.cn/problem/P2634) | ⭐⭐⭐ | 点分治入门 |
+
+## 总结
+
+| 要点 | 内容 |
+|------|------|
+| **定义** | 删去后最大连通块 $\le n/2$ |
+| **等价定义** | 距离和最小 / 子树大小都不超过 $n/2$ |
+| **数量** | 最多 2 个，若有 2 个则相邻 |
+| **求法** | 一次 DFS，$O(n)$ |
+| **应用** | 点分治的核心基础 |

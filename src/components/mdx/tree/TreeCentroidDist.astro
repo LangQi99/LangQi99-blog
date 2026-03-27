@@ -1,0 +1,296 @@
+---
+// 树的重心演示：距离和最小性质
+---
+
+<div class="tree-centroid-dist-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">距离和最小 = 重心</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="centroidDistCanvas"></canvas>
+    <div class="dist-table" id="distTable">
+      <div class="row header">
+        <span>节点</span>
+        <span>距离和</span>
+        <span>状态</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="calcDistBtn">计算距离和</button>
+      <button class="btn" id="stepDistBtn">逐步计算</button>
+      <button class="btn danger" id="resetDistBtn">重置</button>
+    </div>
+    <p class="hint">重心 = 距离和最小的节点</p>
+  </div>
+</div>
+
+<style>
+  .tree-centroid-dist-demo {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #3b82f6;
+  }
+  .tree-centroid-dist-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-centroid-dist-demo .badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-centroid-dist-demo .title {
+    font-weight: 600;
+    color: #1e40af;
+  }
+  .tree-centroid-dist-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-centroid-dist-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-centroid-dist-demo .dist-table {
+    margin: 10px 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.8rem;
+  }
+  .tree-centroid-dist-demo .dist-table .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .tree-centroid-dist-demo .dist-table .row:last-child {
+    border-bottom: none;
+  }
+  .tree-centroid-dist-demo .dist-table .row span {
+    padding: 8px;
+    text-align: center;
+  }
+  .tree-centroid-dist-demo .dist-table .row.header {
+    background: #dbeafe;
+    font-weight: 600;
+  }
+  .tree-centroid-dist-demo .dist-table .row.min {
+    background: #dcfce7;
+  }
+  .tree-centroid-dist-demo .dist-table .row.processing {
+    background: #fef3c7;
+  }
+  .tree-centroid-dist-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .tree-centroid-dist-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .tree-centroid-dist-demo .btn.primary {
+    background: #3b82f6;
+    color: white;
+  }
+  .tree-centroid-dist-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .tree-centroid-dist-demo .hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('centroidDistCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 480;
+  canvas.height = 240;
+
+  const nodes = [
+    { id: 0, x: 240, y: 40, label: 'A' },
+    { id: 1, x: 120, y: 100, label: 'B' },
+    { id: 2, x: 360, y: 100, label: 'C' },
+    { id: 3, x: 60, y: 160, label: 'D' },
+    { id: 4, x: 160, y: 160, label: 'E' },
+    { id: 5, x: 300, y: 160, label: 'F' },
+    { id: 6, x: 420, y: 160, label: 'G' },
+    { id: 7, x: 60, y: 220, label: 'H' },
+    { id: 8, x: 420, y: 220, label: 'I' },
+  ];
+
+  const edges = [
+    [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [6, 8]
+  ];
+
+  const adj = {};
+  nodes.forEach(n => adj[n.id] = []);
+  edges.forEach(([u, v]) => {
+    adj[u].push(v);
+    adj[v].push(u);
+  });
+
+  let distSums = {};
+  let processingNode = null;
+  let processedNodes = [];
+  let minNode = null;
+
+  // BFS计算距离和
+  function calcDistSum(start) {
+    const dist = new Array(nodes.length).fill(-1);
+    dist[start] = 0;
+    const queue = [start];
+    let sum = 0;
+
+    while (queue.length > 0) {
+      const u = queue.shift();
+      for (let v of adj[u]) {
+        if (dist[v] === -1) {
+          dist[v] = dist[u] + 1;
+          sum += dist[v];
+          queue.push(v);
+        }
+      }
+    }
+
+    return sum;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(([u, v]) => {
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 18, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (processedNodes.includes(node.id)) fill = '#60a5fa';
+      if (node.id === processingNode) fill = '#fbbf24';
+      if (node.id === minNode) fill = '#22c55e';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示距离和
+      if (distSums[node.id] !== undefined) {
+        ctx.fillStyle = '#374151';
+        ctx.font = '10px Arial';
+        ctx.fillText(`Σ=${distSums[node.id]}`, node.x, node.y + 26);
+      }
+    });
+  }
+
+  function updateTable() {
+    const table = document.getElementById('distTable');
+    let html = `
+      <div class="row header">
+        <span>节点</span>
+        <span>距离和</span>
+        <span>状态</span>
+      </div>
+    `;
+
+    let minSum = Infinity;
+    processedNodes.forEach(id => {
+      if (distSums[id] < minSum) minSum = distSums[id];
+    });
+
+    processedNodes.forEach(id => {
+      const isMin = distSums[id] === minSum;
+      const isProcessing = id === processingNode;
+      html += `
+        <div class="row ${isMin ? 'min' : ''} ${isProcessing ? 'processing' : ''}">
+          <span>${nodes[id].label}</span>
+          <span><strong>${distSums[id]}</strong></span>
+          <span>${isMin ? '最小 ✓' : ''}</span>
+        </div>
+      `;
+    });
+
+    table.innerHTML = html;
+  }
+
+  function step() {
+    const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    if (processedNodes.length >= order.length) return;
+
+    processingNode = order[processedNodes.length];
+    distSums[processingNode] = calcDistSum(processingNode);
+    processedNodes.push(processingNode);
+
+    // 更新最小值
+    if (minNode === null || distSums[processingNode] < distSums[minNode]) {
+      minNode = processingNode;
+    }
+
+    draw();
+    updateTable();
+    processingNode = null;
+  }
+
+  function autoRun() {
+    if (processedNodes.length >= nodes.length) return;
+    step();
+    setTimeout(autoRun, 300);
+  }
+
+  document.getElementById('calcDistBtn').addEventListener('click', () => {
+    if (processedNodes.length < nodes.length) {
+      autoRun();
+    }
+  });
+
+  document.getElementById('stepDistBtn').addEventListener('click', step);
+
+  document.getElementById('resetDistBtn').addEventListener('click', () => {
+    distSums = {};
+    processingNode = null;
+    processedNodes = [];
+    minNode = null;
+    draw();
+    updateTable();
+  });
+
+  draw();
+</script>

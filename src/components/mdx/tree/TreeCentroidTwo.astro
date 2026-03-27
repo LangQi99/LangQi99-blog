@@ -1,0 +1,231 @@
+---
+// 树的重心演示：双重心
+---
+
+<div class="tree-centroid-two-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">双重心现象</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="twoCentroidCanvas"></canvas>
+    <div class="info-box">
+      <p>一棵树最多有<strong>两个重心</strong>。</p>
+      <p>如果有两个重心，它们<strong>必定相邻</strong>。</p>
+    </div>
+    <div class="controls">
+      <button class="btn active" data-tree="1">树1: 单重心</button>
+      <button class="btn" data-tree="2">树2: 双重心</button>
+      <button class="btn" data-tree="3">树3: 偶数节点</button>
+    </div>
+    <p class="hint" id="centroidInfo">橙色节点为重心</p>
+  </div>
+</div>
+
+<style>
+  .tree-centroid-two-demo {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #f59e0b;
+  }
+  .tree-centroid-two-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-centroid-two-demo .badge {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-centroid-two-demo .title {
+    font-weight: 600;
+    color: #92400e;
+  }
+  .tree-centroid-two-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-centroid-two-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-centroid-two-demo .info-box {
+    margin: 10px 0;
+    padding: 10px;
+    background: #fffbeb;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    border: 1px solid #fde68a;
+  }
+  .tree-centroid-two-demo .info-box p {
+    margin: 4px 0;
+    color: #92400e;
+  }
+  .tree-centroid-two-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .tree-centroid-two-demo .btn {
+    padding: 6px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    color: #374151;
+  }
+  .tree-centroid-two-demo .btn:hover {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .tree-centroid-two-demo .btn.active {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: white;
+  }
+  .tree-centroid-two-demo .hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('twoCentroidCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 480;
+  canvas.height = 200;
+
+  // 三种不同的树
+  const trees = {
+    1: {
+      nodes: [
+        { x: 240, y: 40, label: 'A' },
+        { x: 120, y: 100, label: 'B' },
+        { x: 360, y: 100, label: 'C' },
+        { x: 60, y: 160, label: 'D' },
+        { x: 160, y: 160, label: 'E' },
+        { x: 300, y: 160, label: 'F' },
+        { x: 420, y: 160, label: 'G' },
+        { x: 60, y: 190, label: 'H' },
+      ],
+      edges: [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6], [3,7]],
+      centroids: [1],
+      info: '单重心: 节点 B (n=8, n/2=4)'
+    },
+    2: {
+      nodes: [
+        { x: 200, y: 60, label: 'A' },
+        { x: 280, y: 60, label: 'B' },
+        { x: 120, y: 130, label: 'C' },
+        { x: 200, y: 130, label: 'D' },
+        { x: 280, y: 130, label: 'E' },
+        { x: 360, y: 130, label: 'F' },
+        { x: 80, y: 180, label: 'G' },
+        { x: 400, y: 180, label: 'H' },
+      ],
+      edges: [[0,2], [0,3], [0,1], [1,4], [1,5], [2,6], [5,7]],
+      centroids: [0, 1],
+      info: '双重心: 节点 A 和 B 相邻 (n=8)'
+    },
+    3: {
+      nodes: [
+        { x: 240, y: 40, label: 'A' },
+        { x: 160, y: 100, label: 'B' },
+        { x: 320, y: 100, label: 'C' },
+        { x: 80, y: 160, label: 'D' },
+        { x: 160, y: 160, label: 'E' },
+        { x: 320, y: 160, label: 'F' },
+        { x: 400, y: 160, label: 'G' },
+        { x: 80, y: 190, label: 'H' },
+        { x: 400, y: 190, label: 'I' },
+      ],
+      edges: [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6], [3,7], [6,8]],
+      centroids: [0],
+      info: '奇数节点树通常单重心 (n=9, n/2=4.5)'
+    }
+  };
+
+  let currentTree = '1';
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const tree = trees[currentTree];
+
+    // 绘制边
+    tree.edges.forEach(([u, v]) => {
+      ctx.beginPath();
+      ctx.moveTo(tree.nodes[u].x, tree.nodes[u].y);
+      ctx.lineTo(tree.nodes[v].x, tree.nodes[v].y);
+
+      // 双重心之间的边高亮
+      if (tree.centroids.length === 2 &&
+          tree.centroids.includes(u) && tree.centroids.includes(v)) {
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 4;
+      } else {
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+      }
+      ctx.stroke();
+    });
+
+    // 绘制节点
+    tree.nodes.forEach((node, id) => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 18, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (tree.centroids.includes(id)) {
+        fill = '#f97316';
+      }
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 重心标记
+      if (tree.centroids.includes(id)) {
+        ctx.fillStyle = '#f97316';
+        ctx.font = 'bold 9px Arial';
+        ctx.fillText('重心', node.x, node.y - 26);
+      }
+    });
+
+    document.getElementById('centroidInfo').textContent = tree.info;
+  }
+
+  document.querySelectorAll('.tree-centroid-two-demo [data-tree]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-centroid-two-demo [data-tree]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTree = btn.dataset.tree;
+      draw();
+    });
+  });
+
+  draw();
+</script>

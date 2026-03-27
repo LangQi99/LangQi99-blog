@@ -1,0 +1,448 @@
+---
+// Kruskal 算法可视化演示
+---
+
+<div class="mst-kruskal-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">Kruskal 算法</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="kruskalCanvas"></canvas>
+    <div class="edge-list" id="kruskalEdgeList">
+      <div class="edge-list-header">边列表（按权重排序）</div>
+      <div class="edge-items" id="edgeItems"></div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="startKruskalBtn">▶ 开始演示</button>
+      <button class="btn" id="stepKruskalBtn">下一步</button>
+      <button class="btn danger" id="resetKruskalBtn">重置</button>
+    </div>
+    <div class="result" id="kruskalResult">
+      <div class="result-row">
+        <span class="label">已选边数：</span>
+        <span class="value" id="edgeCount">0</span>
+        <span class="label">/ 5</span>
+      </div>
+      <div class="result-row">
+        <span class="label">当前总权重：</span>
+        <span class="value" id="totalWeight">0</span>
+      </div>
+    </div>
+    <p class="hint" id="kruskalHint">点击"开始演示"查看 Kruskal 算法执行过程</p>
+  </div>
+</div>
+
+<style>
+  .mst-kruskal-demo {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #f59e0b;
+  }
+  .mst-kruskal-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .mst-kruskal-demo .badge {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .mst-kruskal-demo .title {
+    font-weight: 600;
+    color: #92400e;
+  }
+  .mst-kruskal-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .mst-kruskal-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 6px;
+    border: 1px solid #bae6fd;
+  }
+  .mst-kruskal-demo .edge-list {
+    margin-top: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .mst-kruskal-demo .edge-list-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+  .mst-kruskal-demo .edge-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .mst-kruskal-demo .edge-item {
+    padding: 4px 10px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+  }
+  .mst-kruskal-demo .edge-item.current {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    transform: scale(1.05);
+  }
+  .mst-kruskal-demo .edge-item.selected {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+  .mst-kruskal-demo .edge-item.skipped {
+    background: #fee2e2;
+    border-color: #ef4444;
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+  .mst-kruskal-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .mst-kruskal-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #374151;
+    transition: all 0.2s;
+  }
+  .mst-kruskal-demo .btn:hover {
+    background: #d1d5db;
+  }
+  .mst-kruskal-demo .btn.primary {
+    background: #f97316;
+    color: white;
+  }
+  .mst-kruskal-demo .btn.primary:hover {
+    background: #ea580c;
+  }
+  .mst-kruskal-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .mst-kruskal-demo .btn.danger:hover {
+    background: #dc2626;
+  }
+  .mst-kruskal-demo .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .mst-kruskal-demo .result {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f0f9ff;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .mst-kruskal-demo .result-row {
+    font-size: 0.85rem;
+  }
+  .mst-kruskal-demo .result .label {
+    color: #0369a1;
+  }
+  .mst-kruskal-demo .result .value {
+    color: #0c4a6e;
+    font-family: monospace;
+    font-weight: 600;
+  }
+  .mst-kruskal-demo .hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('kruskalCanvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  canvas.width = 480;
+  canvas.height = 320;
+
+  // 节点定义
+  const nodes = [
+    { id: 0, x: 240, y: 60, label: 'A' },
+    { id: 1, x: 120, y: 140, label: 'B' },
+    { id: 2, x: 360, y: 140, label: 'C' },
+    { id: 3, x: 60, y: 240, label: 'D' },
+    { id: 4, x: 180, y: 260, label: 'E' },
+    { id: 5, x: 300, y: 240, label: 'F' },
+  ];
+
+  // 边定义 (u, v, weight)
+  interface Edge {
+    u: number;
+    v: number;
+    w: number;
+  }
+
+  const edges: Edge[] = [
+    { u: 0, v: 1, w: 4 },
+    { u: 0, v: 2, w: 2 },
+    { u: 1, v: 2, w: 1 },
+    { u: 1, v: 3, w: 5 },
+    { u: 1, v: 4, w: 3 },
+    { u: 2, v: 4, w: 6 },
+    { u: 2, v: 5, w: 7 },
+    { u: 3, v: 4, w: 2 },
+    { u: 4, v: 5, w: 4 },
+  ];
+
+  // 按权重排序的边
+  let sortedEdges: Edge[] = [];
+  let currentEdgeIndex: number = -1;
+  let selectedEdges: number[] = [];
+  let skippedEdges: number[] = [];
+  let parent: number[] = [];
+  let phase: number = 0; // 0: 初始, 1: 运行中, 2: 完成
+  let animating: boolean = false;
+
+  // 并查集
+  function find(x: number): number {
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  }
+
+  function unite(x: number, y: number): boolean {
+    const px = find(x), py = find(y);
+    if (px === py) return false;
+    parent[px] = py;
+    return true;
+  }
+
+  function init(): void {
+    sortedEdges = [...edges].sort((a, b) => a.w - b.w);
+    currentEdgeIndex = -1;
+    selectedEdges = [];
+    skippedEdges = [];
+    parent = nodes.map((_, i) => i);
+    phase = 0;
+
+    updateEdgeListUI();
+    updateResultUI();
+    draw();
+  }
+
+  function updateEdgeListUI(): void {
+    const container = document.getElementById('edgeItems')!;
+    container.innerHTML = '';
+
+    sortedEdges.forEach((edge, idx) => {
+      const item = document.createElement('div');
+      item.className = 'edge-item';
+      item.textContent = `${nodes[edge.u].label}-${nodes[edge.v].label}:${edge.w}`;
+
+      if (idx === currentEdgeIndex) item.classList.add('current');
+      if (selectedEdges.includes(idx)) {
+        item.classList.remove('current');
+        item.classList.add('selected');
+      }
+      if (skippedEdges.includes(idx)) {
+        item.classList.remove('current');
+        item.classList.add('skipped');
+      }
+
+      container.appendChild(item);
+    });
+  }
+
+  function updateResultUI(): void {
+    document.getElementById('edgeCount')!.textContent = String(selectedEdges.length);
+    const total = selectedEdges.reduce((sum, idx) => sum + sortedEdges[idx].w, 0);
+    document.getElementById('totalWeight')!.textContent = String(total);
+  }
+
+  function draw(): void {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach((edge) => {
+      const u = nodes[edge.u];
+      const v = nodes[edge.v];
+
+      const isSelected = selectedEdges.some(i => {
+        const e = sortedEdges[i];
+        return (e.u === edge.u && e.v === edge.v) || (e.u === edge.v && e.v === edge.u);
+      });
+      const isSkipped = skippedEdges.some(i => {
+        const e = sortedEdges[i];
+        return (e.u === edge.u && e.v === edge.v) || (e.u === edge.v && e.v === edge.u);
+      });
+      const isCurrent = currentEdgeIndex >= 0 &&
+        ((sortedEdges[currentEdgeIndex].u === edge.u && sortedEdges[currentEdgeIndex].v === edge.v) ||
+         (sortedEdges[currentEdgeIndex].u === edge.v && sortedEdges[currentEdgeIndex].v === edge.u));
+
+      ctx.beginPath();
+      ctx.moveTo(u.x, u.y);
+      ctx.lineTo(v.x, v.y);
+
+      if (isSelected) {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 4;
+      } else if (isSkipped) {
+        ctx.strokeStyle = '#fca5a5';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+      } else if (isCurrent) {
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 3;
+      } else {
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+      }
+
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 绘制权重标签
+      const midX = (u.x + v.x) / 2;
+      const midY = (u.y + v.y) / 2;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(midX - 12, midY - 10, 24, 16);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(midX - 12, midY - 10, 24, 16);
+      ctx.fillStyle = '#374151';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(edge.w), midX, midY - 2);
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      // 阴影
+      ctx.beginPath();
+      ctx.arc(node.x + 2, node.y + 2, 22, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fill();
+
+      // 节点
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 22, 0, 2 * Math.PI);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 标签
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示并查集根
+      if (phase >= 1) {
+        const root = find(node.id);
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px Arial';
+        ctx.fillText(`root:${nodes[root].label}`, node.x, node.y + 32);
+      }
+    });
+
+    // 标题
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    if (phase === 0) {
+      ctx.fillText('初始状态：带权无向图', canvas.width / 2, 20);
+    } else if (phase === 1) {
+      ctx.fillText('Kruskal 算法执行中...', canvas.width / 2, 20);
+    } else {
+      ctx.fillText('最小生成树构建完成！', canvas.width / 2, 20);
+    }
+  }
+
+  function step(): void {
+    if (phase === 2) return;
+
+    currentEdgeIndex++;
+
+    if (currentEdgeIndex >= sortedEdges.length) {
+      phase = 2;
+      document.getElementById('kruskalHint')!.textContent =
+        `完成！最小生成树总权重 = ${selectedEdges.reduce((s, i) => s + sortedEdges[i].w, 0)}`;
+      draw();
+      return;
+    }
+
+    phase = 1;
+    const edge = sortedEdges[currentEdgeIndex];
+
+    // 检查是否会形成环
+    if (unite(edge.u, edge.v)) {
+      selectedEdges.push(currentEdgeIndex);
+      document.getElementById('kruskalHint')!.textContent =
+        `边 ${nodes[edge.u].label}-${nodes[edge.v].label} 权重 ${edge.w}：加入（不形成环）`;
+    } else {
+      skippedEdges.push(currentEdgeIndex);
+      document.getElementById('kruskalHint')!.textContent =
+        `边 ${nodes[edge.u].label}-${nodes[edge.v].label} 权重 ${edge.w}：跳过（会形成环）`;
+    }
+
+    // 检查是否完成
+    if (selectedEdges.length === nodes.length - 1) {
+      phase = 2;
+      document.getElementById('kruskalHint')!.textContent =
+        `完成！最小生成树总权重 = ${selectedEdges.reduce((s, i) => s + sortedEdges[i].w, 0)}`;
+    }
+
+    updateEdgeListUI();
+    updateResultUI();
+    draw();
+  }
+
+  function autoRun(): void {
+    if (animating || phase === 2) return;
+    animating = true;
+
+    function runStep(): void {
+      if (phase === 2) {
+        animating = false;
+        return;
+      }
+      step();
+      setTimeout(runStep, 800);
+    }
+    runStep();
+  }
+
+  document.getElementById('startKruskalBtn')!.addEventListener('click', autoRun);
+  document.getElementById('stepKruskalBtn')!.addEventListener('click', step);
+  document.getElementById('resetKruskalBtn')!.addEventListener('click', () => {
+    animating = false;
+    init();
+    document.getElementById('kruskalHint')!.textContent = '点击"开始演示"查看 Kruskal 算法执行过程';
+  });
+
+  init();
+</script>

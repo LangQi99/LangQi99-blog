@@ -1,0 +1,538 @@
+---
+// Prim 算法可视化演示
+---
+
+<div class="mst-prim-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">Prim 算法</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="primCanvas"></canvas>
+    <div class="info-panel">
+      <div class="info-section">
+        <div class="info-title">已加入集合 S</div>
+        <div class="info-items" id="inSetS">
+          <span class="empty">（空）</span>
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="info-title">候选边</div>
+        <div class="info-items" id="candidateEdges">
+          <span class="empty">（空）</span>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="startPrimBtn">▶ 开始演示</button>
+      <button class="btn" id="stepPrimBtn">下一步</button>
+      <button class="btn danger" id="resetPrimBtn">重置</button>
+    </div>
+    <div class="result" id="primResult">
+      <div class="result-row">
+        <span class="label">已加入节点：</span>
+        <span class="value" id="nodeCount">0</span>
+        <span class="label">/ 6</span>
+      </div>
+      <div class="result-row">
+        <span class="label">当前总权重：</span>
+        <span class="value" id="primWeight">0</span>
+      </div>
+    </div>
+    <p class="hint" id="primHint">点击"开始演示"查看 Prim 算法执行过程</p>
+  </div>
+</div>
+
+<style>
+  .mst-prim-demo {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #3b82f6;
+  }
+  .mst-prim-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .mst-prim-demo .badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .mst-prim-demo .title {
+    font-weight: 600;
+    color: #1e40af;
+  }
+  .mst-prim-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .mst-prim-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #fefce8 0%, #fef9c3 100%);
+    border-radius: 6px;
+    border: 1px solid #fde047;
+  }
+  .mst-prim-demo .info-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .mst-prim-demo .info-section {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .mst-prim-demo .info-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+  }
+  .mst-prim-demo .info-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 24px;
+  }
+  .mst-prim-demo .info-items .empty {
+    color: #94a3b8;
+    font-size: 0.75rem;
+  }
+  .mst-prim-demo .info-items .item {
+    padding: 2px 8px;
+    background: #e0f2fe;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-family: monospace;
+    color: #0369a1;
+  }
+  .mst-prim-demo .info-items .item.best {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 600;
+  }
+  .mst-prim-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .mst-prim-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #e5e7eb;
+    color: #374151;
+    transition: all 0.2s;
+  }
+  .mst-prim-demo .btn:hover {
+    background: #d1d5db;
+  }
+  .mst-prim-demo .btn.primary {
+    background: #3b82f6;
+    color: white;
+  }
+  .mst-prim-demo .btn.primary:hover {
+    background: #2563eb;
+  }
+  .mst-prim-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .mst-prim-demo .btn.danger:hover {
+    background: #dc2626;
+  }
+  .mst-prim-demo .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .mst-prim-demo .result {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f0fdf4;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .mst-prim-demo .result-row {
+    font-size: 0.85rem;
+  }
+  .mst-prim-demo .result .label {
+    color: #166534;
+  }
+  .mst-prim-demo .result .value {
+    color: #14532d;
+    font-family: monospace;
+    font-weight: 600;
+  }
+  .mst-prim-demo .hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('primCanvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  canvas.width = 480;
+  canvas.height = 300;
+
+  // 节点定义
+  interface Node {
+    id: number;
+    x: number;
+    y: number;
+    label: string;
+  }
+
+  interface Edge {
+    u: number;
+    v: number;
+    w: number;
+  }
+
+  interface AdjItem {
+    v: number;
+    w: number;
+  }
+
+  const nodes: Node[] = [
+    { id: 0, x: 240, y: 50, label: 'A' },
+    { id: 1, x: 120, y: 120, label: 'B' },
+    { id: 2, x: 360, y: 120, label: 'C' },
+    { id: 3, x: 60, y: 220, label: 'D' },
+    { id: 4, x: 180, y: 240, label: 'E' },
+    { id: 5, x: 300, y: 220, label: 'F' },
+  ];
+
+  // 边定义 (u, v, weight)
+  const edges: Edge[] = [
+    { u: 0, v: 1, w: 4 },
+    { u: 0, v: 2, w: 2 },
+    { u: 1, v: 2, w: 1 },
+    { u: 1, v: 3, w: 5 },
+    { u: 1, v: 4, w: 3 },
+    { u: 2, v: 4, w: 6 },
+    { u: 2, v: 5, w: 7 },
+    { u: 3, v: 4, w: 2 },
+    { u: 4, v: 5, w: 4 },
+  ];
+
+  // 邻接表
+  const adj: Record<number, AdjItem[]> = {};
+  nodes.forEach(n => adj[n.id] = []);
+  edges.forEach(e => {
+    adj[e.u].push({ v: e.v, w: e.w });
+    adj[e.v].push({ v: e.u, w: e.w });
+  });
+
+  // 算法状态
+  let inMST: boolean[] = [];
+  let minDist: number[] = [];
+  let parent: number[] = [];
+  let mstEdges: Edge[] = [];
+  let phase: number = 0; // 0: 初始, 1: 运行中, 2: 完成
+  let currentNode: number | null = null;
+  let candidateEdges: Edge[] = [];
+  let bestEdge: Edge | null = null;
+  let animating: boolean = false;
+
+  function init(): void {
+    inMST = new Array(nodes.length).fill(false);
+    minDist = new Array(nodes.length).fill(Infinity);
+    parent = new Array(nodes.length).fill(-1);
+    mstEdges = [];
+    phase = 0;
+    currentNode = null;
+    candidateEdges = [];
+    bestEdge = null;
+
+    updateInfoUI();
+    updateResultUI();
+    draw();
+  }
+
+  function updateInfoUI(): void {
+    // 已加入集合
+    const inSetContainer = document.getElementById('inSetS')!;
+    const inSetNodes = nodes.filter(n => inMST[n.id]);
+    if (inSetNodes.length === 0) {
+      inSetContainer.innerHTML = '<span class="empty">（空）</span>';
+    } else {
+      inSetContainer.innerHTML = inSetNodes.map(n =>
+        `<span class="item">${n.label}</span>`
+      ).join('');
+    }
+
+    // 候选边
+    const candContainer = document.getElementById('candidateEdges')!;
+    if (candidateEdges.length === 0) {
+      candContainer.innerHTML = '<span class="empty">（空）</span>';
+    } else {
+      const sorted = [...candidateEdges].sort((a, b) => a.w - b.w);
+      candContainer.innerHTML = sorted.map(e =>
+        `<span class="item ${e === bestEdge ? 'best' : ''}">${nodes[e.u].label}-${nodes[e.v].label}:${e.w}</span>`
+      ).join('');
+    }
+  }
+
+  function updateResultUI(): void {
+    const count = inMST.filter(x => x).length;
+    document.getElementById('nodeCount')!.textContent = String(count);
+    const total = mstEdges.reduce((s, e) => s + e.w, 0);
+    document.getElementById('primWeight')!.textContent = String(total);
+  }
+
+  function draw(): void {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(edge => {
+      const u = nodes[edge.u];
+      const v = nodes[edge.v];
+
+      const isInMST = mstEdges.some(e =>
+        (e.u === edge.u && e.v === edge.v) || (e.u === edge.v && e.v === edge.u)
+      );
+      const isCandidate = candidateEdges.some(e =>
+        (e.u === edge.u && e.v === edge.v) || (e.u === edge.v && e.v === edge.u)
+      );
+      const isBest = bestEdge &&
+        ((bestEdge.u === edge.u && bestEdge.v === edge.v) || (bestEdge.u === edge.v && bestEdge.v === edge.u));
+
+      ctx.beginPath();
+      ctx.moveTo(u.x, u.y);
+      ctx.lineTo(v.x, v.y);
+
+      if (isInMST) {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 4;
+      } else if (isBest) {
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 3;
+      } else if (isCandidate) {
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+      } else {
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+      }
+
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 权重标签
+      const midX = (u.x + v.x) / 2;
+      const midY = (u.y + v.y) / 2;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(midX, midY, 12, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = isInMST ? '#22c55e' : '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#374151';
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(edge.w), midX, midY);
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      // 阴影
+      ctx.beginPath();
+      ctx.arc(node.x + 2, node.y + 2, 22, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fill();
+
+      // 节点
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 22, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (inMST[node.id]) fill = '#22c55e';
+      if (node.id === currentNode) fill = '#f97316';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 标签
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示 minDist
+      if (phase >= 1 && !inMST[node.id] && minDist[node.id] < Infinity) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px Arial';
+        ctx.fillText(`d=${minDist[node.id]}`, node.x, node.y + 32);
+      }
+    });
+
+    // 集合标签
+    if (phase >= 1) {
+      ctx.fillStyle = '#166534';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('集合 S = {' + nodes.filter(n => inMST[n.id]).map(n => n.label).join(', ') + '}', 10, 20);
+    }
+
+    // 标题
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    if (phase === 0) {
+      ctx.fillText('初始状态：从节点 A 开始', canvas.width / 2, canvas.height - 15);
+    } else if (phase === 1) {
+      ctx.fillText('Prim 算法执行中...', canvas.width / 2, canvas.height - 15);
+    } else {
+      ctx.fillText('最小生成树构建完成！', canvas.width / 2, canvas.height - 15);
+    }
+  }
+
+  function findMinEdge(): Edge | null {
+    let minW = Infinity;
+    let minEdge: Edge | null = null;
+
+    for (let edge of candidateEdges) {
+      if (edge.w < minW) {
+        minW = edge.w;
+        minEdge = edge;
+      }
+    }
+
+    return minEdge;
+  }
+
+  function step(): void {
+    if (phase === 2) return;
+
+    if (phase === 0) {
+      // 初始化：从节点 A 开始
+      phase = 1;
+      inMST[0] = true;
+      currentNode = 0;
+
+      // 更新候选边
+      candidateEdges = [];
+      for (let { v, w } of adj[0]) {
+        if (!inMST[v]) {
+          candidateEdges.push({ u: 0, v, w });
+          minDist[v] = w;
+          parent[v] = 0;
+        }
+      }
+
+      bestEdge = findMinEdge();
+      document.getElementById('primHint')!.textContent =
+        `节点 A 加入集合 S，更新候选边`;
+    } else {
+      // 选择最小候选边
+      bestEdge = findMinEdge();
+
+      if (!bestEdge) {
+        phase = 2;
+        document.getElementById('primHint')!.textContent =
+          `完成！最小生成树总权重 = ${mstEdges.reduce((s, e) => s + e.w, 0)}`;
+        draw();
+        updateInfoUI();
+        updateResultUI();
+        return;
+      }
+
+      // 加入新节点
+      const newNode = bestEdge.v;
+      inMST[newNode] = true;
+      mstEdges.push(bestEdge);
+      currentNode = newNode;
+
+      // 从候选边中移除已连接的边
+      candidateEdges = candidateEdges.filter(e => !inMST[e.v]);
+
+      // 更新候选边
+      for (let { v, w } of adj[newNode]) {
+        if (!inMST[v]) {
+          // 检查是否已有更短的边
+          const existing = candidateEdges.find(e => e.v === v);
+          if (!existing) {
+            candidateEdges.push({ u: newNode, v, w });
+            minDist[v] = w;
+            parent[v] = newNode;
+          } else if (w < existing.w) {
+            existing.u = newNode;
+            existing.w = w;
+            minDist[v] = w;
+            parent[v] = newNode;
+          }
+        }
+      }
+
+      bestEdge = findMinEdge();
+
+      const lastEdge = mstEdges[mstEdges.length - 1];
+      document.getElementById('primHint')!.textContent =
+        `选中边 ${nodes[lastEdge.u].label}-${nodes[newNode].label} (权重 ${lastEdge.w})，节点 ${nodes[newNode].label} 加入集合 S`;
+
+      // 检查是否完成
+      if (inMST.every(x => x)) {
+        phase = 2;
+        document.getElementById('primHint')!.textContent =
+          `完成！最小生成树总权重 = ${mstEdges.reduce((s, e) => s + e.w, 0)}`;
+      }
+    }
+
+    draw();
+    updateInfoUI();
+    updateResultUI();
+  }
+
+  function autoRun(): void {
+    if (animating || phase === 2) return;
+    animating = true;
+
+    function runStep(): void {
+      if (phase === 2) {
+        animating = false;
+        return;
+      }
+      step();
+      setTimeout(runStep, 800);
+    }
+    runStep();
+  }
+
+  document.getElementById('startPrimBtn')!.addEventListener('click', autoRun);
+  document.getElementById('stepPrimBtn')!.addEventListener('click', step);
+  document.getElementById('resetPrimBtn')!.addEventListener('click', () => {
+    animating = false;
+    init();
+    document.getElementById('primHint')!.textContent = '点击"开始演示"查看 Prim 算法执行过程';
+  });
+
+  init();
+</script>

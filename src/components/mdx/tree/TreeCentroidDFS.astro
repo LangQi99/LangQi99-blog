@@ -1,0 +1,315 @@
+---
+// 树的重心演示：DFS求重心
+---
+
+<div class="tree-centroid-dfs-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">DFS 求重心</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="centroidDfsCanvas"></canvas>
+    <div class="formula">
+      <code>size[u] = 1 + Σ size[v]</code>
+      <span class="note">up_size = n - size[u]</span>
+    </div>
+    <div class="size-table" id="sizeTable">
+      <div class="row header">
+        <span>节点</span>
+        <span>size</span>
+        <span>max_part</span>
+        <span>重心?</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="runDfsBtn">▶ 运行 DFS</button>
+      <button class="btn" id="stepDfsBtn">下一步</button>
+      <button class="btn danger" id="resetDfsBtn">重置</button>
+    </div>
+    <p class="hint">重心条件: max_part ≤ n/2</p>
+  </div>
+</div>
+
+<style>
+  .tree-centroid-dfs-demo {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #22c55e;
+  }
+  .tree-centroid-dfs-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-centroid-dfs-demo .badge {
+    background: #22c55e;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-centroid-dfs-demo .title {
+    font-weight: 600;
+    color: #166534;
+  }
+  .tree-centroid-dfs-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-centroid-dfs-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-centroid-dfs-demo .formula {
+    text-align: center;
+    margin: 8px 0;
+    font-size: 0.8rem;
+  }
+  .tree-centroid-dfs-demo .formula code {
+    background: #dcfce7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #166534;
+  }
+  .tree-centroid-dfs-demo .formula .note {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-left: 10px;
+  }
+  .tree-centroid-dfs-demo .size-table {
+    margin: 10px 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.75rem;
+  }
+  .tree-centroid-dfs-demo .size-table .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .tree-centroid-dfs-demo .size-table .row:last-child {
+    border-bottom: none;
+  }
+  .tree-centroid-dfs-demo .size-table .row span {
+    padding: 6px;
+    text-align: center;
+  }
+  .tree-centroid-dfs-demo .size-table .row.header {
+    background: #dcfce7;
+    font-weight: 600;
+  }
+  .tree-centroid-dfs-demo .size-table .row.centroid {
+    background: #fef3c7;
+  }
+  .tree-centroid-dfs-demo .size-table .row.processing {
+    background: #e0f2fe;
+  }
+  .tree-centroid-dfs-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .tree-centroid-dfs-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .tree-centroid-dfs-demo .btn.primary {
+    background: #22c55e;
+    color: white;
+  }
+  .tree-centroid-dfs-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .tree-centroid-dfs-demo .hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('centroidDfsCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 480;
+  canvas.height = 200;
+
+  // 以0为根的树
+  const nodes = [
+    { id: 0, x: 240, y: 40, label: 'A', children: [1, 2] },
+    { id: 1, x: 120, y: 100, label: 'B', children: [3, 4] },
+    { id: 2, x: 360, y: 100, label: 'C', children: [5, 6] },
+    { id: 3, x: 60, y: 160, label: 'D', children: [7] },
+    { id: 4, x: 160, y: 160, label: 'E', children: [] },
+    { id: 5, x: 300, y: 160, label: 'F', children: [] },
+    { id: 6, x: 420, y: 160, label: 'G', children: [8] },
+    { id: 7, x: 30, y: 190, label: 'H', children: [] },
+    { id: 8, x: 450, y: 190, label: 'I', children: [] },
+  ];
+
+  const edges = [
+    [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [6, 8]
+  ];
+
+  const n = nodes.length;
+  let sizes = {};
+  let maxParts = {};
+  let centroids = [];
+  let dfsOrder = [7, 8, 3, 4, 1, 5, 6, 2, 0]; // 后序遍历
+  let currentStep = -1;
+  let processingNode = null;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(([u, v]) => {
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+      if (sizes[node.id] !== undefined) fill = '#86efac';
+      if (node.id === processingNode) fill = '#fbbf24';
+      if (centroids.includes(node.id)) fill = '#22c55e';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示size
+      if (sizes[node.id] !== undefined) {
+        ctx.fillStyle = '#374151';
+        ctx.font = '9px Arial';
+        ctx.fillText(`sz=${sizes[node.id]}`, node.x, node.y + 24);
+      }
+    });
+  }
+
+  function updateTable() {
+    const table = document.getElementById('sizeTable');
+    let html = `
+      <div class="row header">
+        <span>节点</span>
+        <span>size</span>
+        <span>max_part</span>
+        <span>重心?</span>
+      </div>
+    `;
+
+    const processed = dfsOrder.slice(0, currentStep + 1);
+    processed.forEach(id => {
+      const isCentroid = centroids.includes(id);
+      const isProcessing = id === processingNode;
+      html += `
+        <div class="row ${isCentroid ? 'centroid' : ''} ${isProcessing ? 'processing' : ''}">
+          <span>${nodes[id].label}</span>
+          <span>${sizes[id]}</span>
+          <span>${maxParts[id]}</span>
+          <span>${isCentroid ? '✓' : ''}</span>
+        </div>
+      `;
+    });
+
+    table.innerHTML = html;
+  }
+
+  // DFS计算size和判断重心
+  function calcSize(nodeId) {
+    const node = nodes[nodeId];
+    let size = 1;
+    let maxPart = 0;
+
+    // 计算子树size
+    for (let childId of node.children) {
+      if (sizes[childId] === undefined) return null;
+      size += sizes[childId];
+      maxPart = Math.max(maxPart, sizes[childId]);
+    }
+
+    // 计算向上的部分
+    const upPart = n - size;
+    maxPart = Math.max(maxPart, upPart);
+
+    sizes[nodeId] = size;
+    maxParts[nodeId] = maxPart;
+
+    // 判断是否为重心
+    if (maxPart <= n / 2) {
+      centroids.push(nodeId);
+    }
+
+    return size;
+  }
+
+  function step() {
+    if (currentStep >= dfsOrder.length - 1) return;
+
+    currentStep++;
+    processingNode = dfsOrder[currentStep];
+    calcSize(processingNode);
+
+    draw();
+    updateTable();
+    processingNode = null;
+  }
+
+  function autoRun() {
+    if (currentStep >= dfsOrder.length - 1) return;
+    step();
+    setTimeout(autoRun, 400);
+  }
+
+  document.getElementById('runDfsBtn').addEventListener('click', () => {
+    if (currentStep < dfsOrder.length - 1) {
+      autoRun();
+    }
+  });
+
+  document.getElementById('stepDfsBtn').addEventListener('click', step);
+
+  document.getElementById('resetDfsBtn').addEventListener('click', () => {
+    sizes = {};
+    maxParts = {};
+    centroids = [];
+    currentStep = -1;
+    processingNode = null;
+    draw();
+    updateTable();
+  });
+
+  draw();
+</script>

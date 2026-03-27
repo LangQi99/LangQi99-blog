@@ -77,22 +77,23 @@
     border-radius: 6px;
   }
   .tree-diameter-dfs-demo .steps {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     margin: 12px 0;
-    flex-wrap: wrap;
   }
   .tree-diameter-dfs-demo .step {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: 4px;
+    padding: 8px;
     background: #f1f5f9;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
     border: 2px solid transparent;
     transition: all 0.3s;
+    text-align: center;
   }
   .tree-diameter-dfs-demo .step.active {
     background: #eef2ff;
@@ -106,12 +107,15 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     background: #cbd5e1;
     border-radius: 50%;
     font-weight: 600;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+  }
+  .tree-diameter-dfs-demo .step .text {
+    line-height: 1.2;
   }
   .tree-diameter-dfs-demo .step.active .num {
     background: #6366f1;

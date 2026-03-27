@@ -1,0 +1,385 @@
+---
+// 树的重心演示：定义与重量计算
+---
+
+<div class="tree-centroid-def-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">树的重心</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="centroidDefCanvas"></canvas>
+    <div class="info-panel">
+      <div class="info-row">
+        <span class="label">当前选中：</span>
+        <span class="value" id="selectedNode">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">最大连通块：</span>
+        <span class="value" id="maxComponent">-</span>
+      </div>
+      <div class="info-row">
+        <span class="label">是否为重心：</span>
+        <span class="value" id="isCentroid">-</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="findCentroidBtn">寻找重心</button>
+      <button class="btn danger" id="resetCentroidBtn">重置</button>
+    </div>
+    <p class="hint">点击节点查看删除后的连通块大小</p>
+  </div>
+</div>
+
+<style>
+  .tree-centroid-def-demo {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #ec4899;
+  }
+  .tree-centroid-def-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-centroid-def-demo .badge {
+    background: #ec4899;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-centroid-def-demo .title {
+    font-weight: 600;
+    color: #9d174d;
+  }
+  .tree-centroid-def-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-centroid-def-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-centroid-def-demo .info-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+    text-align: center;
+  }
+  .tree-centroid-def-demo .info-row {
+    padding: 8px;
+    background: #fdf2f8;
+    border-radius: 6px;
+    font-size: 0.8rem;
+  }
+  .tree-centroid-def-demo .info-row .label {
+    display: block;
+    color: #9d174d;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tree-centroid-def-demo .info-row .value {
+    color: #374151;
+    font-family: monospace;
+  }
+  .tree-centroid-def-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .tree-centroid-def-demo .btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .tree-centroid-def-demo .btn.primary {
+    background: #ec4899;
+    color: white;
+  }
+  .tree-centroid-def-demo .btn.danger {
+    background: #ef4444;
+    color: white;
+  }
+  .tree-centroid-def-demo .hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+  }
+  .tree-centroid-def-demo .centroid {
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('centroidDefCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 480;
+  canvas.height = 280;
+
+  // 树结构
+  const nodes = [
+    { id: 0, x: 240, y: 50, label: 'A' },
+    { id: 1, x: 120, y: 120, label: 'B' },
+    { id: 2, x: 360, y: 120, label: 'C' },
+    { id: 3, x: 60, y: 190, label: 'D' },
+    { id: 4, x: 160, y: 190, label: 'E' },
+    { id: 5, x: 300, y: 190, label: 'F' },
+    { id: 6, x: 420, y: 190, label: 'G' },
+    { id: 7, x: 60, y: 260, label: 'H' },
+    { id: 8, x: 420, y: 260, label: 'I' },
+  ];
+
+  const edges = [
+    [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [6, 8]
+  ];
+
+  const adj = {};
+  nodes.forEach(n => adj[n.id] = []);
+  edges.forEach(([u, v]) => {
+    adj[u].push(v);
+    adj[v].push(u);
+  });
+
+  const n = nodes.length;
+  let selectedNode = null;
+  let centroids = [];
+  let componentColors = {};
+
+  // 计算删除某节点后的连通块大小
+  function getComponentSizes(removedNode) {
+    const visited = new Set([removedNode]);
+    const sizes = [];
+
+    for (let start = 0; start < n; start++) {
+      if (visited.has(start)) continue;
+
+      const queue = [start];
+      visited.add(start);
+      let size = 0;
+
+      while (queue.length > 0) {
+        const u = queue.shift();
+        size++;
+
+        for (let v of adj[u]) {
+          if (!visited.has(v)) {
+            visited.add(v);
+            queue.push(v);
+          }
+        }
+      }
+
+      sizes.push(size);
+    }
+
+    return sizes;
+  }
+
+  // 找重心
+  function findCentroids() {
+    centroids = [];
+    for (let i = 0; i < n; i++) {
+      const sizes = getComponentSizes(i);
+      const max = Math.max(...sizes, 0);
+      if (max <= n / 2) {
+        centroids.push(i);
+      }
+    }
+  }
+
+  // 给连通块着色
+  function colorComponents(removedNode) {
+    componentColors = {};
+    const visited = new Set([removedNode]);
+    const colors = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+    let colorIndex = 0;
+
+    for (let start = 0; start < n; start++) {
+      if (visited.has(start)) continue;
+
+      const queue = [start];
+      visited.add(start);
+      const component = [start];
+
+      while (queue.length > 0) {
+        const u = queue.shift();
+        for (let v of adj[u]) {
+          if (!visited.has(v)) {
+            visited.add(v);
+            queue.push(v);
+            component.push(v);
+          }
+        }
+      }
+
+      const color = colors[colorIndex++ % colors.length];
+      component.forEach(id => componentColors[id] = color);
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(([u, v]) => {
+      if (selectedNode !== null && (u === selectedNode || v === selectedNode)) {
+        // 删除的边用虚线
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#d1d5db';
+      } else {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#e5e7eb';
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+
+      let fill = '#94a3b8';
+
+      if (selectedNode === node.id) {
+        fill = '#fbbf24'; // 被删除的节点
+      } else if (centroids.includes(node.id) && selectedNode === null) {
+        fill = '#ec4899'; // 重心
+      } else if (componentColors[node.id]) {
+        fill = componentColors[node.id]; // 连通块颜色
+      }
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 13px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 重心标记
+      if (centroids.includes(node.id) && selectedNode === null) {
+        ctx.fillStyle = '#ec4899';
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText('重心', node.x, node.y - 30);
+      }
+
+      // 连通块大小标记
+      if (selectedNode !== null && selectedNode !== node.id && componentColors[node.id]) {
+        // 找该节点所属连通块的大小
+        const sizes = getComponentSizes(selectedNode);
+        let currentSize = 0;
+        const visited = new Set([selectedNode]);
+        for (let start = 0; start < n; start++) {
+          if (visited.has(start)) continue;
+          const queue = [start];
+          visited.add(start);
+          const component = [start];
+          while (queue.length > 0) {
+            const u = queue.shift();
+            for (let v of adj[u]) {
+              if (!visited.has(v)) {
+                visited.add(v);
+                queue.push(v);
+                component.push(v);
+              }
+            }
+          }
+          if (component.includes(node.id)) {
+            currentSize = component.length;
+            break;
+          }
+        }
+        ctx.fillStyle = componentColors[node.id];
+        ctx.font = '10px Arial';
+        ctx.fillText(`s=${currentSize}`, node.x, node.y + 32);
+      }
+    });
+
+    // 显示n/2参考线
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`n = ${n}, n/2 = ${n/2}`, canvas.width - 10, 20);
+  }
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    for (let node of nodes) {
+      if (Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2) < 22) {
+        selectedNode = node.id;
+        colorComponents(node.id);
+
+        const sizes = getComponentSizes(node.id);
+        const maxSize = Math.max(...sizes, 0);
+        const isCentroid = maxSize <= n / 2;
+
+        document.getElementById('selectedNode').textContent = node.label;
+        document.getElementById('maxComponent').textContent = maxSize + (maxSize > n/2 ? ' > n/2 ❌' : ' ≤ n/2 ✓');
+        document.getElementById('isCentroid').textContent = isCentroid ? '是 ✓' : '否 ✗';
+        document.getElementById('isCentroid').style.color = isCentroid ? '#22c55e' : '#ef4444';
+
+        draw();
+        break;
+      }
+    }
+  });
+
+  document.getElementById('findCentroidBtn').addEventListener('click', () => {
+    selectedNode = null;
+    componentColors = {};
+    findCentroids();
+    draw();
+
+    const labels = centroids.map(id => nodes[id].label).join(', ');
+    document.getElementById('selectedNode').textContent = '-';
+    document.getElementById('maxComponent').textContent = '-';
+    document.getElementById('isCentroid').textContent = centroids.length > 0 ? labels : '无';
+    document.getElementById('isCentroid').style.color = '#ec4899';
+  });
+
+  document.getElementById('resetCentroidBtn').addEventListener('click', () => {
+    selectedNode = null;
+    centroids = [];
+    componentColors = {};
+    draw();
+    document.getElementById('selectedNode').textContent = '-';
+    document.getElementById('maxComponent').textContent = '-';
+    document.getElementById('isCentroid').textContent = '-';
+    document.getElementById('isCentroid').style.color = '#374151';
+  });
+
+  draw();
+</script>
