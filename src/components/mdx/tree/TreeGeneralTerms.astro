@@ -1,0 +1,411 @@
+---
+// 树的通用术语演示（森林、生成树、叶节点、度数）
+---
+
+<div class="tree-general-terms-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">通用术语可视化</span>
+  </div>
+  <div class="demo-content">
+    <canvas id="treeGeneralTermsCanvas"></canvas>
+    <div class="term-buttons">
+      <button data-term="forest">森林</button>
+      <button data-term="spanning">生成树</button>
+      <button data-term="leaf">叶节点</button>
+      <button data-term="degree">度数</button>
+    </div>
+    <div class="explanation" id="generalTermExplanation">
+      <strong>点击上方按钮</strong>查看不同术语的图示说明
+    </div>
+  </div>
+</div>
+
+<style>
+  .tree-general-terms-demo {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #10b981;
+  }
+  .tree-general-terms-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .tree-general-terms-demo .badge {
+    background: #10b981;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tree-general-terms-demo .title {
+    font-weight: 600;
+    color: #065f46;
+  }
+  .tree-general-terms-demo .demo-content {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tree-general-terms-demo canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fafafa;
+    border-radius: 6px;
+  }
+  .tree-general-terms-demo .term-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .tree-general-terms-demo .term-buttons button {
+    padding: 6px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    background: white;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tree-general-terms-demo .term-buttons button:hover {
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+  .tree-general-terms-demo .term-buttons button.active {
+    border-color: #10b981;
+    background: #10b981;
+    color: white;
+  }
+  .tree-general-terms-demo .explanation {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+    color: #475569;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('treeGeneralTermsCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 420;
+  canvas.height = 180;
+
+  // 森林：三棵独立的树
+  const forestNodes = [
+    // 第一棵树
+    { id: 0, x: 60, y: 40, label: 'A', tree: 0 },
+    { id: 1, x: 30, y: 90, label: 'B', tree: 0 },
+    { id: 2, x: 90, y: 90, label: 'C', tree: 0 },
+    // 第二棵树
+    { id: 3, x: 160, y: 50, label: 'D', tree: 1 },
+    { id: 4, x: 140, y: 100, label: 'E', tree: 1 },
+    { id: 5, x: 180, y: 100, label: 'F', tree: 1 },
+    { id: 6, x: 140, y: 150, label: 'G', tree: 1 },
+    // 第三棵树
+    { id: 7, x: 280, y: 60, label: 'H', tree: 2 },
+    { id: 8, x: 260, y: 110, label: 'I', tree: 2 },
+    { id: 9, x: 300, y: 110, label: 'J', tree: 2 },
+    { id: 10, x: 340, y: 110, label: 'K', tree: 2 },
+    { id: 11, x: 300, y: 160, label: 'L', tree: 2 },
+  ];
+
+  const forestEdges = [[0,1], [0,2], [3,4], [3,5], [4,6], [7,8], [7,9], [7,10], [9,11]];
+
+  // 图的节点和边（用于生成树演示）
+  const graphNodes = [
+    { id: 0, x: 210, y: 30, label: '1' },
+    { id: 1, x: 100, y: 90, label: '2' },
+    { id: 2, x: 320, y: 90, label: '3' },
+    { id: 3, x: 50, y: 150, label: '4' },
+    { id: 4, x: 150, y: 150, label: '5' },
+    { id: 5, x: 270, y: 150, label: '6' },
+    { id: 6, x: 370, y: 150, label: '7' },
+  ];
+
+  // 图的所有边（原始图）
+  const allEdges = [
+    [0,1,1], [0,2,1], [1,3,1], [1,4,1], [2,5,1], [2,6,1],
+    [3,4,1], [4,5,1], [5,6,1] // 额外的边（形成环）
+  ];
+
+  // 生成树的边（只保留 n-1 条边）
+  const spanningEdges = [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6]];
+
+  // 叶节点演示的树
+  const leafNodes = [
+    { id: 0, x: 210, y: 30, label: 'A', isLeaf: false },
+    { id: 1, x: 120, y: 90, label: 'B', isLeaf: false },
+    { id: 2, x: 300, y: 90, label: 'C', isLeaf: false },
+    { id: 3, x: 70, y: 150, label: 'D', isLeaf: true },
+    { id: 4, x: 150, y: 150, label: 'E', isLeaf: true },
+    { id: 5, x: 260, y: 150, label: 'F', isLeaf: false },
+    { id: 6, x: 340, y: 150, label: 'G', isLeaf: true },
+    { id: 7, x: 260, y: 180, label: 'H', isLeaf: true },
+    { id: 8, x: 300, y: 180, label: 'I', isLeaf: true },
+  ];
+
+  const leafEdges = [[0,1], [0,2], [1,3], [1,4], [2,5], [2,6], [5,7], [5,8]];
+
+  // 度数演示的树
+  const degreeNodes = [
+    { id: 0, x: 210, y: 40, label: 'A', degree: 4 },
+    { id: 1, x: 80, y: 100, label: 'B', degree: 2 },
+    { id: 2, x: 150, y: 100, label: 'C', degree: 1 },
+    { id: 3, x: 270, y: 100, label: 'D', degree: 1 },
+    { id: 4, x: 340, y: 100, label: 'E', degree: 3 },
+    { id: 5, x: 50, y: 160, label: 'F', degree: 1 },
+    { id: 6, x: 310, y: 160, label: 'G', degree: 1 },
+    { id: 7, x: 370, y: 160, label: 'H', degree: 1 },
+  ];
+
+  const degreeEdges = [[0,1], [0,2], [0,3], [0,4], [1,5], [4,6], [4,7]];
+
+  const explanations = {
+    forest: {
+      text: '<strong>森林 (Forest)</strong>：由多棵独立的树组成的集合。左侧展示了包含 3 棵树的森林，每棵树之间没有连接。',
+      draw: 'forest'
+    },
+    spanning: {
+      text: '<strong>生成树 (Spanning Tree)</strong>：包含图中所有顶点的连通子图，边数为 n-1。红色边为生成树的边，灰色虚线为原图中不在生成树中的边。',
+      draw: 'spanning'
+    },
+    leaf: {
+      text: '<strong>叶节点 (Leaf)</strong>：度数为 1 的节点（橙色标记）。D、E、G、H、I 都是叶节点，它们只与一个节点相连。',
+      draw: 'leaf'
+    },
+    degree: {
+      text: '<strong>度数 (Degree)</strong>：与节点相连的边数。A 的度数为 4（连接 4 条边），E 的度数为 3，B 的度数为 2，其余叶节点度数为 1。',
+      draw: 'degree'
+    },
+  };
+
+  let currentDrawMode = 'none';
+
+  function drawForest() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制分隔框
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(10, 10, 110, 160);
+    ctx.strokeRect(125, 10, 90, 160);
+    ctx.strokeRect(225, 10, 180, 160);
+    ctx.setLineDash([]);
+
+    // 树标签
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText('树1', 55, 20);
+    ctx.fillText('树2', 165, 20);
+    ctx.fillText('树3', 305, 20);
+
+    // 绘制边
+    for (let [u, v] of forestEdges) {
+      ctx.beginPath();
+      ctx.moveTo(forestNodes[u].x, forestNodes[u].y);
+      ctx.lineTo(forestNodes[v].x, forestNodes[v].y);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of forestNodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 14, 0, 2 * Math.PI);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+    }
+  }
+
+  function drawSpanningTree() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制所有边（原图）
+    for (let [u, v, w] of allEdges) {
+      const isSpanning = spanningEdges.some(([a, b]) =>
+        (a === u && b === v) || (a === v && b === u)
+      );
+
+      ctx.beginPath();
+      ctx.moveTo(graphNodes[u].x, graphNodes[u].y);
+      ctx.lineTo(graphNodes[v].x, graphNodes[v].y);
+
+      if (isSpanning) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+      } else {
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 绘制节点
+    for (let node of graphNodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+    }
+
+    // 标注
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('生成树边 (n-1=6条)', 100, 175);
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText('原图额外边', 320, 175);
+  }
+
+  function drawLeafNodes() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    for (let [u, v] of leafEdges) {
+      ctx.beginPath();
+      ctx.moveTo(leafNodes[u].x, leafNodes[u].y);
+      ctx.lineTo(leafNodes[v].x, leafNodes[v].y);
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 绘制节点
+    for (let node of leafNodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI);
+
+      if (node.isLeaf) {
+        ctx.fillStyle = '#f97316';
+      } else {
+        ctx.fillStyle = '#94a3b8';
+      }
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 叶节点标注
+      if (node.isLeaf) {
+        ctx.fillStyle = '#f97316';
+        ctx.font = '9px Arial';
+        ctx.fillText('叶', node.x, node.y - 22);
+      }
+    }
+  }
+
+  function drawDegreeNodes() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    for (let [u, v] of degreeEdges) {
+      ctx.beginPath();
+      ctx.moveTo(degreeNodes[u].x, degreeNodes[u].y);
+      ctx.lineTo(degreeNodes[v].x, degreeNodes[v].y);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 绘制节点（带度数标签）
+    for (let node of degreeNodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 18, 0, 2 * Math.PI);
+
+      // 根据度数设置颜色
+      if (node.degree >= 3) {
+        ctx.fillStyle = '#ef4444';
+      } else if (node.degree === 2) {
+        ctx.fillStyle = '#f97316';
+      } else {
+        ctx.fillStyle = '#10b981';
+      }
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示度数
+      ctx.fillStyle = '#374151';
+      ctx.font = 'bold 10px Arial';
+      ctx.fillText(`度:${node.degree}`, node.x, node.y + 28);
+    }
+
+    // 图例
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('● 度≥3', 20, 170);
+    ctx.fillStyle = '#f97316';
+    ctx.fillText('● 度=2', 80, 170);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText('● 度=1', 140, 170);
+  }
+
+  function draw() {
+    switch (currentDrawMode) {
+      case 'forest': drawForest(); break;
+      case 'spanning': drawSpanningTree(); break;
+      case 'leaf': drawLeafNodes(); break;
+      case 'degree': drawDegreeNodes(); break;
+      default: drawForest();
+    }
+  }
+
+  document.querySelectorAll('.tree-general-terms-demo [data-term]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tree-general-terms-demo [data-term]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const term = btn.dataset.term;
+      const info = explanations[term];
+      currentDrawMode = info.draw;
+      document.getElementById('generalTermExplanation').innerHTML = info.text;
+      draw();
+    });
+  });
+
+  draw();
+</script>
