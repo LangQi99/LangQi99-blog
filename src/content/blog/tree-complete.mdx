@@ -27,6 +27,7 @@ import TreeCentroidDef from "../../components/mdx/tree/TreeCentroidDef.astro";
 import TreeCentroidDist from "../../components/mdx/tree/TreeCentroidDist.astro";
 import TreeCentroidDFS from "../../components/mdx/tree/TreeCentroidDFS.astro";
 import TreeCentroidTwo from "../../components/mdx/tree/TreeCentroidTwo.astro";
+import TreeRerootDP from "../../components/mdx/tree/TreeRerootDP.astro";
 import MSTKruskal from "../../components/mdx/mst/MSTKruskal.astro";
 import MSTPrim from "../../components/mdx/mst/MSTPrim.astro";
 
@@ -649,7 +650,62 @@ int main() {
 
 ### 换根 DP 方法
 
-利用「距离和最小」的性质，通过两次 DFS 计算：
+利用「距离和最小」的性质，通过两次 DFS 计算所有节点的距离和，然后取最小值对应的节点作为重心。这种方法的优势是能同时得到所有节点作为根时的距离和信息。
+
+<TreeRerootDP />
+
+#### 算法原理
+
+换根 DP 的核心思想是**利用父子关系，从已知的根节点信息推导所有节点的信息**。
+
+设 $dp[u]$ 表示以 $u$ 为根时，所有节点到 $u$ 的距离之和。如果我们已经计算出了 $dp[root]$（某个根节点的距离和），如何高效地计算出其他节点的 $dp$ 值？
+
+**关键观察：换根时的变化**
+
+考虑从父亲节点 $u$ 换根到子节点 $v$ 时，各节点距离的变化：
+
+- **$v$ 的子树内节点**（共 $size_v$ 个）：原本距离是到 $u$ 的，现在变成到 $v$ 的，距离各**减少 1**
+- **$v$ 的子树外节点**（共 $n - size_v$ 个）：原本距离是到 $u$ 的，现在需要经过 $u$ 再到 $v$，距离各**增加 1**
+
+因此得到转移公式：
+
+$$dp[v] = dp[u] - size_v + (n - size_v) = dp[u] + n - 2 \cdot size_v$$
+
+#### 两次 DFS 的具体过程
+
+**第一次 DFS（dfs1）**：以任意节点为根（如节点 1），自顶向下传递深度，自底向上累加 size 和 dp。
+
+- `size[u]`：以 $u$ 为根的子树大小
+- `dep[u]`：$u$ 到根节点的距离（深度）
+- 初始时，$dp[u] = dep[u]$（每个节点对根的距离贡献初始为深度值）
+- 回溯时累加子节点信息：$size[u] += size[v]$，$dp[u] += dp[v]$
+
+这样 DFS1 结束后，$dp[root]$ 就是以 root 为根时的距离和。
+
+**第二次 DFS（dfs2）**：从根开始，利用转移公式依次计算每个子节点作为根时的 dp 值。
+
+```cpp
+dp[v] = dp[u] + n - 2 * size[v];
+```
+
+DFS2 结束后，所有节点的 $dp$ 值都已计算完毕，取最小值即为重心。
+
+#### 时间复杂度分析
+
+| 操作 | 复杂度 |
+|------|--------|
+| DFS1 | $O(n)$ |
+| DFS2 | $O(n)$ |
+| 找最小值 | $O(n)$ |
+| **总计** | $O(n)$ |
+
+相比于暴力方法（每个节点做一次 BFS/DFS，$O(n^2)$），换根 DP 将复杂度优化到了线性！
+
+<Info>
+换根 DP 是一类通用技巧，不仅适用于求距离和最小的问题，还可以用于求「以每个节点为根时的最大子树大小」等问题。核心都是找到换根时的变化规律。
+</Info>
+
+#### 代码实现
 
 ```cpp
 #include <bits/stdc++.h>
@@ -662,19 +718,20 @@ long long dp[N];  // dp[u] = 以u为根的距离和
 
 void dfs1(int u, int fa) {
     size_[u] = 1;
-    dp[u] = dep[u];
+    dp[u] = dep[u];  // 初始值：当前节点对根的距离贡献 = 深度
     for (int v : adj[u]) {
         if (v == fa) continue;
-        dep[v] = dep[u] + 1;
-        dfs1(v, u);
-        size_[u] += size_[v];
-        dp[u] += dp[v];
+        dep[v] = dep[u] + 1;  // 先传递深度
+        dfs1(v, u);           // 递归子节点
+        size_[u] += size_[v]; // 累加子树大小
+        dp[u] += dp[v];       // 累加子节点对根的距离贡献
     }
 }
 
 void dfs2(int u, int fa) {
     for (int v : adj[u]) {
         if (v == fa) continue;
+        // 换根转移公式：dp[v] = dp[u] + n - 2*size[v]
         dp[v] = dp[u] - size_[v] + (n - size_[v]);
         dfs2(v, u);
     }
@@ -689,12 +746,14 @@ int main() {
         adj[v].push_back(u);
     }
 
-    dfs1(1, -1);
-    dfs2(1, -1);
+    dep[1] = 0;  // 根节点深度为0
+    dfs1(1, -1); // 第一次DFS：计算size和dp[根]
+    dfs2(1, -1); // 第二次DFS：换根转移，计算所有dp值
 
     // 距离和最小的节点即为重心
     int centroid = min_element(dp + 1, dp + n + 1) - dp;
     cout << "重心: " << centroid << endl;
+    cout << "距离和: " << dp[centroid] << endl;
 
     return 0;
 }

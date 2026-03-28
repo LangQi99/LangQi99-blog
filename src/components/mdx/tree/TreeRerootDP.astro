@@ -1,0 +1,661 @@
+---
+// 换根DP演示：两次DFS计算所有节点的距离和
+---
+
+<div class="reroot-dp-demo">
+  <div class="demo-header">
+    <span class="badge">交互演示</span>
+    <span class="title">换根DP：两次DFS计算距离和</span>
+  </div>
+  <div class="demo-content">
+    <div class="phase-indicator" id="phaseIndicator">
+      <div class="phase" data-phase="0">
+        <span class="phase-num">1</span>
+        <span class="phase-name">初始状态</span>
+      </div>
+      <div class="phase" data-phase="1">
+        <span class="phase-num">2</span>
+        <span class="phase-name">DFS1: 计算size与dp[根]</span>
+      </div>
+      <div class="phase" data-phase="2">
+        <span class="phase-num">3</span>
+        <span class="phase-name">DFS2: 换根转移</span>
+      </div>
+      <div class="phase" data-phase="3">
+        <span class="phase-num">4</span>
+        <span class="phase-name">完成：找出重心</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="rerootCanvas"></canvas>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <div class="formula-box">
+        <h4>转移公式</h4>
+        <div class="formula">dp[v] = dp[u] + n - 2*size[v]</div>
+        <div class="formula-explain">
+          <p>从父亲 u 换根到子节点 v：</p>
+          <ul>
+            <li>v 的子树内 (<span id="sizeV">?</span> 个节点)：距离各 <strong>-1</strong></li>
+            <li>v 的子树外 (<span id="outsideV">?</span> 个节点)：距离各 <strong>+1</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="current-state" id="currentState">
+        <h4>当前状态</h4>
+        <div class="state-content">等待开始...</div>
+      </div>
+    </div>
+
+    <div class="dp-table" id="dpTable">
+      <div class="row header">
+        <span>节点</span>
+        <span>size</span>
+        <span>dp值</span>
+        <span>说明</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn primary" id="startBtn">开始演示</button>
+      <button class="btn" id="stepBtn" disabled>下一步</button>
+      <button class="btn" id="autoBtn" disabled>自动播放</button>
+      <button class="btn danger" id="resetBtn">重置</button>
+    </div>
+
+    <div class="legend">
+      <span class="item"><span class="dot root"></span>当前根</span>
+      <span class="item"><span class="dot processing"></span>正在处理</span>
+      <span class="item"><span class="dot done"></span>已完成</span>
+      <span class="item"><span class="dot centroid"></span>重心</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .reroot-dp-demo {
+    background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid #6366f1;
+    color: #e2e8f0;
+  }
+  .reroot-dp-demo .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+  }
+  .reroot-dp-demo .badge {
+    background: #6366f1;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .reroot-dp-demo .title {
+    font-weight: 600;
+    color: #a5b4fc;
+  }
+  .reroot-dp-demo .demo-content {
+    background: #111827;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .reroot-dp-demo .phase-indicator {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .reroot-dp-demo .phase {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #374151;
+    border-radius: 6px;
+    opacity: 0.5;
+    transition: all 0.3s;
+  }
+  .reroot-dp-demo .phase.active {
+    background: #6366f1;
+    opacity: 1;
+  }
+  .reroot-dp-demo .phase.completed {
+    background: #22c55e;
+    opacity: 1;
+  }
+  .reroot-dp-demo .phase-num {
+    background: #1f2937;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.7rem;
+  }
+  .reroot-dp-demo .phase-name {
+    font-size: 0.75rem;
+  }
+  .reroot-dp-demo .canvas-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .reroot-dp-demo canvas {
+    background: #0f172a;
+    border-radius: 8px;
+    border: 1px solid #334155;
+  }
+  .reroot-dp-demo .info-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .reroot-dp-demo .formula-box,
+  .reroot-dp-demo .current-state {
+    background: #1f2937;
+    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid #334155;
+  }
+  .reroot-dp-demo .formula-box h4,
+  .reroot-dp-demo .current-state h4 {
+    color: #a5b4fc;
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+  }
+  .reroot-dp-demo .formula {
+    background: #312e81;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-family: monospace;
+    color: #fbbf24;
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  .reroot-dp-demo .formula-explain {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+  .reroot-dp-demo .formula-explain ul {
+    margin: 4px 0;
+    padding-left: 16px;
+  }
+  .reroot-dp-demo .formula-explain li {
+    margin: 2px 0;
+  }
+  .reroot-dp-demo .formula-explain strong {
+    color: #fbbf24;
+  }
+  .reroot-dp-demo .state-content {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+  }
+  .reroot-dp-demo .dp-table {
+    margin-bottom: 12px;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .reroot-dp-demo .dp-table .row {
+    display: grid;
+    grid-template-columns: 50px 60px 60px 1fr;
+    border-bottom: 1px solid #334155;
+    padding: 6px 8px;
+  }
+  .reroot-dp-demo .dp-table .row:last-child {
+    border-bottom: none;
+  }
+  .reroot-dp-demo .dp-table .row.header {
+    background: #312e81;
+    font-weight: 600;
+  }
+  .reroot-dp-demo .dp-table .row.min {
+    background: #14532d;
+  }
+  .reroot-dp-demo .dp-table .row.processing {
+    background: #78350f;
+  }
+  .reroot-dp-demo .controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .reroot-dp-demo .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #374151;
+    color: #e2e8f0;
+    transition: all 0.2s;
+  }
+  .reroot-dp-demo .btn:hover:not(:disabled) {
+    background: #4b5563;
+  }
+  .reroot-dp-demo .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .reroot-dp-demo .btn.primary {
+    background: #6366f1;
+  }
+  .reroot-dp-demo .btn.primary:hover:not(:disabled) {
+    background: #818cf8;
+  }
+  .reroot-dp-demo .btn.danger {
+    background: #dc2626;
+  }
+  .reroot-dp-demo .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+  .reroot-dp-demo .legend .item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .reroot-dp-demo .legend .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #1f2937;
+  }
+  .reroot-dp-demo .legend .dot.root {
+    background: #f97316;
+  }
+  .reroot-dp-demo .legend .dot.processing {
+    background: #fbbf24;
+  }
+  .reroot-dp-demo .legend .dot.done {
+    background: #3b82f6;
+  }
+  .reroot-dp-demo .legend .dot.centroid {
+    background: #22c55e;
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById('rerootCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 500;
+  canvas.height = 280;
+
+  // 定义树结构
+  const nodes = [
+    { id: 0, x: 250, y: 40, label: 'A' },
+    { id: 1, x: 120, y: 100, label: 'B' },
+    { id: 2, x: 380, y: 100, label: 'C' },
+    { id: 3, x: 60, y: 160, label: 'D' },
+    { id: 4, x: 160, y: 160, label: 'E' },
+    { id: 5, x: 300, y: 160, label: 'F' },
+    { id: 6, x: 420, y: 160, label: 'G' },
+    { id: 7, x: 60, y: 220, label: 'H' },
+    { id: 8, x: 420, y: 220, label: 'I' },
+  ];
+
+  const edges = [
+    [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [6, 8]
+  ];
+
+  const n = nodes.length;
+  const adj = {};
+  nodes.forEach(n => adj[n.id] = []);
+  edges.forEach(([u, v]) => {
+    adj[u].push(v);
+    adj[v].push(u);
+  });
+
+  // DP状态
+  let size = {};
+  let dp = {};
+  let dep = {};
+  let currentRoot = 0;
+  let processingNode = null;
+  let dfs1Order = [];
+  let dfs2Order = [];
+  let dfs1Index = 0;
+  let dfs2Index = 0;
+  let phase = 0;
+  let completedNodes = [];
+  let centroid = null;
+
+  // 构建DFS顺序（模拟递归）
+  function buildDFS1Order(u, fa) {
+    dfs1Order.push({ node: u, parent: fa, action: 'enter' });
+    for (let v of adj[u]) {
+      if (v !== fa) {
+        dep[v] = dep[u] + 1;
+        buildDFS1Order(v, u);
+      }
+    }
+    dfs1Order.push({ node: u, parent: fa, action: 'exit' });
+  }
+
+  function buildDFS2Order(u, fa) {
+    dfs2Order.push({ node: u, parent: fa });
+    for (let v of adj[u]) {
+      if (v !== fa) {
+        buildDFS2Order(v, u);
+      }
+    }
+  }
+
+  // 初始化
+  function init() {
+    dep[0] = 0;
+    buildDFS1Order(0, -1);
+    buildDFS2Order(0, -1);
+    updatePhaseIndicator();
+  }
+
+  function updatePhaseIndicator() {
+    const phases = document.querySelectorAll('.phase');
+    phases.forEach((p, i) => {
+      p.classList.remove('active', 'completed');
+      if (i < phase) p.classList.add('completed');
+      if (i === phase) p.classList.add('active');
+    });
+  }
+
+  function updateState(content) {
+    document.getElementById('currentState').querySelector('.state-content').innerHTML = content;
+  }
+
+  function updateFormula(sizeV) {
+    document.getElementById('sizeV').textContent = sizeV || '?';
+    document.getElementById('outsideV').textContent = sizeV ? (n - sizeV) : '?';
+  }
+
+  function updateTable() {
+    const table = document.getElementById('dpTable');
+    let html = `<div class="row header">
+      <span>节点</span>
+      <span>size</span>
+      <span>dp</span>
+      <span>说明</span>
+    </div>`;
+
+    let minDp = Infinity;
+    Object.keys(dp).forEach(id => {
+      if (dp[id] < minDp) minDp = dp[id];
+    });
+
+    nodes.forEach(node => {
+      const sizeVal = size[node.id] !== undefined ? size[node.id] : '-';
+      const dpVal = dp[node.id] !== undefined ? dp[node.id] : '-';
+      const isMin = dp[node.id] === minDp;
+      const isProcessing = node.id === processingNode;
+      const isDone = completedNodes.includes(node.id);
+
+      let note = '';
+      if (isMin && phase === 3) note = '距离和最小 ✓';
+      else if (isProcessing) note = '正在处理';
+      else if (isDone) note = '已完成';
+
+      html += `<div class="row ${isMin && phase === 3 ? 'min' : ''} ${isProcessing ? 'processing' : ''}">
+        <span>${node.label}</span>
+        <span>${sizeVal}</span>
+        <span>${dpVal}</span>
+        <span>${note}</span>
+      </div>`;
+    });
+
+    table.innerHTML = html;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制边
+    edges.forEach(([u, v]) => {
+      ctx.beginPath();
+      ctx.moveTo(nodes[u].x, nodes[u].y);
+      ctx.lineTo(nodes[v].x, nodes[v].y);
+      ctx.strokeStyle = '#4b5563';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 绘制边上的转移箭头（DFS2阶段）
+      if (phase === 2 && processingNode !== null) {
+        const edgeData = dfs2Order[dfs2Index];
+        if (edgeData && edgeData.parent === u && edgeData.node === v) {
+          // 从u到v的转移
+          const midX = (nodes[u].x + nodes[v].x) / 2;
+          const midY = (nodes[u].y + nodes[v].y) / 2;
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(`+${n}-${2*size[v]}`, midX, midY - 10);
+        }
+      }
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+
+      let fill = '#374151';
+      if (completedNodes.includes(node.id)) fill = '#3b82f6';
+      if (node.id === processingNode) fill = '#fbbf24';
+      if (node.id === currentRoot && phase >= 1) fill = '#f97316';
+      if (node.id === centroid) fill = '#22c55e';
+
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.label, node.x, node.y);
+
+      // 显示size和dp值
+      if (size[node.id] !== undefined) {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px Arial';
+        ctx.fillText(`s=${size[node.id]}`, node.x, node.y + 28);
+      }
+      if (dp[node.id] !== undefined) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '10px Arial';
+        ctx.fillText(`dp=${dp[node.id]}`, node.x, node.y - 28);
+      }
+
+      // 显示深度（DFS1阶段）
+      if (phase === 1 && dep[node.id] !== undefined) {
+        ctx.fillStyle = '#a5b4fc';
+        ctx.font = '9px Arial';
+        ctx.fillText(`d=${dep[node.id]}`, node.x + 25, node.y);
+      }
+    });
+
+    // 绘制当前根标记
+    if (phase >= 1) {
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('ROOT', nodes[currentRoot].x, nodes[currentRoot].y - 45);
+    }
+  }
+
+  function stepDFS1() {
+    if (dfs1Index >= dfs1Order.length) {
+      phase = 2;
+      updatePhaseIndicator();
+      updateState('DFS1完成！开始DFS2换根转移...');
+      document.getElementById('stepBtn').disabled = false;
+      return;
+    }
+
+    const { node, parent, action } = dfs1Order[dfs1Index];
+
+    if (action === 'enter') {
+      processingNode = node;
+      size[node] = 1;
+      dep[node] = parent >= 0 ? dep[parent] + 1 : 0;
+      dp[node] = dep[node];
+      updateState(`<strong>进入节点 ${nodes[node].label}</strong><br>
+        dep[${nodes[node].label}] = ${dep[node]}<br>
+        size[${nodes[node].label}] = 1 (初始)<br>
+        dp[${nodes[node].label}] = ${dep[node]} (初始，等于深度)`);
+    } else {
+      // exit: 回溯时累加
+      processingNode = node;
+      if (parent >= 0) {
+        size[parent] += size[node];
+        dp[parent] += dp[node];
+        updateState(`<strong>回溯到父亲 ${nodes[parent].label}</strong><br>
+          size[${nodes[parent].label}] += size[${nodes[node].label}] = ${size[parent]}<br>
+          dp[${nodes[parent].label}] += dp[${nodes[node].label}] = ${dp[parent]}`);
+      }
+      completedNodes.push(node);
+    }
+
+    dfs1Index++;
+    draw();
+    updateTable();
+  }
+
+  function stepDFS2() {
+    if (dfs2Index >= dfs2Order.length) {
+      phase = 3;
+      updatePhaseIndicator();
+
+      // 找重心
+      let minDp = Infinity;
+      Object.keys(dp).forEach(id => {
+        if (dp[id] < minDp) {
+          minDp = dp[id];
+          centroid = parseInt(id);
+        }
+      });
+
+      updateState(`<strong>完成！</strong><br>
+        所有节点的距离和已计算完毕。<br>
+        重心 = 距离和最小的节点 = <strong>${nodes[centroid].label}</strong> (dp=${minDp})`);
+      draw();
+      updateTable();
+      document.getElementById('stepBtn').disabled = true;
+      document.getElementById('autoBtn').disabled = true;
+      return;
+    }
+
+    const { node, parent } = dfs2Order[dfs2Index];
+
+    if (node === currentRoot) {
+      // 根节点已经在DFS1中计算过了
+      processingNode = node;
+      updateState(`节点 ${nodes[node].label} 是当前根，dp值已在DFS1中计算 = ${dp[node]}`);
+      completedNodes.push(node);
+    } else if (parent >= 0) {
+      // 换根转移
+      processingNode = node;
+      currentRoot = node;
+      const oldDp = dp[parent];
+      dp[node] = dp[parent] + n - 2 * size[node];
+
+      updateState(`<strong>换根: ${nodes[parent].label} → ${nodes[node].label}</strong><br>
+        dp[${nodes[node].label}] = dp[${nodes[parent].label}] + n - 2*size[${nodes[node].label}]<br>
+        = ${oldDp} + ${n} - ${2 * size[node]} = <strong>${dp[node]}</strong><br><br>
+        解释：<br>
+        - ${nodes[node].label}的子树(${size[node]}个节点)距离各-1<br>
+        - ${nodes[node].label}的子树外(${n - size[node]}个节点)距离各+1`);
+      updateFormula(size[node]);
+      completedNodes.push(node);
+    }
+
+    dfs2Index++;
+    draw();
+    updateTable();
+  }
+
+  function step() {
+    if (phase === 0) {
+      phase = 1;
+      updatePhaseIndicator();
+      updateState('开始DFS1：以节点A为根，计算size和dp[根]');
+      currentRoot = 0;
+      document.getElementById('stepBtn').disabled = false;
+    } else if (phase === 1) {
+      stepDFS1();
+    } else if (phase === 2) {
+      stepDFS2();
+    }
+    draw();
+  }
+
+  function autoRun() {
+    if (phase === 3) return;
+    step();
+    setTimeout(autoRun, 400);
+  }
+
+  function reset() {
+    size = {};
+    dp = {};
+    dep = {};
+    currentRoot = 0;
+    processingNode = null;
+    dfs1Order = [];
+    dfs2Order = [];
+    dfs1Index = 0;
+    dfs2Index = 0;
+    phase = 0;
+    completedNodes = [];
+    centroid = null;
+
+    init();
+    draw();
+    updateTable();
+    updateState('等待开始...');
+    updateFormula(null);
+    document.getElementById('stepBtn').disabled = true;
+    document.getElementById('autoBtn').disabled = true;
+  }
+
+  // 初始化
+  init();
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    if (phase === 0) {
+      step();
+      document.getElementById('stepBtn').disabled = false;
+      document.getElementById('autoBtn').disabled = false;
+    }
+  });
+
+  document.getElementById('stepBtn').addEventListener('click', step);
+  document.getElementById('autoBtn').addEventListener('click', () => {
+    document.getElementById('stepBtn').disabled = true;
+    autoRun();
+  });
+  document.getElementById('resetBtn').addEventListener('click', reset);
+
+  draw();
+  updateTable();
+</script>

@@ -1,22 +1,21 @@
 ---
-// 树的直径性质：中点重合
+// 树的直径性质：中点重合（带边权，中点在边上）
 ---
 
 <div class="tree-diameter-mid-demo">
   <div class="demo-header">
     <span class="badge">交互演示</span>
-    <span class="title">直径的中点重合</span>
+    <span class="title">直径的中点重合（中点在边上）</span>
   </div>
   <div class="demo-content">
     <canvas id="midCanvas"></canvas>
     <div class="info" id="midInfo">
       <p>当边权为正时，所有直径的中点必定重合。</p>
-      <p>点击下方按钮查看不同直径。</p>
+      <p>两条直径 <strong>L→R</strong> 和 <strong>U→D</strong> 的中点都在边 <strong>A-B</strong> 的正中间。</p>
     </div>
     <div class="controls">
-      <button class="btn" data-diameter="1">直径 1: H→I</button>
-      <button class="btn" data-diameter="2">直径 2: H→F</button>
-      <button class="btn" data-diameter="3">直径 3: E→I</button>
+      <button class="btn" data-diameter="horizontal">直径1: L→R (横向)</button>
+      <button class="btn" data-diameter="vertical">直径2: U→D (纵向)</button>
       <button class="btn primary" id="showAllBtn">显示全部</button>
     </div>
   </div>
@@ -51,17 +50,17 @@
   .tree-diameter-mid-demo .demo-content {
     background: white;
     border-radius: 8px;
-    padding: 12px;
+    padding: 16px;
   }
   .tree-diameter-mid-demo canvas {
     display: block;
     margin: 0 auto;
     background: #fafafa;
-    border-radius: 6px;
+    border-radius: 8px;
   }
   .tree-diameter-mid-demo .info {
-    margin: 10px 0;
-    padding: 10px;
+    margin: 12px 0;
+    padding: 12px;
     background: #f0fdf4;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -73,15 +72,16 @@
   }
   .tree-diameter-mid-demo .controls {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
+    margin-top: 12px;
   }
   .tree-diameter-mid-demo .btn {
-    padding: 6px 14px;
+    padding: 8px 16px;
     border: 2px solid #e5e7eb;
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     background: white;
@@ -92,9 +92,14 @@
     background: #f0fdf4;
   }
   .tree-diameter-mid-demo .btn.active {
-    border-color: #22c55e;
-    background: #22c55e;
-    color: white;
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #ef4444;
+  }
+  .tree-diameter-mid-demo .btn.active[data-diameter="vertical"] {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
   }
   .tree-diameter-mid-demo .btn.primary {
     background: #22c55e;
@@ -106,127 +111,236 @@
 <script>
   const canvas = document.getElementById('midCanvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = 480;
-  canvas.height = 240;
+  canvas.width = 700;
+  canvas.height = 500;
 
-  // 树结构 - 设计有多条直径的树
+  // 十字形树结构，中心边为 A-B
+  // 横向直径: L -> A -> B -> R (权重: 5 + 6 + 5 = 16，中点在A-B边正中间)
+  // 纵向直径: U -> A -> B -> D (权重: 5 + 6 + 5 = 16，中点在A-B边正中间)
+  // 边权与视觉长度成正比（比例因子: 30px/单位权重）
+
+  const scale = 30; // 每单位权重对应30像素
+
+  // 中心边 A-B，权重6
+  const centerX = 350;
+  const centerY = 250;
+
   const nodes = [
-    { id: 0, x: 240, y: 50, label: 'A' },   // 根
-    { id: 1, x: 160, y: 110, label: 'B' },  // 左子
-    { id: 2, x: 320, y: 110, label: 'C' },  // 右子
-    { id: 3, x: 80, y: 170, label: 'D' },   // B的左子
-    { id: 4, x: 180, y: 170, label: 'E' },  // B的右子
-    { id: 5, x: 300, y: 170, label: 'F' },  // C的左子
-    { id: 6, x: 400, y: 170, label: 'G' },  // C的右子
-    { id: 7, x: 80, y: 230, label: 'H' },   // D的子 (直径端点1)
-    { id: 8, x: 400, y: 230, label: 'I' },  // G的子 (直径端点2)
+    // 中心边的两端
+    { id: 0, x: centerX - 3*scale, y: centerY, label: 'A' },      // A在左边
+    { id: 1, x: centerX + 3*scale, y: centerY, label: 'B' },      // B在右边
+    // 四个端点
+    { id: 2, x: centerX - 3*scale - 5*scale, y: centerY, label: 'L' },     // L在A左侧，权重5
+    { id: 3, x: centerX + 3*scale + 5*scale, y: centerY, label: 'R' },     // R在B右侧，权重5
+    { id: 4, x: centerX - 3*scale, y: centerY - 5*scale, label: 'U' },     // U在A上方，权重5
+    { id: 5, x: centerX + 3*scale, y: centerY + 5*scale, label: 'D' },     // D在B下方，权重5
   ];
 
+  // 边带权重
   const edges = [
-    [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [6, 8]
+    // 中心边（横向连接）
+    { u: 0, v: 1, w: 6 },   // A-B，权重6
+    // A的分支（左、上）
+    { u: 0, v: 2, w: 5 },   // A-L，权重5
+    { u: 0, v: 4, w: 5 },   // A-U，权重5
+    // B的分支（右、下）
+    { u: 1, v: 3, w: 5 },   // B-R，权重5
+    { u: 1, v: 5, w: 5 },   // B-D，权重5
   ];
 
-  // 三条直径
+  // 两条直径
   const diameters = {
-    1: { path: [7, 3, 1, 0, 2, 6, 8], color: '#ef4444', label: 'H→I' },
-    2: { path: [7, 3, 1, 0, 2, 5], color: '#3b82f6', label: 'H→F' },
-    3: { path: [4, 1, 0, 2, 6, 8], color: '#8b5cf6', label: 'E→I' }
+    horizontal: {
+      path: [2, 0, 1, 3], // L -> A -> B -> R
+      edges: [[2,0], [0,1], [1,3]],
+      color: '#ef4444',
+      label: 'L→R',
+      totalWeight: 16,
+      midpointEdge: { u: 0, v: 1, position: 0.5 } // 中点在A-B边正中间
+    },
+    vertical: {
+      path: [4, 0, 1, 5], // U -> A -> B -> D
+      edges: [[4,0], [0,1], [1,5]],
+      color: '#3b82f6',
+      label: 'U→D',
+      totalWeight: 16,
+      midpointEdge: { u: 0, v: 1, position: 0.5 } // 中点在A-B边正中间
+    }
   };
 
-  // 中点 (对于长度为6的路径，中点是第3个节点，即节点0)
-  const midpoint = 0;
-
   let showDiameters = [];
+
+  // 计算中点位置（在边上）
+  function getMidpointPosition(edge) {
+    const nodeU = nodes[edge.u];
+    const nodeV = nodes[edge.v];
+    const midX = nodeU.x + (nodeV.x - nodeU.x) * edge.position;
+    const midY = nodeU.y + (nodeV.y - nodeU.y) * edge.position;
+    return { x: midX, y: midY };
+  }
+
+  function drawEdge(edge, highlight, color) {
+    const nodeU = nodes[edge.u];
+    const nodeV = nodes[edge.v];
+
+    ctx.beginPath();
+    ctx.moveTo(nodeU.x, nodeU.y);
+    ctx.lineTo(nodeV.x, nodeV.y);
+
+    if (highlight) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 5;
+    } else {
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 3;
+    }
+    ctx.stroke();
+
+    // 显示边权（在边的中点位置）
+    const midX = (nodeU.x + nodeV.x) / 2;
+    const midY = (nodeU.y + nodeV.y) / 2;
+
+    // 根据边的方向调整标签位置
+    let labelX = midX;
+    let labelY = midY;
+    if (nodeU.x === nodeV.x) { // 垂直边
+      labelX += 25;
+    } else if (nodeU.y === nodeV.y) { // 水平边
+      labelY -= 25;
+    } else { // 斜边
+      labelX += 15;
+      labelY -= 15;
+    }
+
+    // 背景框
+    const text = `w=${edge.w}`;
+    ctx.font = highlight ? 'bold 14px Arial' : '13px Arial';
+    const textWidth = ctx.measureText(text).width;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillRect(labelX - textWidth/2 - 4, labelY - 10, textWidth + 8, 20);
+
+    ctx.fillStyle = highlight ? color : '#64748b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, labelX, labelY);
+  }
+
+  function drawNode(node, isInDiameter, diameterColor, isEndpoint) {
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 24, 0, 2 * Math.PI);
+
+    let fill = '#94a3b8';
+    if (isEndpoint) {
+      fill = diameterColor;
+    } else if (isInDiameter) {
+      fill = diameterColor;
+    }
+
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = '#1f2937';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.label, node.x, node.y);
+  }
+
+  function drawMidpoint(show) {
+    if (!show) return;
+
+    const midPos = getMidpointPosition({ u: 0, v: 1, position: 0.5 });
+
+    // 中点标记（橙色圆点）
+    ctx.beginPath();
+    ctx.arc(midPos.x, midPos.y, 12, 0, 2 * Math.PI);
+    ctx.fillStyle = '#f97316';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 中点标签
+    ctx.fillStyle = '#f97316';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('中点', midPos.x, midPos.y - 30);
+    ctx.font = '12px Arial';
+    ctx.fillText('(共同)', midPos.x, midPos.y - 46);
+  }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 绘制边
-    edges.forEach(([u, v]) => {
-      ctx.beginPath();
-      ctx.moveTo(nodes[u].x, nodes[u].y);
-      ctx.lineTo(nodes[v].x, nodes[v].y);
+    // 绘制所有边
+    for (let edge of edges) {
+      let highlight = false;
+      let color = '#cbd5e1';
 
-      // 检查是否在某条直径上
-      let inDiameter = false;
       for (let key of showDiameters) {
         const d = diameters[key];
-        for (let i = 0; i < d.path.length - 1; i++) {
-          if ((d.path[i] === u && d.path[i+1] === v) ||
-              (d.path[i] === v && d.path[i+1] === u)) {
-            ctx.strokeStyle = d.color;
-            ctx.lineWidth = 4;
-            inDiameter = true;
+        for (let [du, dv] of d.edges) {
+          if ((edge.u === du && edge.v === dv) || (edge.u === dv && edge.v === du)) {
+            highlight = true;
+            color = d.color;
             break;
           }
         }
-        if (inDiameter) break;
       }
 
-      if (!inDiameter) {
-        ctx.strokeStyle = '#e5e7eb';
-        ctx.lineWidth = 2;
-      }
+      drawEdge(edge, highlight, color);
+    }
 
-      ctx.stroke();
-    });
+    // 绘制所有节点
+    for (let node of nodes) {
+      let isInDiameter = false;
+      let diameterColor = '#94a3b8';
+      let isEndpoint = false;
 
-    // 绘制节点
-    nodes.forEach(node => {
-      // 检查是否在某条直径上
-      let inDiameter = false;
-      let colors = [];
       for (let key of showDiameters) {
-        if (diameters[key].path.includes(node.id)) {
-          colors.push(diameters[key].color);
-          inDiameter = true;
+        const d = diameters[key];
+        if (d.path.includes(node.id)) {
+          isInDiameter = true;
+          diameterColor = d.color;
+          // 端点是路径的首尾节点
+          if (node.id === d.path[0] || node.id === d.path[d.path.length - 1]) {
+            isEndpoint = true;
+          }
         }
       }
 
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, 18, 0, 2 * Math.PI);
+      drawNode(node, isInDiameter, diameterColor, isEndpoint);
+    }
 
-      let fill = '#94a3b8';
-      if (node.id === midpoint) {
-        fill = '#f97316'; // 中点用橙色
-      } else if (inDiameter && colors.length === 1) {
-        fill = colors[0];
-      } else if (inDiameter) {
-        fill = '#22c55e'; // 多条直径交点
-      }
+    // 绘制中点（当有直径显示时）
+    drawMidpoint(showDiameters.length > 0);
 
-      ctx.fillStyle = fill;
-      ctx.fill();
-      ctx.strokeStyle = '#1f2937';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(node.label, node.x, node.y);
-
-      // 中点标记
-      if (node.id === midpoint) {
-        ctx.fillStyle = '#f97316';
-        ctx.font = 'bold 10px Arial';
-        ctx.fillText('中点', node.x, node.y - 28);
-      }
-    });
-
-    // 图例
+    // 显示直径信息
     if (showDiameters.length > 0) {
-      let y = 20;
-      ctx.font = '11px Arial';
+      ctx.font = 'bold 14px Arial';
       ctx.textAlign = 'left';
+
+      let y = 30;
       for (let key of showDiameters) {
         const d = diameters[key];
         ctx.fillStyle = d.color;
-        ctx.fillRect(10, y - 8, 20, 3);
+
+        // 绘制粗线条
+        ctx.fillRect(15, y - 4, 35, 5);
+
         ctx.fillStyle = '#374151';
-        ctx.fillText(`直径 ${key}: ${d.label}`, 35, y);
-        y += 18;
+        ctx.font = '14px Arial';
+        ctx.fillText(`${d.label}: 总权重 = ${d.totalWeight}`, 60, y);
+
+        ctx.fillStyle = '#f97316';
+        ctx.font = '13px Arial';
+        ctx.fillText(`中点位于边 A-B 正中间`, 60, y + 18);
+
+        y += 40;
       }
     }
   }
@@ -248,12 +362,12 @@
   });
 
   document.getElementById('showAllBtn').addEventListener('click', function() {
-    if (showDiameters.length === 3) {
+    if (showDiameters.length === 2) {
       showDiameters = [];
       document.querySelectorAll('.tree-diameter-mid-demo [data-diameter]').forEach(b => b.classList.remove('active'));
       this.textContent = '显示全部';
     } else {
-      showDiameters = ['1', '2', '3'];
+      showDiameters = ['horizontal', 'vertical'];
       document.querySelectorAll('.tree-diameter-mid-demo [data-diameter]').forEach(b => b.classList.add('active'));
       this.textContent = '隐藏全部';
     }
