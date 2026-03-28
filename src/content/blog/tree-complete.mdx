@@ -2,6 +2,7 @@
 title: "树基础（树的概念&直径&重心&最小生成树）"
 description: "系统介绍树的基础概念、直径、重心以及最小生成树，配有交互式动画演示"
 pubDate: "Mar 27 2026"
+image: "/image/tree-intro.png"   
 categories:
   - tech
 tags:
@@ -1080,5 +1081,401 @@ int prim_heap(int start) {
 | **树的直径** | 两次 DFS（简单但不支持负权）、树形 DP（通用） |
 | **树的重心** | 删去后最大连通块 $\le n/2$，点分治的基础 |
 | **最小生成树** | Kruskal（稀疏图）、Prim（稠密图） |
+| **经典例题** | 消防（直径+尺取）、Digit Tree（点分治+数论） |
 
-这些知识点环环相扣：树的遍历是基础算法，直径和重心是重要的树上结构性质，而最小生成树则是树在图论中的重要应用。掌握这些内容，将为解决更复杂的树论问题打下坚实基础。
+这些知识点环环相扣：树的遍历是基础算法，直径和重心是重要的树上结构性质，最小生成树是图论中的重要应用，而经典例题则展示了知识的综合运用。掌握这些内容，将为解决更复杂的树论问题打下坚实基础。
+
+---
+
+# 第五部分：经典例题详解
+
+本部分精选两道经典竞赛题目，综合运用树论的核心知识，展示算法在实际问题中的应用。
+
+## 例题一：[P2491 [SDOI2011] 消防](https://www.luogu.com.cn/problem/P2491)
+
+### 题目背景
+
+这道题的背景包装得很花哨，但剔除掉背景后，它是一个非常经典的图论问题。
+
+### 等价题意
+
+给定一棵包含 $n$ 个节点、边带有非负权值的无向树，以及一个长度上限 $s$。请在树上找出一条简单路径，满足以下条件：
+
+**约束条件**：这条路径的总长度（即路径上所有边的权值之和）不能超过 $s$。
+
+**优化目标**：最小化树中所有节点到这条路径的距离的最大值。
+
+**补充说明**：树上任意一个节点到某条路径的"距离"，定义为该节点到路径上所有节点最短距离的最小值。
+
+### 问题本质
+
+这道题在算法竞赛中通常被称为**「树的核」（Tree Core）问题**。
+
+因为距离路径最远的节点一定在树的某个"边缘"上，所以直觉上（也有严谨证明），这条最优路径一定完全包含在树的**直径**（树上最长的一条简单路径）上。
+
+因此，这类问题通常的解题方向是：
+1. 先求出树的直径
+2. 然后利用**尺取法（双指针）**或**二分答案**在直径上寻找最优的线段
+
+### 算法思路
+
+**第一步：求树的直径**
+
+使用两次 DFS 方法求出直径的两个端点，并记录直径路径上所有节点的距离（从某个端点出发）。
+
+**第二步：尺取法在直径上找最优路径**
+
+设直径端点为 $u$ 和 $v$，直径长度为 $D$。我们需要在直径上找一段长度不超过 $s$ 的路径，使得"偏心距"（所有节点到路径的最大距离）最小。
+
+用双指针 $i$ 和 $j$ 在直径路径上移动：
+- $i$ 从 $u$ 向 $v$ 移动
+- $j$ 从 $v$ 向 $u$ 移动
+- 保证 $i$ 到 $j$ 的距离不超过 $s$
+
+对于每对 $(i, j)$，偏心距由两部分构成：
+1. 直径端点到路径的距离：$dis[i]$ 和 $D - dis[j]$
+2. 直径外分支的最大深度
+
+**第三步：处理直径外的分支**
+
+对于不在直径上的分支，需要从直径上的节点出发 DFS，计算每个分支的最大深度。
+
+### 关键性质证明
+
+**为什么最优路径一定在直径上？**
+
+设最优路径为 $P$，不在直径上。考虑距离 $P$ 最远的节点 $x$。
+
+由于 $P$ 不在直径上，从 $P$ 到 $x$ 的路径必定在某点 $y$ 处离开直径（或从未进入直径）。
+
+设直径端点为 $u$ 和 $v$，$u$ 到 $v$ 的路径经过 $y$。那么 $u$ 到 $x$ 的距离或 $v$ 到 $x$ 的距离中，至少有一个大于 $x$ 到 $P$ 的距离。
+
+这意味着，如果把 $P$ 移到直径上某个包含 $y$ 的位置，偏心距不会变大，反而可能变小。因此最优路径一定在直径上。
+
+### 代码实现
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const ll N=1e6+5;
+
+ll n, s, tot, hd[N], cnt, dis[N], ans=9999999999, top, k, fa[N], line[N];
+struct edge { ll t, nxt, va; } es[N<<2];
+
+// 快读快写模板
+template <typename T> void rd(T &x) {
+    ll fl=1; x=0; char c=getchar();
+    for(; !isdigit(c); c=getchar()) if(c=='-') fl=-fl;
+    for(; isdigit(c); c=getchar()) x=(x<<3)+(x<<1)+c-'0';
+    x*=fl;
+}
+
+void add(ll u, ll v, ll w) {
+    es[++tot] = (edge){v, hd[u], w}, hd[u] = tot;
+}
+
+// DFS求最远点，同时记录父亲
+void dfs(ll x, ll ff) {
+    fa[x] = ff;
+    if(dis[x] > dis[k]) k = x;  // 更新最远点
+    for(ll i = hd[x]; i; i = es[i].nxt) {
+        ll to = es[i].t;
+        if(to == ff || line[to]) continue;  // 跳过父亲和已标记的直径节点
+        dis[to] = dis[x] + es[i].va;
+        dfs(to, x);
+    }
+}
+
+int main() {
+    rd(n); rd(s);
+    for(ll i=1, u, v, w; i<n; i++) {
+        rd(u); rd(v); rd(w);
+        add(u, v, w); add(v, u, w);
+    }
+
+    // 第一步：求直径
+    dis[1] = 1; dfs(1, 0);       // 第一次DFS：从任意点找最远点k
+    dis[k] = 0; dfs(k, 0);       // 第二次DFS：从k找最远点top
+    top = k;                     // top是直径的另一端点
+
+    // 第二步：尺取法在直径上找最优路径
+    for(ll i=top, j=top; i; i=fa[i]) {
+        // i从top向另一端移动，j跟随移动保证路径长度<=s
+        while(dis[j] - dis[i] > s) j = fa[j];
+        // 更新答案：偏心距 = max(左端距离, 右端距离)
+        ans = min(ans, max(dis[i], dis[top] - dis[j]));
+    }
+
+    // 第三步：标记直径上的节点
+    for(ll i=top; i; i=fa[i]) line[i] = 1;
+
+    // 第四步：计算直径外分支的最大深度
+    for(ll i=top; i; i=fa[i]) {
+        k = i; dis[k] = 0;
+        dfs(i, fa[i]);  // 从直径节点出发DFS其分支
+    }
+
+    // 最终答案：取所有节点到路径的最大距离
+    for(ll i=1; i<=n; i++) ans = max(ans, dis[i]);
+
+    printf("%lld\n", ans);
+    return 0;
+}
+```
+
+### 算法分析
+
+| 步骤 | 时间复杂度 | 说明 |
+|------|------------|------|
+| 求直径 | $O(n)$ | 两次 DFS |
+| 尺取法 | $O(n)$ | 直径长度不超过 $n$ |
+| 计算分支深度 | $O(n)$ | 每个节点只访问一次 |
+| **总计** | $O(n)$ | 线性复杂度 |
+
+<Info>
+这道题巧妙地结合了树的直径和双指针技巧，是树论综合应用的经典范例。
+</Info>
+
+---
+
+## 例题二：[CF 715C Digit Tree](https://codeforces.com/problemset/problem/715/C)
+
+### 等价题意
+
+求树上有多少个有序节点对 $(u, v)$，使得从 $u$ 到 $v$ 路径上的数字按顺序拼接成的十进制数能被 $M$ 整除。
+
+### 问题分析
+
+看到"树上所有路径统计"以及 $n \le 10^5$ 的数据范围，这道题通常是指向**点分治（Centroid Decomposition）**的经典模型。
+
+结合"顺序拼接数字"和"与 10 互质"的性质，需要利用**扩展欧几里得求逆元**，将路径 $u \to root \to v$ 的余数合并起来进行快速统计。
+
+### 算法思路
+
+**核心思想**：点分治 + 路径余数统计
+
+对于每个分治中心 $cent$，统计所有经过 $cent$ 的满足条件的路径对 $(u, v)$。
+
+**路径余数的表示**
+
+设从 $u$ 到 $cent$ 的路径上数字拼接成的数为 $X_u$，从 $cent$ 到 $v$ 的路径上数字拼接成的数为 $Y_v$。
+
+则 $u \to cent \to v$ 路径上的数为 $X_u \times 10^{len(Y_v)} + Y_v$。
+
+我们需要统计满足 $X_u \times 10^{len} + Y_v \equiv 0 \pmod M$ 的对数。
+
+**两个方向的处理**
+
+- **down 方向**：从 $cent$ 向下走到节点 $u$，数字从左往右拼接
+- **up 方向**：从节点 $u$ 向上走到 $cent$，数字从右往左拼接（需要乘 $10^{h}$）
+
+设 $down[u]$ 为从 $cent$ 到 $u$ 的路径余数，$up[u]$ 为从 $u$ 到 $cent$ 的路径余数，$h[u]$ 为路径高度（长度）。
+
+**合并条件**
+
+$up[u] \times 10^{h[v]} + down[v] \equiv 0 \pmod M$
+
+等价于：$up[u] \equiv -down[v] \times 10^{-h[v]} \pmod M$
+
+这里需要用到模逆元，要求 $M$ 与 $10$ 互质（题目保证）。
+
+**统计方法**
+
+使用两个 map：
+- $tot$：所有子树中 $up$ 值的总统计
+- $vec[part]$：各子树内部的 $up$ 值统计（避免重复计数）
+
+对于每个节点 $v$，查询 $tot$ 中满足条件的数量，减去同一子树内的数量（避免路径起点终点在同一子树）。
+
+### 代码实现
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int,int> ii;
+typedef vector<int> vi;
+
+const int N = 1e5 + 1;
+int MOD, n;
+
+vector<ii> adj[N];
+int subsize[N];
+bool visited[N];
+int treesize;
+vi clrlist;
+ll up[N], down[N];
+int h[N];
+int PHI;
+int dppart[N];
+
+// 快速幂
+ll modpow(ll a, ll b) {
+    ll r = 1;
+    while(b) {
+        if(b&1) r = (r*a) % MOD;
+        a = (a*a) % MOD;
+        b >>= 1;
+    }
+    return r;
+}
+
+ll mult(ll a, ll b) { return (a*b) % MOD; }
+ll add(ll a, ll b) { return (a+b+MOD) % MOD; }
+
+ll inv(ll a) { return modpow(a, PHI-1); }  // 模逆元
+
+// 欧拉函数（用于求逆元）
+int phi(int n) {
+    ll num = 1, num2 = n;
+    for(ll i = 2; i*i <= n; i++) {
+        if(n % i == 0) {
+            num2 /= i;
+            num *= (i-1);
+        }
+        while(n % i == 0) n /= i;
+    }
+    if(n > 1) { num2 /= n; num *= (n-1); }
+    return num * num2;
+}
+
+// 计算子树大小
+void dfs(int u, int par) {
+    if(par == -1) clrlist.clear();
+    subsize[u] = 1;
+    clrlist.pb(u);
+    for(int i = 0; i < adj[u].size(); i++) {
+        int v = adj[u][i].fi;
+        if(visited[v] || v == par) continue;
+        dfs(v, u);
+        subsize[u] += subsize[v];
+    }
+    if(par == -1) treesize = subsize[u];
+}
+
+// 找重心
+int centroid(int u, int par) {
+    for(int i = 0; i < adj[u].size(); i++) {
+        int v = adj[u][i].fi;
+        if(visited[v] || v == par) continue;
+        if(subsize[v]*2 > treesize) return centroid(v, u);
+    }
+    return u;
+}
+
+// 计算各节点的up、down、h值
+int parts = 0;
+void fill(int u, int p, int cent) {
+    if(p == cent) {
+        dppart[u] = parts;
+        parts++;
+    } else if(p != -1) {
+        dppart[u] = dppart[p];
+    }
+    for(int i = 0; i < adj[u].size(); i++) {
+        int v = adj[u][i].fi, w = adj[u][i].se;
+        if(v == p || visited[v]) continue;
+        down[v] = add(mult(down[u], 10), w);
+        up[v] = add(up[u], mult(modpow(10, h[u]), w));
+        h[v] = h[u] + 1;
+        fill(v, u, cent);
+    }
+}
+
+// 统计经过cent的满足条件的路径数
+ll solve(int cent) {
+    for(int u : clrlist) { up[u] = 0; down[u] = 0; h[u] = 0; }
+    parts = 0;
+    fill(cent, -1, cent);
+    parts--;
+    dppart[cent] = -1;
+
+    map<ll,ll> tot;  // 所有up值的统计
+    vector<map<ll,ll>> vec(parts+1);  // 各子树up值统计
+    tot[0]++;
+    for(int u : clrlist) {
+        if(u == cent) continue;
+        tot[up[u]]++;
+        vec[dppart[u]][up[u]]++;
+    }
+
+    ll ans = 0;
+    for(int u : clrlist) {
+        int ht = h[u], pt = dppart[u];
+        if(u == cent) {
+            ans += (tot[0] - 1);  // cent作为起点
+        } else {
+            ll val = mult((-down[u]) % MOD + MOD, inv(modpow(10, ht)));
+            ans += (tot[val] - vec[pt][val]);  // 减去同一子树内的
+        }
+    }
+    return ans;
+}
+
+// 点分治主过程
+ll compsolve(int u) {
+    dfs(u, -1);
+    int cent = centroid(u, -1);
+    ll ans = solve(cent);
+    visited[cent] = true;
+    for(int i = 0; i < adj[cent].size(); i++) {
+        int v = adj[cent][i].fi;
+        if(!visited[v]) ans += compsolve(v);
+    }
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n >> MOD;
+    if(MOD == 1) {
+        cout << ll(n) * ll(n-1) << '\n';
+        return 0;
+    }
+    PHI = phi(MOD);  // 欧拉函数值
+    for(int i = 0; i < n-1; i++) {
+        int u, v, w; cin >> u >> v >> w;
+        adj[u].pb(ii(v, w)); adj[v].pb(ii(u, w));
+    }
+    cout << compsolve(0) << '\n';
+    return 0;
+}
+```
+
+### 算法分析
+
+| 组件 | 说明 |
+|------|------|
+| **点分治** | 保证递归深度 $O(\log n)$，总复杂度 $O(n \log n)$ |
+| **欧拉函数** | 用于计算模逆元（要求 $M$ 与 $10$ 互质） |
+| **up/down数组** | 分别表示向上和向下方向的路径余数 |
+| **map统计** | 快速查询满足合并条件的路径数 |
+
+<Warning>
+题目保证 $M$ 与 $10$ 互质，这样才能使用欧拉函数求逆元。如果 $M$ 不与 $10$ 互质，需要用其他方法处理。
+</Warning>
+
+### 关键技巧总结
+
+1. **路径方向的区分**：数字拼接有方向性，$u \to v$ 和 $v \to u$ 是不同的
+2. **模逆元的应用**：将"乘以 $10^{len}$"转化为"乘以逆元"
+3. **避免重复计数**：统计时减去同一子树内的路径数
+4. **重心优化**：点分治保证线性对数复杂度
+
+---
+
+## 小结
+
+这两道例题展示了树论知识的综合应用：
+
+| 题目 | 核心知识点 | 算法技巧 |
+|------|------------|----------|
+| **P2491 消防** | 树的直径 | 尺取法、DFS分支处理 |
+| **CF 715C Digit Tree** | 树的重心（点分治） | 模逆元、路径余数统计 |
+
+学习建议：
+- 先掌握基础算法（DFS、求直径、求重心）
+- 理解点分治的核心思想：每次选重心，保证递归深度
+- 多练习综合题目，体会知识点的融合应用
