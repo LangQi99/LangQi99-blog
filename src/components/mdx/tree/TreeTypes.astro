@@ -97,78 +97,117 @@
 </style>
 
 <script>
-  const canvas = document.getElementById('treeTypesCanvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById("treeTypesCanvas");
+  const ctx = canvas.getContext("2d");
   canvas.width = 400;
   canvas.height = 180;
 
   const treeTypes = {
     chain: {
-      nodes: Array.from({length: 7}, (_, i) => ({ x: 40 + i * 55, y: 90, label: String(i + 1) })),
-      edges: [[0,1], [1,2], [2,3], [3,4], [4,5], [5,6]],
-      info: '<strong>链 (Chain)</strong>：所有节点度数 ≤ 2，最"瘦长"的树结构'
+      nodes: Array.from({ length: 7 }, (_, i) => ({ x: 40 + i * 55, y: 90, label: String(i + 1) })),
+      edges: [
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [3, 4],
+        [4, 5],
+        [5, 6],
+      ],
+      info: '<strong>链 (Chain)</strong>：所有节点度数 ≤ 2，最"瘦长"的树结构',
     },
     star: {
       nodes: (() => {
-        const n = [{ x: 200, y: 90, label: 'C' }];
+        const n = [{ x: 200, y: 90, label: "C" }];
         for (let i = 0; i < 6; i++) {
-          const angle = (i * 60 - 90) * Math.PI / 180;
+          const angle = ((i * 60 - 90) * Math.PI) / 180;
           n.push({ x: 200 + 70 * Math.cos(angle), y: 90 + 70 * Math.sin(angle), label: String.fromCharCode(65 + i) });
         }
         return n;
       })(),
-      edges: [[0,1], [0,2], [0,3], [0,4], [0,5], [0,6]],
-      info: '<strong>星形 (Star)</strong>：一个中心节点连接所有其他节点，最"扁平"的树'
+      edges: [
+        [0, 1],
+        [0, 2],
+        [0, 3],
+        [0, 4],
+        [0, 5],
+        [0, 6],
+      ],
+      info: '<strong>星形 (Star)</strong>：一个中心节点连接所有其他节点，最"扁平"的树',
     },
     full: {
       nodes: [
-        { x: 200, y: 40, label: '1' },
-        { x: 130, y: 100, label: '2' },
-        { x: 270, y: 100, label: '3' },
-        { x: 90, y: 160, label: '4' },
-        { x: 160, y: 160, label: '5' },
+        { x: 200, y: 40, label: "1" },
+        { x: 130, y: 100, label: "2" },
+        { x: 270, y: 100, label: "3" },
+        { x: 90, y: 160, label: "4" },
+        { x: 160, y: 160, label: "5" },
       ],
-      edges: [[0,1], [0,2], [1,3], [1,4]],
-      info: '<strong>完整二叉树</strong>：每个节点有 0 或 2 个子节点'
+      edges: [
+        [0, 1],
+        [0, 2],
+        [1, 3],
+        [1, 4],
+      ],
+      info: "<strong>完整二叉树</strong>：每个节点有 0 或 2 个子节点",
     },
     complete: {
       nodes: [
-        { x: 200, y: 30, label: '1' },
-        { x: 130, y: 75, label: '2' },
-        { x: 270, y: 75, label: '3' },
-        { x: 90, y: 120, label: '4' },
-        { x: 160, y: 120, label: '5' },
-        { x: 230, y: 120, label: '6' },
-        { x: 90, y: 165, label: '7' },
-        { x: 160, y: 165, label: '8' },
+        { x: 200, y: 30, label: "1" },
+        { x: 130, y: 75, label: "2" },
+        { x: 270, y: 75, label: "3" },
+        { x: 90, y: 120, label: "4" },
+        { x: 160, y: 120, label: "5" },
+        { x: 230, y: 120, label: "6" },
+        { x: 300, y: 120, label: "7" },
+        { x: 75, y: 165, label: "8" },
       ],
-      edges: [[0,1], [0,2], [1,3], [1,4], [2,5], [3,6], [4,7]],
-      info: '<strong>完全二叉树</strong>：除最后一层外全满，最后一层靠左排列'
+      edges: [
+        [0, 1],
+        [0, 2],
+        [1, 3],
+        [1, 4],
+        [2, 5],
+        [2, 6],
+        [3, 7],
+      ],
+      info: "<strong>完全二叉树</strong>：除最后一层外全满，最后一层靠左排列",
     },
     perfect: {
       nodes: [
-        { x: 200, y: 20, label: '1' },
-        { x: 130, y: 55, label: '2' },
-        { x: 270, y: 55, label: '3' },
-        { x: 90, y: 90, label: '4' },
-        { x: 160, y: 90, label: '5' },
-        { x: 230, y: 90, label: '6' },
-        { x: 300, y: 90, label: '7' },
-        { x: 65, y: 125, label: '8' },
-        { x: 110, y: 125, label: '9' },
-        { x: 145, y: 125, label: '10' },
-        { x: 175, y: 125, label: '11' },
-        { x: 215, y: 125, label: '12' },
-        { x: 250, y: 125, label: '13' },
-        { x: 285, y: 125, label: '14' },
-        { x: 320, y: 125, label: '15' },
+        { x: 200, y: 20, label: "1" },
+        { x: 130, y: 55, label: "2" },
+        { x: 270, y: 55, label: "3" },
+        { x: 90, y: 90, label: "4" },
+        { x: 160, y: 90, label: "5" },
+        { x: 230, y: 90, label: "6" },
+        { x: 300, y: 90, label: "7" },
+        { x: 65, y: 125, label: "8" },
+        { x: 110, y: 125, label: "9" },
+        { x: 145, y: 125, label: "10" },
+        { x: 175, y: 125, label: "11" },
+        { x: 215, y: 125, label: "12" },
+        { x: 250, y: 125, label: "13" },
+        { x: 285, y: 125, label: "14" },
+        { x: 320, y: 125, label: "15" },
       ],
       edges: [
-        [0,1], [0,2], [1,3], [1,4], [2,5], [2,6],
-        [3,7], [3,8], [4,9], [4,10], [5,11], [5,12], [6,13], [6,14]
+        [0, 1],
+        [0, 2],
+        [1, 3],
+        [1, 4],
+        [2, 5],
+        [2, 6],
+        [3, 7],
+        [3, 8],
+        [4, 9],
+        [4, 10],
+        [5, 11],
+        [5, 12],
+        [6, 13],
+        [6, 14],
       ],
-      info: '<strong>完美二叉树</strong>：所有叶节点深度相同，节点数 = 2^(h+1) - 1'
-    }
+      info: "<strong>完美二叉树</strong>：所有叶节点深度相同，节点数 = 2^(h+1) - 1",
+    },
   };
 
   function drawType(type) {
@@ -180,7 +219,7 @@
       ctx.beginPath();
       ctx.moveTo(data.nodes[u].x, data.nodes[u].y);
       ctx.lineTo(data.nodes[v].x, data.nodes[v].y);
-      ctx.strokeStyle = '#86efac';
+      ctx.strokeStyle = "#86efac";
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -189,29 +228,29 @@
     for (let node of data.nodes) {
       ctx.beginPath();
       ctx.arc(node.x, node.y, 14, 0, 2 * Math.PI);
-      ctx.fillStyle = '#22c55e';
+      ctx.fillStyle = "#22c55e";
       ctx.fill();
-      ctx.strokeStyle = '#166534';
+      ctx.strokeStyle = "#166534";
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 10px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 10px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       ctx.fillText(node.label, node.x, node.y);
     }
 
-    document.getElementById('treeTypeInfo').innerHTML = data.info;
+    document.getElementById("treeTypeInfo").innerHTML = data.info;
   }
 
-  document.querySelectorAll('.tree-types-demo [data-type]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tree-types-demo [data-type]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  document.querySelectorAll(".tree-types-demo [data-type]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tree-types-demo [data-type]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
       drawType(btn.dataset.type);
     });
   });
 
-  drawType('chain');
+  drawType("chain");
 </script>
