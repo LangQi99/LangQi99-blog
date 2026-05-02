@@ -3,6 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import MainCard from "@/components/MainCard.astro";
 import FeatureCard from "@/components/mdx/FeatureCard.astro";
 import GitHubStats from "@/components/mdx/GitHubStats.astro";
+import PinnedRepos from "@/components/mdx/PinnedRepos.astro";
 import PostCard from "@components/PostCard.astro";
 import Pagination from "@components/widgets/Pagination.astro";
 import CardGroup from "@components/temple/CardGroup.astro";
@@ -65,7 +66,17 @@ const isFirstPage = page.currentPage === 1;
             <Icon name="lucide:github" class="w-6 h-6 text-primary" />
             <span>Featured Repositories</span>
           </h2>
-          <GitHubStats username="LangQi99" repositoryName="NetworkStealer" showLanguages={true} showContributors={true} />
+          <PinnedRepos
+            username="LangQi99"
+            fallback={[
+              { author: "LangQi99", name: "dlut-FakeRun", description: "✨一键刷校园跑脚本 | 虚拟定位校园跑刷跑软件", language: "Java", stars: 72, forks: 10 },
+              { author: "songhahaha66", name: "PaperAgent", description: "PaperAgent - 全流程智能文章写作与代码执行系统", language: "Python", stars: 43, forks: 8 },
+              { author: "LangQi99", name: "NeoFish", description: "🎯人人可用的Agent，你的终极数字奴隶。", language: "Python", stars: 24, forks: 8 },
+              { author: "rk8s-dev", name: "rk8s", description: "A lightweight Kubernetes-compatible container orchestration system in Rust.", language: "Rust", stars: 488, forks: 80 },
+              { author: "matplotlib", name: "matplotlib", description: "matplotlib: plotting with Python", language: "Python" },
+              { author: "LangQi99", name: "dlut-NetworkStealer", description: "欺骗 DLUT 校园网认证", language: "Python", stars: 23, forks: 6 },
+            ]}
+          />
         </section>
       </div>
     </MainCard>

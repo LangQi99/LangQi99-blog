@@ -1,0 +1,232 @@
+---
+export interface PinnedReposProps {
+  username: string;
+  fallback?: Array<{ author: string; name: string }>;
+}
+
+const { username, fallback = [] } = Astro.props as PinnedReposProps;
+
+import { Icon } from "astro-icon/components";
+---
+
+<pinned-repos
+  class="block"
+  data-username={username}
+  data-fallback={JSON.stringify(fallback)}
+>
+  <div class="pinned-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {
+      Array.from({ length: 6 }).map(() => (
+        <div class="card bg-base-100 shadow-md border border-base-200 overflow-hidden">
+          <div class="card-body p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <Icon name="lucide:github" class="w-4 h-4 text-base-content/50" />
+              <div class="skeleton h-4 w-32" />
+            </div>
+            <div class="skeleton h-3 w-full mb-1" />
+            <div class="skeleton h-3 w-3/4 mb-3" />
+            <div class="flex justify-between items-center">
+              <div class="skeleton h-3 w-16" />
+              <div class="skeleton h-3 w-20" />
+            </div>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+  <div class="pinned-error hidden mt-2 text-sm text-base-content/60">
+    <Icon name="lucide:triangle-alert" class="w-4 h-4 inline-block mr-1" />
+    <span class="pinned-error-msg">Unable to load pinned repositories.</span>
+  </div>
+</pinned-repos>
+
+<script>
+  const languageColors: Record<string, string> = {
+    JavaScript: "#f1e05a",
+    TypeScript: "#3178c6",
+    HTML: "#e34c26",
+    CSS: "#563d7c",
+    Python: "#3572A5",
+    Rust: "#dea584",
+    Go: "#00ADD8",
+    Java: "#b07219",
+    Swift: "#F05138",
+    Kotlin: "#A97BFF",
+    "C#": "#178600",
+    C: "#555555",
+    "C++": "#f34b7d",
+    Ruby: "#701516",
+    PHP: "#4F5D95",
+    Shell: "#89e051",
+    Vue: "#41b883",
+    Astro: "#ff5a03",
+    Dart: "#00B4AB",
+    Jupyter: "#DA5B0B",
+    "Jupyter Notebook": "#DA5B0B",
+  };
+
+  interface PinnedRepo {
+    author: string;
+    name: string;
+    description?: string;
+    language?: string;
+    languageColor?: string;
+    stars?: number;
+    forks?: number;
+  }
+
+  class PinnedRepos extends HTMLElement {
+    private abortController: AbortController | null = null;
+
+    connectedCallback() {
+      this.abortController = new AbortController();
+      const username = this.getAttribute("data-username");
+      if (!username) return;
+
+      const cacheKey = `pinned-repos:${username}`;
+      const cached = this.readCache(cacheKey);
+      if (cached) {
+        this.render(cached);
+        return;
+      }
+
+      this.fetchPinned(username, this.abortController.signal)
+        .then((repos) => {
+          this.writeCache(cacheKey, repos);
+          this.render(repos);
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          console.warn("Pinned repos fetch failed, using fallback", err);
+          const fallback = this.readFallback();
+          if (fallback.length > 0) {
+            this.render(fallback);
+          } else {
+            this.showError("Unable to load pinned repositories.");
+          }
+        });
+    }
+
+    disconnectedCallback() {
+      this.abortController?.abort();
+      this.abortController = null;
+    }
+
+    private async fetchPinned(username: string, signal: AbortSignal): Promise<PinnedRepo[]> {
+      const url = `https://pinned.berrysauce.dev/get/${encodeURIComponent(username)}`;
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as PinnedRepo[];
+      if (!Array.isArray(data) || data.length === 0) throw new Error("empty");
+      return data;
+    }
+
+    private readFallback(): PinnedRepo[] {
+      try {
+        const raw = this.getAttribute("data-fallback") || "[]";
+        return JSON.parse(raw);
+      } catch {
+        return [];
+      }
+    }
+
+    private readCache(key: string): PinnedRepo[] | null {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const { data, timestamp } = JSON.parse(raw);
+        if (Date.now() - timestamp < 6 * 60 * 60 * 1000) return data;
+      } catch {
+        /* ignore */
+      }
+      return null;
+    }
+
+    private writeCache(key: string, data: PinnedRepo[]) {
+      try {
+        localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    private render(repos: PinnedRepo[]) {
+      const grid = this.querySelector(".pinned-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      for (const repo of repos) {
+        grid.appendChild(this.createCard(repo));
+      }
+    }
+
+    private createCard(repo: PinnedRepo): HTMLElement {
+      const href = `https://github.com/${repo.author}/${repo.name}`;
+      const langColor = repo.languageColor || (repo.language ? languageColors[repo.language] : "") || "#8b949e";
+      const description = repo.description || "No description provided";
+      const stars = this.formatNumber(repo.stars ?? 0);
+      const forks = this.formatNumber(repo.forks ?? 0);
+
+      const card = document.createElement("a");
+      card.href = href;
+      card.target = "_blank";
+      card.rel = "noopener";
+      card.className =
+        "card bg-base-100 shadow-md hover:shadow-xl border border-base-200 overflow-hidden transition-transform duration-300 hover:-translate-y-1 no-underline";
+      card.innerHTML = `
+        <div class="card-body p-4">
+          <div class="flex items-center gap-2 mb-2 text-base-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 opacity-70"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+            <span class="text-sm text-base-content/60 truncate">${this.escape(repo.author)}/</span>
+            <span class="font-semibold text-primary truncate">${this.escape(repo.name)}</span>
+          </div>
+          <p class="text-sm text-base-content/70 line-clamp-2 mb-4 min-h-[2.5rem]">${this.escape(description)}</p>
+          <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-base-content/70 mt-auto pt-2 border-t border-base-200">
+            <div class="flex items-center gap-1">
+              ${repo.language ? `<span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color:${langColor}"></span><span>${this.escape(repo.language)}</span>` : `<span class="opacity-50">—</span>`}
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1" title="Stars">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                ${stars}
+              </span>
+              <span class="flex items-center gap-1" title="Forks">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></svg>
+                ${forks}
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    private showError(message: string) {
+      const grid = this.querySelector(".pinned-grid") as HTMLElement | null;
+      const errBox = this.querySelector(".pinned-error") as HTMLElement | null;
+      const errMsg = this.querySelector(".pinned-error-msg") as HTMLElement | null;
+      if (grid) grid.innerHTML = "";
+      if (errBox) errBox.classList.remove("hidden");
+      if (errMsg) errMsg.textContent = message;
+    }
+
+    private escape(s: string): string {
+      return s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    private formatNumber(num: number): string {
+      if (!num) return "0";
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+      if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+      return num.toString();
+    }
+  }
+
+  if (!customElements.get("pinned-repos")) {
+    customElements.define("pinned-repos", PinnedRepos);
+  }
+</script>
