@@ -21,31 +21,31 @@ const pageLinks = generatePageLinks(totalPages);
 
 <BaseLayout title="Blog">
   <!-- Command Line Toolbar -->
-  <div class="flex flex-wrap items-center gap-4 mb-8 bg-base-200/80 backdrop-blur-sm p-4 rounded-md border border-base-300 transition-all duration-300">
-    <div class="font-mono text-sm text-base-content/60 mr-2">$ ./blog_tools.sh</div>
+  <div class="flex flex-wrap items-center gap-4 mb-8 bg-gray-50/80 dark:bg-zinc-900/80 backdrop-blur-sm p-4 rounded-md border border-gray-200 dark:border-zinc-600 transition-all duration-300">
+    <div class="font-mono text-sm text-gray-500 dark:text-zinc-300 mr-2">$ ./blog_tools.sh</div>
     
     <!-- Archives -->
-    <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-accent hover:shadow-sm transition-all duration-200">
+    <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-accent dark:hover:border-accent hover:shadow-sm transition-all duration-200">
       <span class="text-accent font-bold group-hover:text-accent-focus">$</span>
-      <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">ls -R /archives</span>
+      <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">ls -R /archives</span>
     </a>
 
     <!-- Categories -->
-    <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-primary hover:shadow-sm transition-all duration-200">
+    <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-primary dark:hover:border-primary hover:shadow-sm transition-all duration-200">
       <span class="text-primary font-bold group-hover:text-primary-focus">#</span>
-      <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">find /categories</span>
+      <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">find /categories</span>
     </a>
 
     <!-- Tags -->
-    <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-secondary hover:shadow-sm transition-all duration-200">
+    <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-secondary dark:hover:border-secondary hover:shadow-sm transition-all duration-200">
       <span class="text-secondary font-bold group-hover:text-secondary-focus">@</span>
-      <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">cat /tags</span>
+      <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">cat /tags</span>
     </a>
 
     <!-- Search -->
-    <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-info hover:shadow-sm transition-all duration-200">
-      <Icon name="lucide:search" class="w-4 h-4 text-base-content/50 group-hover:text-info" />
-      <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">grep</span>
+    <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-info dark:hover:border-info hover:shadow-sm transition-all duration-200">
+      <Icon name="lucide:search" class="w-4 h-4 text-gray-400 dark:text-zinc-400 group-hover:text-info" />
+      <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">grep</span>
     </a>
   </div>
 

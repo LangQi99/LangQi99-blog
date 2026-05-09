@@ -33,28 +33,28 @@ const isFirstPage = page.currentPage === 1;
         <section class="py-6">
           <div class="flex flex-col items-start text-left">
             
-            <div class="mb-6 text-base-content/50 text-sm">
-              <span class="text-purple-600">import</span> <span class="text-yellow-600">{`{ Welcome }`}</span> <span class="text-purple-600">from</span> <span class="text-green-600">'@universe/blog'</span>;
+            <div class="mb-6 text-gray-400 dark:text-zinc-400 text-sm">
+              <span class="text-purple-600 dark:text-purple-300">import</span> <span class="text-yellow-600 dark:text-yellow-300">{`{ Welcome }`}</span> <span class="text-purple-600 dark:text-purple-300">from</span> <span class="text-green-600 dark:text-green-300">'@universe/blog'</span>;
               <br/>
-              <span class="text-base-content/50">// <span class="text-orange-400">TODO:</span> Explore the universe of code</span>
+              <span class="text-gray-400 dark:text-zinc-400">// <span class="text-orange-400 dark:text-orange-300">TODO:</span> Explore the universe of code</span>
             </div>
 
-            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-base-content">
-              <span class="text-blue-600">const</span> <span class="text-yellow-600">author</span> = <span class="text-green-600">'LangQi99'</span>;
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-black dark:text-zinc-100">
+              <span class="text-blue-600 dark:text-blue-300">const</span> <span class="text-yellow-600 dark:text-yellow-300">author</span> = <span class="text-green-600 dark:text-green-300">'LangQi99'</span>;
             </h1>
             
-            <p class="text-xl text-base-content/70 max-w-3xl mb-8 border-l-2 border-base-300 pl-4">
-               A minimal, responsive, and <span class="text-purple-600 font-bold">feature-rich</span> Astro blog theme designed for <span class="text-pink-500 font-bold">&lt;Developers /&gt;</span> who value data density.
+            <p class="text-xl text-gray-600 dark:text-zinc-300 max-w-3xl mb-8 border-l-2 border-gray-200 dark:border-zinc-600 pl-4">
+               A minimal, responsive, and <span class="text-purple-600 dark:text-purple-300 font-bold">feature-rich</span> Astro blog theme designed for <span class="text-pink-500 dark:text-pink-300 font-bold">&lt;Developers /&gt;</span> who value data density.
             </p>
 
             <div class="flex flex-wrap gap-4">
               <a href="#blog-posts" class="btn-category group !text-sm !px-4 !py-2">
-                <Icon name="lucide:arrow-down" class="w-4 h-4 text-purple-600" />
-                <span class="text-base-content font-bold">./read_posts.sh</span>
+                <Icon name="lucide:arrow-down" class="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                <span class="text-black dark:text-zinc-100 font-bold">./read_posts.sh</span>
               </a>
-              <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn-category group !text-sm !px-4 !py-2 !border-base-content/40">
-                 <Icon name="lucide:github" class="w-4 h-4 text-base-content" />
-                <span class="text-base-content/70">git clone repo</span>
+              <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn-category group !text-sm !px-4 !py-2 !border-gray-400 dark:!border-zinc-500">
+                 <Icon name="lucide:github" class="w-4 h-4 text-black dark:text-zinc-100" />
+                <span class="text-gray-600 dark:text-zinc-300">git clone repo</span>
               </a>
             </div>
           </div>
@@ -84,31 +84,31 @@ const isFirstPage = page.currentPage === 1;
 
   <div id="blog-posts" class="scroll-mt-20">
       <!-- Command Line Toolbar -->
-      <div class="flex flex-wrap items-center gap-4 mb-8 bg-base-200/80 backdrop-blur-sm p-4 rounded-md border border-base-300 sticky top-[70px] z-40 transition-all duration-300">
-        <div class="font-mono text-sm text-base-content/60 mr-2">$ ./blog_tools.sh</div>
+      <div class="flex flex-wrap items-center gap-4 mb-8 bg-gray-50/80 dark:bg-zinc-900/80 backdrop-blur-sm p-4 rounded-md border border-gray-200 dark:border-zinc-600 sticky top-[70px] z-40 transition-all duration-300">
+        <div class="font-mono text-sm text-gray-500 dark:text-zinc-300 mr-2">$ ./blog_tools.sh</div>
         
         <!-- Archives -->
-        <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-accent hover:shadow-sm transition-all duration-200">
+        <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-accent dark:hover:border-accent hover:shadow-sm transition-all duration-200">
           <span class="text-accent font-bold group-hover:text-accent-focus">$</span>
-          <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">ls -R /archives</span>
+          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">ls -R /archives</span>
         </a>
 
         <!-- Categories -->
-        <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-primary hover:shadow-sm transition-all duration-200">
+        <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-primary dark:hover:border-primary hover:shadow-sm transition-all duration-200">
           <span class="text-primary font-bold group-hover:text-primary-focus">#</span>
-          <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">find /categories</span>
+          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">find /categories</span>
         </a>
 
         <!-- Tags -->
-        <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-secondary hover:shadow-sm transition-all duration-200">
+        <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-secondary dark:hover:border-secondary hover:shadow-sm transition-all duration-200">
           <span class="text-secondary font-bold group-hover:text-secondary-focus">@</span>
-          <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">cat /tags</span>
+          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">cat /tags</span>
         </a>
 
         <!-- Search -->
-        <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-base-100 border border-base-300 rounded hover:border-info hover:shadow-sm transition-all duration-200">
-          <Icon name="lucide:search" class="w-4 h-4 text-base-content/50 group-hover:text-info" />
-          <span class="font-mono text-sm text-base-content/80 group-hover:text-base-content">grep</span>
+        <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-info dark:hover:border-info hover:shadow-sm transition-all duration-200">
+          <Icon name="lucide:search" class="w-4 h-4 text-gray-400 dark:text-zinc-400 group-hover:text-info" />
+          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">grep</span>
         </a>
       </div>
 

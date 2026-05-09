@@ -6,6 +6,7 @@ import { SITE_THEME } from "./src/config";
 
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
+  darkMode: ["selector", `[data-theme="${SITE_THEME.dark}"]`],
   theme: {
     extend: {
       fontFamily: {

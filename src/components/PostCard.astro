@@ -28,11 +28,11 @@ const displayDate = pubDate ? dayjs(pubDate).format(DATE_FORMAT) : "";
 <Card class="overflow-hidden" title={`~/posts/${title.toLowerCase().replace(/\s+/g, '-')}.md`}>
   <div class="flex flex-col lg:flex-row">
     <!-- Content Section -->
-    <div class="flex-1 p-6 overflow-hidden bg-base-100 lg:order-1 order-2 flex flex-col justify-between">
+    <div class="flex-1 p-6 overflow-hidden bg-white dark:bg-zinc-800 lg:order-1 order-2 flex flex-col justify-between">
       <div>
         <PostInfo pubDate={displayDate} badge={badge} word={word} time={time} />
         <Heading url={url} title={title}>{title}</Heading>
-        <p class="text-sm text-base-content/70 mb-4">{description}</p>
+        <p class="text-sm text-gray-600 dark:text-zinc-300 mb-4">{description}</p>
       </div>
       <PostFilter categories={categories} tags={tags} />
     </div>
