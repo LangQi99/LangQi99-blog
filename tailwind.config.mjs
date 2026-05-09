@@ -60,7 +60,8 @@ export default {
   ],
   plugins: [daisyUI, typography, addDynamicIconSelectors()],
   daisyui: {
-    themes: ["light"], // Force light theme for the white background requirement
+    themes: [SITE_THEME.light, SITE_THEME.dark],
+    darkTheme: SITE_THEME.dark,
     logs: false,
   },
 };

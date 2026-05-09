@@ -14,7 +14,7 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
 ---
 
 <!doctype html>
-<html lang={SITE_LANGUAGE} class="bg-white" data-theme="light">
+<html lang={SITE_LANGUAGE}>
   <head>
     <ClientRouter />
     <ElementCrossing />
@@ -22,17 +22,25 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
     <Header description={SITE_DESCRIPTION} favicon={SITE_FAVICON} image={image} />
     <title>{`${title} - ${SITE_TAB}`}</title>
 
-    {/* Theme persistence script - kept minimal as we are forcing light/IDE theme but might want dark mode later */}
+    {/* Theme persistence script - resolves stored preference, falls back to system preference */}
     <script define:vars={{ SITE_THEME }} is:inline>
       (function () {
         const storedTheme = localStorage.getItem("theme");
-         // Default to light for IDE theme
-        let theme = storedTheme || 'light';
+        const prefersDark =
+          typeof window !== "undefined" &&
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme =
+          storedTheme === SITE_THEME.dark || storedTheme === SITE_THEME.light
+            ? storedTheme
+            : prefersDark
+              ? SITE_THEME.dark
+              : SITE_THEME.light;
         document.documentElement.setAttribute("data-theme", theme);
       })();
     </script>
   </head>
-  <body class="bg-transparent font-mono text-gray-800 antialiased min-h-screen flex flex-col">
+  <body class="bg-transparent font-mono text-base-content antialiased min-h-screen flex flex-col">
     <!-- Top Navbar -->
     <Navbar />
 
