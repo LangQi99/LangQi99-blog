@@ -3,7 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 import MainCard from "@/components/MainCard.astro";
 import GitHubStats from "@/components/mdx/GitHubStats.astro";
-import RepositoryCard from "@/components/mdx/RepositoryCard.astro";
+import UserRepos from "@/components/mdx/UserRepos.astro";
 ---
 
 <BaseLayout title="Projects">
@@ -20,23 +20,36 @@ import RepositoryCard from "@/components/mdx/RepositoryCard.astro";
         <span>Featured Projects</span>
       </h2>
 
-      <GitHubStats username="LangQi99" repositoryName="NetworkStealer" showLanguages={true} showContributors={true} />
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <GitHubStats username="LangQi99" repositoryName="dlut-FakeRun" />
+        <GitHubStats username="songhahaha66" repositoryName="PaperAgent" />
+        <GitHubStats username="LangQi99" repositoryName="NeoFish" />
+        <GitHubStats username="rk8s-dev" repositoryName="rk8s" />
+        <GitHubStats username="matplotlib" repositoryName="matplotlib" />
+        <GitHubStats username="LangQi99" repositoryName="dlut-NetworkStealer" />
+      </div>
     </section>
 
-    <!-- My Repositories -->
+    <!-- My Repositories (Stars > 1) -->
     <section class="py-4">
       <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
         <Icon name="lucide:folder" class="w-6 h-6 text-primary" />
         <span>My Repositories</span>
       </h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <RepositoryCard repo="LangQi99/prose-polish" isPinned={true} />
-        <RepositoryCard repo="LangQi99/NetworkStealer" isPinned={true} />
-        <RepositoryCard repo="LangQi99/ModSDK-Search-MCP" />
-        <RepositoryCard repo="LangQi99/OurEDA2024WebWinter" />
-        <RepositoryCard repo="LangQi99/LangQi99-blog" />
-      </div>
+      <UserRepos
+        username="LangQi99"
+        minStars={2}
+        limit={12}
+        fallback={[
+          { author: "LangQi99", name: "dlut-FakeRun", description: "✨一键刷校园跑脚本 | 虚拟定位校园跑刷跑软件", language: "Java", stars: 72, forks: 10 },
+          { author: "LangQi99", name: "NeoFish", description: "🎯人人可用的Agent，你的终极数字奴隶。", language: "Python", stars: 24, forks: 8 },
+          { author: "LangQi99", name: "dlut-NetworkStealer", description: "欺骗 DLUT 校园网认证", language: "Python", stars: 23, forks: 6 },
+          { author: "LangQi99", name: "prose-polish", description: "AI 写作润色助手", language: "TypeScript", stars: 5, forks: 1 },
+          { author: "LangQi99", name: "ModSDK-Search-MCP", description: "ModSDK 搜索 MCP 服务", language: "Python", stars: 3, forks: 0 },
+          { author: "LangQi99", name: "LangQi99-blog", description: "个人博客", language: "Astro", stars: 2, forks: 0 },
+        ]}
+      />
 
       <div class="flex justify-center mt-10">
         <a
