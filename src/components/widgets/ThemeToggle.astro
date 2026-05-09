@@ -76,6 +76,15 @@ const { className = "" } = Astro.props as ThemeToggleProps;
       }, 300);
     });
   });
+
+  // Sync icons when theme is updated by external source (e.g., system preference change)
+  document.addEventListener("themechange", (event) => {
+    const newTheme = event.detail && event.detail.theme;
+    const allToggles = document.querySelectorAll("[data-theme-toggle]");
+    allToggles.forEach((toggle) => {
+      updateThemeIcons(toggle, newTheme === SITE_THEME.dark);
+    });
+  });
 </script>
 
 <style>

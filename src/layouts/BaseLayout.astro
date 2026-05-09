@@ -22,21 +22,45 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
     <Header description={SITE_DESCRIPTION} favicon={SITE_FAVICON} image={image} />
     <title>{`${title} - ${SITE_TAB}`}</title>
 
-    {/* Theme persistence script - resolves stored preference, falls back to system preference */}
+    {/* Theme persistence script - resolves stored preference, falls back to system preference, syncs across SPA navigations and live system changes */}
     <script define:vars={{ SITE_THEME }} is:inline>
       (function () {
-        const storedTheme = localStorage.getItem("theme");
-        const prefersDark =
-          typeof window !== "undefined" &&
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const theme =
-          storedTheme === SITE_THEME.dark || storedTheme === SITE_THEME.light
-            ? storedTheme
-            : prefersDark
-              ? SITE_THEME.dark
-              : SITE_THEME.light;
-        document.documentElement.setAttribute("data-theme", theme);
+        function applyTheme() {
+          const storedTheme = localStorage.getItem("theme");
+          const prefersDark =
+            typeof window !== "undefined" &&
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const theme =
+            storedTheme === SITE_THEME.dark || storedTheme === SITE_THEME.light
+              ? storedTheme
+              : prefersDark
+                ? SITE_THEME.dark
+                : SITE_THEME.light;
+          document.documentElement.setAttribute("data-theme", theme);
+          document.dispatchEvent(new CustomEvent("themechange", { detail: { theme } }));
+        }
+
+        // Initial apply
+        applyTheme();
+
+        // Re-apply after Astro ClientRouter view transitions
+        document.addEventListener("astro:after-swap", applyTheme);
+
+        // Live-follow system preference when user has no manual override
+        if (window.matchMedia) {
+          const mql = window.matchMedia("(prefers-color-scheme: dark)");
+          const onChange = () => {
+            if (!localStorage.getItem("theme")) {
+              applyTheme();
+            }
+          };
+          if (mql.addEventListener) {
+            mql.addEventListener("change", onChange);
+          } else if (mql.addListener) {
+            mql.addListener(onChange);
+          }
+        }
       })();
     </script>
   </head>
