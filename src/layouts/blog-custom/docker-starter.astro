@@ -1,0 +1,813 @@
+---
+/**
+ * Design Read: Developer tutorial landing page. Railway.app-inspired dark aesthetic,
+ * containerized feel, dense technical content organized into clear visual sections.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 5 (left-aligned hero, varied section rhythms, asymmetric code blocks)
+ *   MOTION_INTENSITY: 2 (minimal fade-ups on scroll, no flashy transitions)
+ *   VISUAL_DENSITY: 6 (dense tutorial content, compact code blocks, tight section spacing)
+ *
+ * Accent color: #2496ED (Docker blue) locked for the entire page.
+ * Corner radius system: 4px (subtle rounding on code blocks and cards only).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="docker-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 -z-10"></div>
+      <div class="absolute inset-0 -z-10 opacity-[0.04]">
+        <div class="absolute top-[20%] left-[10%] w-64 h-64 border border-[#2496ED] rounded-[4px]"></div>
+        <div class="absolute top-[35%] left-[15%] w-48 h-48 border border-[#2496ED] rounded-[4px]"></div>
+        <div class="absolute top-[15%] right-[20%] w-56 h-56 border border-[#2496ED] rounded-[4px]"></div>
+        <div class="absolute bottom-[30%] right-[10%] w-40 h-40 border border-[#2496ED] rounded-[4px]"></div>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#2496ED]/30 to-transparent"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-3 h-3 rounded-full bg-[#2496ED] animate-pulse-subtle"></div>
+          <p class="text-sm tracking-widest uppercase text-slate-400 font-mono">
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight text-white mb-6">
+          Docker 入门
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 max-w-xl leading-relaxed">
+          从零开始理解容器化技术，掌握现代应用开发与部署的核心工具
+        </p>
+        <div class="mt-12 flex items-center gap-2 text-sm text-slate-500 font-mono">
+          <span class="inline-block w-4 h-px bg-[#2496ED]"></span>
+          <span>向下滚动开始学习</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: What is Docker -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-950 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#2496ED]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">01</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-8 tracking-tight">
+          什么是 Docker
+        </h2>
+        <p class="text-base md:text-lg text-slate-300 leading-relaxed mb-8 max-w-2xl">
+          Docker 是一个开源的容器化平台，允许开发者将应用程序及其所有依赖项打包到一个标准化的单元中。这个单元被称为「容器」，它可以在任何支持 Docker 的环境中一致地运行。
+        </p>
+        <div class="grid md:grid-cols-3 gap-4 mt-12">
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/50">
+            <p class="text-sm font-mono text-[#2496ED] mb-2">Build</p>
+            <p class="text-sm text-slate-400 leading-relaxed">将代码和依赖打包为可移植的镜像</p>
+          </div>
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/50">
+            <p class="text-sm font-mono text-[#2496ED] mb-2">Ship</p>
+            <p class="text-sm text-slate-400 leading-relaxed">通过镜像仓库分发到任何环境</p>
+          </div>
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/50">
+            <p class="text-sm font-mono text-[#2496ED] mb-2">Run</p>
+            <p class="text-sm text-slate-400 leading-relaxed">在任何平台以相同方式运行容器</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Docker vs VM -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-900/50 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#2496ED]/20 to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">02</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-8 tracking-tight">
+          Docker vs 虚拟机
+        </h2>
+        <p class="text-base text-slate-300 leading-relaxed mb-10 max-w-2xl">
+          容器和虚拟机都是隔离技术，但它们的实现方式和性能特征截然不同。
+        </p>
+
+        <!-- Comparison Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="text-left py-3 pr-6 text-slate-400 font-mono font-normal">特性</th>
+                <th class="text-left py-3 pr-6 text-[#2496ED] font-mono font-normal">Docker 容器</th>
+                <th class="text-left py-3 text-slate-400 font-mono font-normal">虚拟机</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-slate-800/50">
+                <td class="py-3 pr-6 text-slate-400">隔离级别</td>
+                <td class="py-3 pr-6">进程级隔离</td>
+                <td class="py-3">操作系统级隔离</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-3 pr-6 text-slate-400">启动时间</td>
+                <td class="py-3 pr-6 text-[#2496ED]">秒级</td>
+                <td class="py-3">分钟级</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-3 pr-6 text-slate-400">性能损耗</td>
+                <td class="py-3 pr-6 text-[#2496ED]">接近原生</td>
+                <td class="py-3">较大开销</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-3 pr-6 text-slate-400">资源占用</td>
+                <td class="py-3 pr-6 text-[#2496ED]">MB 级别</td>
+                <td class="py-3">GB 级别</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-3 pr-6 text-slate-400">镜像大小</td>
+                <td class="py-3 pr-6 text-[#2496ED]">几十 MB</td>
+                <td class="py-3">几 GB</td>
+              </tr>
+              <tr>
+                <td class="py-3 pr-6 text-slate-400">可移植性</td>
+                <td class="py-3 pr-6 text-[#2496ED]">极高</td>
+                <td class="py-3">中等</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Core Concepts -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-950 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#2496ED]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">03</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-12 tracking-tight">
+          核心概念
+        </h2>
+
+        <div class="space-y-8">
+          <div class="flex items-start gap-6">
+            <div class="w-10 h-10 shrink-0 border border-[#2496ED]/40 rounded-[4px] flex items-center justify-center">
+              <div class="w-4 h-4 bg-[#2496ED]/20 rounded-[2px]"></div>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">容器 (Container)</h3>
+              <p class="text-sm text-slate-400 leading-relaxed">
+                镜像的运行实例。轻量、隔离、可移植。每个容器都有自己的文件系统、网络和进程空间，但共享主机操作系统的内核。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-6">
+            <div class="w-10 h-10 shrink-0 border border-[#2496ED]/40 rounded-[4px] flex items-center justify-center">
+              <div class="w-4 h-4 bg-[#2496ED]/20 rounded-[2px]"></div>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">镜像 (Image)</h3>
+              <p class="text-sm text-slate-400 leading-relaxed">
+                容器的只读模板，包含运行应用所需的一切：代码、运行时、系统工具、库和配置文件。镜像采用分层存储，每一层都是不可变的。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-6">
+            <div class="w-10 h-10 shrink-0 border border-[#2496ED]/40 rounded-[4px] flex items-center justify-center">
+              <div class="w-4 h-4 bg-[#2496ED]/20 rounded-[2px]"></div>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">Docker Engine</h3>
+              <p class="text-sm text-slate-400 leading-relaxed">
+                Docker 的核心运行时，负责构建和运行容器。它是一个 C/S 架构的应用，包含守护进程 (dockerd)、REST API 和 CLI 客户端。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Installation -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-900/50 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#2496ED]/20 to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">04</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-10 tracking-tight">
+          安装 Docker
+        </h2>
+
+        <div class="space-y-6">
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/80">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-mono text-[#2496ED]">Windows</span>
+            </div>
+            <p class="text-sm text-slate-400 leading-relaxed mb-3">
+              下载并安装 Docker Desktop for Windows。需要启用 WSL 2 或 Hyper-V。
+            </p>
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">// 安装完成后验证
+docker --version
+docker run hello-world</code></pre>
+            </div>
+          </div>
+
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/80">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-mono text-[#2496ED]">macOS</span>
+            </div>
+            <p class="text-sm text-slate-400 leading-relaxed mb-3">
+              下载 Docker Desktop for Mac，支持 Intel 和 Apple Silicon 芯片。
+            </p>
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">// 使用 Homebrew 安装
+brew install --cask docker</code></pre>
+            </div>
+          </div>
+
+          <div class="p-5 border border-slate-800 rounded-[4px] bg-slate-900/80">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-mono text-[#2496ED]">Linux (Ubuntu/Debian)</span>
+            </div>
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300"># 更新包索引并安装依赖
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+
+# 添加 Docker 官方 GPG 密钥
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# 设置仓库
+echo "deb [arch=$(dpkg --print-architecture) \
+  signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 安装 Docker Engine
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Basic Commands -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-950 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#2496ED]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">05</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-10 tracking-tight">
+          基础命令
+        </h2>
+
+        <div class="space-y-4">
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker pull nginx:latest</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">从 Docker Hub 拉取镜像</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker run -d -p 8080:80 --name my-nginx nginx</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">以后台模式运行容器，映射端口 8080 到容器的 80</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker ps          # 查看运行中的容器
+docker ps -a       # 查看所有容器（含已停止）</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">列出容器</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker stop my-nginx    # 停止容器
+docker rm my-nginx      # 删除容器</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">停止和删除容器</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker images           # 列出本地镜像
+docker rmi nginx:latest # 删除镜像</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">镜像管理</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker exec -it my-nginx /bin/bash</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">进入运行中容器的交互式终端</p>
+          </div>
+
+          <div class="cmd-row">
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300">docker build -t my-app:1.0 .</code></pre>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 pl-1">从当前目录的 Dockerfile 构建镜像</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Dockerfile -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-900/50 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#2496ED]/20 to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">06</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-6 tracking-tight">
+          Dockerfile 编写
+        </h2>
+        <p class="text-base text-slate-300 leading-relaxed mb-10 max-w-2xl">
+          Dockerfile 是一个文本文件，包含构建 Docker 镜像的所有指令。每条指令都会创建镜像中的一层。
+        </p>
+
+        <div class="space-y-8">
+          <!-- Node.js Example -->
+          <div>
+            <p class="text-sm text-slate-400 mb-3 font-mono">Node.js 应用示例</p>
+            <div class="code-block code-block-large">
+              <pre><code class="text-xs text-slate-300"><span class="text-[#2496ED]">FROM</span> node:18-alpine
+
+<span class="text-[#2496ED]">WORKDIR</span> /app
+
+<span class="text-slate-500"># 利用缓存层：先复制依赖文件</span>
+<span class="text-[#2496ED]">COPY</span> package*.json ./
+<span class="text-[#2496ED]">RUN</span> npm ci --only=production
+
+<span class="text-slate-500"># 再复制源代码</span>
+<span class="text-[#2496ED]">COPY</span> . .
+
+<span class="text-[#2496ED]">EXPOSE</span> 3000
+<span class="text-[#2496ED]">CMD</span> ["node", "server.js"]</code></pre>
+            </div>
+          </div>
+
+          <!-- Python Example -->
+          <div>
+            <p class="text-sm text-slate-400 mb-3 font-mono">Python Flask 应用示例</p>
+            <div class="code-block code-block-large">
+              <pre><code class="text-xs text-slate-300"><span class="text-[#2496ED]">FROM</span> python:3.11-slim
+
+<span class="text-[#2496ED]">WORKDIR</span> /app
+
+<span class="text-[#2496ED]">COPY</span> requirements.txt .
+<span class="text-[#2496ED]">RUN</span> pip install --no-cache-dir -r requirements.txt
+
+<span class="text-[#2496ED]">COPY</span> . .
+
+<span class="text-[#2496ED]">ENV</span> FLASK_APP=app.py
+<span class="text-[#2496ED]">EXPOSE</span> 5000
+
+<span class="text-[#2496ED]">CMD</span> ["flask", "run", "--host=0.0.0.0"]</code></pre>
+            </div>
+          </div>
+
+          <!-- Common Instructions -->
+          <div class="mt-10">
+            <p class="text-sm text-slate-400 mb-4 font-mono">常用指令说明</p>
+            <div class="grid gap-3">
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">FROM</code>
+                <span class="text-slate-400">指定基础镜像</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">WORKDIR</code>
+                <span class="text-slate-400">设置工作目录</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">COPY</code>
+                <span class="text-slate-400">复制文件到镜像</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">RUN</code>
+                <span class="text-slate-400">在构建时执行命令</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">ENV</code>
+                <span class="text-slate-400">设置环境变量</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">EXPOSE</code>
+                <span class="text-slate-400">声明容器监听的端口</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">CMD</code>
+                <span class="text-slate-400">容器启动时的默认命令</span>
+              </div>
+              <div class="flex items-start gap-4 text-sm">
+                <code class="text-[#2496ED] shrink-0 w-24">ENTRYPOINT</code>
+                <span class="text-slate-400">容器入口点（不会被 docker run 覆盖）</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Docker Compose -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-950 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#2496ED]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">07</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-6 tracking-tight">
+          Docker Compose
+        </h2>
+        <p class="text-base text-slate-300 leading-relaxed mb-10 max-w-2xl">
+          Docker Compose 用于定义和运行多容器应用。通过一个 YAML 文件描述所有服务及其依赖关系，然后用一条命令即可启动整个应用。
+        </p>
+
+        <div class="code-block code-block-large">
+          <div class="flex items-center gap-2 mb-3 pb-3 border-b border-slate-800">
+            <span class="text-xs font-mono text-slate-500">docker-compose.yml</span>
+          </div>
+          <pre><code class="text-xs text-slate-300"><span class="text-[#2496ED]">version</span>: "3.8"
+
+<span class="text-[#2496ED]">services</span>:
+  <span class="text-white">web</span>:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/mydb
+    depends_on:
+      - db
+      - redis
+
+  <span class="text-white">db</span>:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=mydb
+
+  <span class="text-white">redis</span>:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+<span class="text-[#2496ED]">volumes</span>:
+  postgres_data:</code></pre>
+        </div>
+
+        <div class="mt-8 space-y-3">
+          <p class="text-sm text-slate-400 mb-3 font-mono">常用命令</p>
+          <div class="code-block">
+            <pre><code class="text-xs text-slate-300">docker compose up -d      # 后台启动所有服务
+docker compose down        # 停止并移除所有容器
+docker compose logs -f     # 查看实时日志
+docker compose ps          # 查看服务状态
+docker compose exec web sh # 进入指定服务容器</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Network and Volume -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-900/50 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#2496ED]/20 to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">08</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-10 tracking-tight">
+          网络与数据卷
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Network -->
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-4">网络 (Network)</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mb-5">
+              Docker 网络允许容器之间以及容器与外部世界通信。默认情况下，Docker 提供 bridge、host 和 none 三种网络驱动。
+            </p>
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300"># 创建自定义网络
+docker network create my-net
+
+# 将容器连接到网络
+docker run -d --network my-net \
+  --name app nginx
+
+# 查看网络列表
+docker network ls
+
+# 查看网络详情
+docker network inspect my-net</code></pre>
+            </div>
+          </div>
+
+          <!-- Volume -->
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-4">数据卷 (Volume)</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mb-5">
+              数据卷是持久化容器数据的首选方式。即使容器被删除，卷中的数据仍然保留。
+            </p>
+            <div class="code-block">
+              <pre><code class="text-xs text-slate-300"># 创建数据卷
+docker volume create my-data
+
+# 挂载卷到容器
+docker run -d \
+  -v my-data:/app/data \
+  --name app nginx
+
+# 绑定挂载（本地目录）
+docker run -d \
+  -v $(pwd)/src:/app/src \
+  --name dev-app node
+
+# 查看卷列表
+docker volume ls</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Best Practices -->
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-slate-950 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#2496ED]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xs font-mono text-[#2496ED] tracking-widest uppercase">09</span>
+          <span class="inline-block w-8 h-px bg-[#2496ED]/50"></span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-10 tracking-tight">
+          最佳实践
+        </h2>
+
+        <div class="space-y-6">
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">01</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">使用精简基础镜像</p>
+              <p class="text-xs text-slate-400 leading-relaxed">优先选择 alpine 或 slim 变体，减少攻击面和镜像体积。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">02</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">合理利用构建缓存</p>
+              <p class="text-xs text-slate-400 leading-relaxed">将变化频率低的指令放在前面（如安装依赖），变化频率高的放后面（如复制源码）。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">03</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">使用多阶段构建</p>
+              <p class="text-xs text-slate-400 leading-relaxed">将编译环境和运行环境分离，最终镜像只包含运行时必需的文件。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">04</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">使用 .dockerignore</p>
+              <p class="text-xs text-slate-400 leading-relaxed">排除 node_modules、.git、日志文件等不需要的内容，加速构建并减小上下文。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">05</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">不要以 root 运行</p>
+              <p class="text-xs text-slate-400 leading-relaxed">在 Dockerfile 中创建非特权用户，用 USER 指令切换，降低安全风险。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">06</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">一个容器只做一件事</p>
+              <p class="text-xs text-slate-400 leading-relaxed">遵循单一职责原则，需要多个服务时使用 Docker Compose 编排。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">07</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">使用健康检查</p>
+              <p class="text-xs text-slate-400 leading-relaxed">在 Dockerfile 或 Compose 中定义 HEALTHCHECK，让编排工具能自动检测和恢复不健康的容器。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="text-[#2496ED] text-lg font-mono shrink-0 mt-0.5">08</span>
+            <div>
+              <p class="text-sm text-white font-medium mb-1">固定镜像版本标签</p>
+              <p class="text-xs text-slate-400 leading-relaxed">避免使用 latest，明确指定版本号确保构建的可重现性。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-stage build example -->
+        <div class="mt-12">
+          <p class="text-sm text-slate-400 mb-3 font-mono">多阶段构建示例</p>
+          <div class="code-block code-block-large">
+            <pre><code class="text-xs text-slate-300"><span class="text-slate-500"># 构建阶段</span>
+<span class="text-[#2496ED]">FROM</span> node:18-alpine <span class="text-[#2496ED]">AS</span> builder
+<span class="text-[#2496ED]">WORKDIR</span> /app
+<span class="text-[#2496ED]">COPY</span> package*.json ./
+<span class="text-[#2496ED]">RUN</span> npm ci
+<span class="text-[#2496ED]">COPY</span> . .
+<span class="text-[#2496ED]">RUN</span> npm run build
+
+<span class="text-slate-500"># 生产阶段</span>
+<span class="text-[#2496ED]">FROM</span> node:18-alpine
+<span class="text-[#2496ED]">WORKDIR</span> /app
+<span class="text-[#2496ED]">COPY</span> --from=builder /app/dist ./dist
+<span class="text-[#2496ED]">COPY</span> --from=builder /app/package*.json ./
+<span class="text-[#2496ED]">RUN</span> npm ci --only=production
+
+<span class="text-[#2496ED]">USER</span> node
+<span class="text-[#2496ED]">EXPOSE</span> 3000
+<span class="text-[#2496ED]">CMD</span> ["node", "dist/server.js"]</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 bg-slate-950 border-t border-slate-800">
+      <div class="max-w-4xl flex flex-wrap gap-3 text-sm text-slate-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-slate-700 rounded-[4px] uppercase tracking-wider text-xs font-mono">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-1 text-xs font-mono text-slate-600">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .docker-landing {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    .code-block {
+      background: #0c1222;
+      border: 1px solid #1e293b;
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    .code-block-large {
+      padding: 1.25rem;
+    }
+
+    .code-block pre {
+      margin: 0;
+      white-space: pre;
+      line-height: 1.7;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-pulse-subtle {
+        animation: none;
+      }
+    }
+
+    /* Scrollbar styling for code blocks */
+    .code-block::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .code-block::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .code-block::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 2px;
+    }
+
+    /* Table styles */
+    table {
+      font-size: 0.8125rem;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 767px) {
+      .hero-section {
+        padding-bottom: 4rem;
+      }
+
+      .code-block {
+        font-size: 0.6875rem;
+      }
+
+      .grid.md\:grid-cols-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .grid.md\:grid-cols-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script>
+    function initDockerScrollReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".docker-landing .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".docker-landing .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    // Run on initial load
+    initDockerScrollReveal();
+
+    // Re-run after Astro view transitions
+    document.addEventListener("astro:after-swap", initDockerScrollReveal);
+    document.addEventListener("astro:page-load", initDockerScrollReveal);
+  </script>
+</BaseLayout>

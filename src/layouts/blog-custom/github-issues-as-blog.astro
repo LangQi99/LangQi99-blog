@@ -1,0 +1,349 @@
+---
+/**
+ * Design Read: Linear-inspired dark developer landing page presenting a workflow discovery.
+ * Three Dials: DESIGN_VARIANCE=7, MOTION_INTENSITY=4, VISUAL_DENSITY=6
+ * Accent: #6366f1 (indigo-500) locked for entire page
+ * Corner radius system: 8px (cards), 6px (inline elements), 12px (hero container)
+ */
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+const coverImage = "/image/github-issues-as-blog-cover.png";
+---
+
+<BaseLayout title={title} image={coverImage}>
+  <article class="github-issues-blog w-full overflow-hidden">
+
+    <!-- HERO: Full viewport, asymmetric left-aligned layout -->
+    <section class="hero-section relative min-h-[100svh] flex items-center -mx-4 -mt-8 px-4 md:px-12 lg:px-20">
+      <div class="absolute inset-0 hero-gradient opacity-60 dark:opacity-100"></div>
+      <div class="absolute inset-0 hero-noise opacity-[0.03] dark:opacity-[0.04]"></div>
+      <div class="relative z-10 max-w-4xl w-full pt-24 pb-16">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="inline-block px-3 py-1 text-xs font-medium tracking-wide uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md">
+            {categories?.[0] || "Workflow"}
+          </span>
+          <time class="text-sm text-zinc-500 dark:text-zinc-500" datetime={pubDate?.toISOString()}>
+            {pubDate?.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </time>
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-zinc-900 dark:text-white mb-6">
+          把 GitHub Issues<br class="hidden md:block" /> 当博客写
+        </h1>
+        <p class="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed">
+          一个被低估的天才方案：既享受 GitHub 的 SEO 权重，又能把博客做得漂亮。
+        </p>
+        <div class="mt-12 flex items-center gap-4">
+          <div class="h-px flex-1 max-w-[120px] bg-gradient-to-r from-indigo-500/60 to-transparent"></div>
+          <span class="text-xs text-zinc-500 dark:text-zinc-600 tracking-widest uppercase">Scroll</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: Discovery - full width image left, text right -->
+    <section class="reveal-section py-20 md:py-32 -mx-4 px-4 md:px-12 lg:px-20">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
+        <div class="md:col-span-7 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-lg dark:shadow-zinc-900/50">
+          <img
+            src="/image/github-issues-as-blog-cover.png"
+            alt="GitHub Issues 作为博客的仓库截图"
+            class="w-full h-auto object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div class="md:col-span-5">
+          <span class="text-xs font-medium tracking-widest uppercase text-indigo-500 mb-4 block">发现</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight">
+            偶然发现的宝藏仓库
+          </h2>
+          <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            在 GitHub 上闲逛时，发现了 <code class="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-sm font-mono text-indigo-500">izackwu/blog</code> 这个仓库。所有文章都以 Issue 的形式发布，Labels 当分类，评论区天然就是讨论区。
+          </p>
+          <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            不是什么复杂的 CMS 系统，也没有花哨的管理后台。只是 GitHub Issues，最朴素的方式，却解决了博客最核心的问题。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Why it's genius - stacked cards with offset -->
+    <section class="reveal-section py-20 md:py-32 -mx-4 px-4 md:px-12 lg:px-20 bg-zinc-50/50 dark:bg-zinc-900/30">
+      <div class="max-w-3xl mb-16">
+        <span class="text-xs font-medium tracking-widest uppercase text-indigo-500 mb-4 block">为什么说这是天才方案</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white leading-tight">
+          四个维度的降维打击
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- SEO Card -->
+        <div class="group p-6 md:p-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/30 transition-colors duration-300">
+          <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">SEO 天然优势</h3>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            GitHub 域名权重极高。你的 Issue 在 Google 搜索结果里，排名往往比大多数独立博客都靠前。发布即收录，零额外 SEO 工作。
+          </p>
+        </div>
+
+        <!-- Comments Card -->
+        <div class="group p-6 md:p-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/30 transition-colors duration-300 md:translate-y-4">
+          <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">原生评论系统</h3>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            不需要 Disqus、不需要 Giscus、不需要任何第三方。GitHub Issues 的评论区本身就是完美的讨论区，支持 Markdown，支持 Reactions。
+          </p>
+        </div>
+
+        <!-- Writing Experience Card -->
+        <div class="group p-6 md:p-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/30 transition-colors duration-300">
+          <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">极致的写作体验</h3>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            GitHub 的 Markdown 编辑器可能是互联网上最好的写作工具之一。实时预览、拖拽上传图片、快捷键齐全。用它写文章，比任何 CMS 后台都舒服。
+          </p>
+        </div>
+
+        <!-- Version Control Card -->
+        <div class="group p-6 md:p-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/30 transition-colors duration-300 md:translate-y-4">
+          <div class="w-10 h-10 rounded-md bg-indigo-500/10 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">内置版本控制</h3>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            每次编辑 Issue 都会留下修改历史。不需要 Git log，不需要额外的版本管理。改了什么、什么时候改的，一目了然。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Google search proof - wide image showcase -->
+    <section class="reveal-section py-20 md:py-32 -mx-4 px-4 md:px-12 lg:px-20">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <span class="text-xs font-medium tracking-widest uppercase text-indigo-500 mb-4 block">实际效果</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white leading-tight">
+          Google 搜索排名第一
+        </h2>
+        <p class="mt-4 text-zinc-600 dark:text-zinc-400 max-w-lg mx-auto">
+          不是夸张。GitHub Issues 发布的文章，凭借域名权重直接登顶搜索结果。
+        </p>
+      </div>
+      <div class="max-w-4xl mx-auto rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-zinc-900/60">
+        <img
+          src="/image/github-issues-as-blog-cover.png"
+          alt="Google 搜索结果中 GitHub Issue 排名第一"
+          class="w-full h-auto"
+          loading="lazy"
+        />
+      </div>
+    </section>
+
+    <!-- SECTION 4: Architecture - text left, diagram right -->
+    <section class="reveal-section py-20 md:py-32 -mx-4 px-4 md:px-12 lg:px-20 bg-zinc-50/50 dark:bg-zinc-900/30">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+        <div class="md:col-span-5">
+          <span class="text-xs font-medium tracking-widest uppercase text-indigo-500 mb-4 block">架构</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight">
+            与自建站点结合
+          </h2>
+          <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+            GitHub Issues 作为内容管理系统，构建时通过 API 拉取所有 Issue 内容，渲染成静态页面部署到你自己的域名。
+          </p>
+          <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            你得到了两个入口：GitHub 上的 Issue 页面提供 SEO 权重和原生社交互动，自建站点提供品牌展示和完全的样式控制。
+          </p>
+        </div>
+        <div class="md:col-span-7">
+          <!-- Architecture Diagram -->
+          <div class="architecture-diagram p-6 md:p-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+            <div class="flex flex-col gap-4">
+              <!-- Row 1: GitHub Issues -->
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-indigo-500 shrink-0"></div>
+                <div class="flex-1 px-4 py-3 rounded-md bg-indigo-500/5 border border-indigo-500/20">
+                  <span class="text-sm font-medium text-zinc-900 dark:text-white">GitHub Issues</span>
+                  <span class="text-xs text-zinc-500 dark:text-zinc-500 ml-2">CMS + SEO + Comments</span>
+                </div>
+              </div>
+              <!-- Arrow -->
+              <div class="flex items-center gap-3 pl-1">
+                <div class="w-1 h-8 ml-1 bg-gradient-to-b from-indigo-500/40 to-indigo-500/20 rounded-full"></div>
+                <span class="text-xs text-zinc-500 dark:text-zinc-600">GitHub API fetch at build time</span>
+              </div>
+              <!-- Row 2: Build Pipeline -->
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-indigo-400 shrink-0"></div>
+                <div class="flex-1 px-4 py-3 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                  <span class="text-sm font-medium text-zinc-900 dark:text-white">Build Pipeline</span>
+                  <span class="text-xs text-zinc-500 dark:text-zinc-500 ml-2">Astro / Next.js / Hugo</span>
+                </div>
+              </div>
+              <!-- Arrow -->
+              <div class="flex items-center gap-3 pl-1">
+                <div class="w-1 h-8 ml-1 bg-gradient-to-b from-indigo-400/40 to-indigo-300/20 rounded-full"></div>
+                <span class="text-xs text-zinc-500 dark:text-zinc-600">Static HTML + assets</span>
+              </div>
+              <!-- Row 3: Your Site -->
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-indigo-300 shrink-0"></div>
+                <div class="flex-1 px-4 py-3 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                  <span class="text-sm font-medium text-zinc-900 dark:text-white">Your Domain</span>
+                  <span class="text-xs text-zinc-500 dark:text-zinc-500 ml-2">Brand + Full control</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: How-to code block -->
+    <section class="reveal-section py-20 md:py-32 -mx-4 px-4 md:px-12 lg:px-20">
+      <div class="max-w-3xl">
+        <span class="text-xs font-medium tracking-widest uppercase text-indigo-500 mb-4 block">实现</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight">
+          构建时拉取，就这么简单
+        </h2>
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-8">
+          核心逻辑只有一个 fetch 调用。在 SSG 构建阶段从 GitHub API 获取 Issues 列表，解析 Markdown 渲染成页面。
+        </p>
+      </div>
+      <div class="max-w-4xl">
+        <div class="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-950">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
+            <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
+            <span class="ml-3 text-xs text-zinc-500 font-mono">fetch-issues.ts</span>
+          </div>
+          <pre class="p-6 overflow-x-auto text-sm leading-relaxed"><code class="text-zinc-300 font-mono"><span class="text-indigo-400">const</span> <span class="text-white">res</span> = <span class="text-indigo-400">await</span> <span class="text-zinc-100">fetch</span>(
+  <span class="text-emerald-400">`https://api.github.com/repos/$&#123;owner&#125;/$&#123;repo&#125;/issues`</span>,
+  &#123; headers: &#123; Authorization: <span class="text-emerald-400">`token $&#123;token&#125;`</span> &#125; &#125;
+);
+
+<span class="text-indigo-400">const</span> <span class="text-white">issues</span> = <span class="text-indigo-400">await</span> res.<span class="text-zinc-100">json</span>();
+
+<span class="text-zinc-600">// Each issue becomes a blog post</span>
+<span class="text-indigo-400">for</span> (<span class="text-indigo-400">const</span> issue <span class="text-indigo-400">of</span> issues) &#123;
+  <span class="text-indigo-400">const</span> html = <span class="text-zinc-100">marked</span>(issue.body);
+  <span class="text-zinc-600">// Render to static page...</span>
+&#125;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Conclusion - centered, minimal -->
+    <section class="reveal-section py-24 md:py-40 -mx-4 px-4 md:px-12 lg:px-20 text-center">
+      <div class="max-w-2xl mx-auto">
+        <div class="w-12 h-px bg-indigo-500 mx-auto mb-8"></div>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white leading-tight mb-6">
+          两全其美
+        </h2>
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-lg">
+          GitHub Issues 给你 SEO、评论、版本控制和极致的写作体验。自建站点给你品牌、设计自由和完整的数据所有权。二者结合，构建时一次 fetch，就拥有了一切。
+        </p>
+        <div class="mt-12 flex items-center justify-center gap-3 flex-wrap">
+          {tags?.map((tag: string) => (
+            <span class="px-3 py-1 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+  </article>
+</BaseLayout>
+
+<style>
+  .hero-gradient {
+    background: radial-gradient(ellipse 80% 60% at 20% 40%, rgba(99, 102, 241, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
+  }
+
+  :global([data-theme="dark"]) .hero-gradient {
+    background: radial-gradient(ellipse 80% 60% at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
+  }
+
+  .hero-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+  .reveal-section {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-section {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  code {
+    font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  }
+</style>
+
+<script>
+  function initScrollReveal() {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) {
+      document.querySelectorAll(".reveal-section").forEach((el) => {
+        el.classList.add("is-visible");
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
+    );
+
+    document.querySelectorAll(".reveal-section").forEach((section) => {
+      observer.observe(section);
+    });
+  }
+
+  // Run on initial load
+  initScrollReveal();
+
+  // Re-run after Astro view transitions
+  document.addEventListener("astro:after-swap", initScrollReveal);
+</script>

@@ -1,0 +1,531 @@
+---
+/**
+ * Design Read: Network operations handbook. Tailscale-inspired clarity,
+ * warm technical confidence, structured step progression.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 5 (left-aligned hero, numbered steps, alternating backgrounds)
+ *   MOTION_INTENSITY: 2 (fade-up reveals only, no decorative motion)
+ *   VISUAL_DENSITY: 5 (technical steps, code-heavy, compact spacing between elements)
+ *
+ * Accent color: #F97316 (orange-500) locked for the entire page.
+ * Corner radius system: 2px (sharp, utilitarian edges).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="custom-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[80dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 -z-10"></div>
+      <div class="absolute top-0 left-0 w-full h-full opacity-[0.04] dark:opacity-[0.03] -z-10">
+        <div class="w-full h-full" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(249,115,22,0.3) 39px, rgba(249,115,22,0.3) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(249,115,22,0.3) 39px, rgba(249,115,22,0.3) 40px);"></div>
+      </div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-block w-2 h-2 bg-orange-500 rounded-full animate-pulse-slow"></span>
+          <p class="text-sm tracking-widest uppercase text-slate-500 dark:text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-slate-900 dark:text-zinc-50 mb-4">
+          {title}
+        </h1>
+        <p class="text-base md:text-lg text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+          {description}
+        </p>
+        <div class="mt-8 flex flex-wrap gap-2">
+          {categories && categories.map((cat: string) => (
+            <span class="px-2 py-0.5 text-xs font-mono uppercase tracking-wider border border-orange-500/40 text-orange-600 dark:text-orange-400">{cat}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Environment Info -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30">
+      <div class="max-w-3xl reveal-element">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm font-mono">
+          <div class="flex flex-col gap-1">
+            <span class="text-slate-400 dark:text-zinc-600 text-xs uppercase tracking-wider">OS</span>
+            <span class="text-slate-700 dark:text-zinc-300">Ubuntu 24.04 LTS</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-slate-400 dark:text-zinc-600 text-xs uppercase tracking-wider">Arch</span>
+            <span class="text-slate-700 dark:text-zinc-300">x86_64 (amd64)</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-slate-400 dark:text-zinc-600 text-xs uppercase tracking-wider">Provider</span>
+            <span class="text-slate-700 dark:text-zinc-300">Tencent Cloud</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Background: Pain Points -->
+    <section class="px-6 md:px-16 lg:px-24 py-20">
+      <div class="max-w-3xl reveal-element">
+        <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-50 mb-8">
+          <span class="text-orange-500 mr-2">*</span>背景与痛点
+        </h2>
+        <div class="space-y-4">
+          <div class="pain-point flex items-start gap-3 p-4 border-l-2 border-red-400/60 bg-red-50/50 dark:bg-red-950/10 dark:border-red-500/40">
+            <span class="text-red-500 dark:text-red-400 font-mono text-sm shrink-0 mt-0.5">x</span>
+            <p class="text-sm text-slate-700 dark:text-zinc-300">Docker Hub 被墙，<code class="code-inline">docker pull</code> 无法拉取镜像</p>
+          </div>
+          <div class="pain-point flex items-start gap-3 p-4 border-l-2 border-red-400/60 bg-red-50/50 dark:bg-red-950/10 dark:border-red-500/40">
+            <span class="text-red-500 dark:text-red-400 font-mono text-sm shrink-0 mt-0.5">x</span>
+            <p class="text-sm text-slate-700 dark:text-zinc-300">v2rayA 官方 apt 源 (apt.v2raya.org) 连接超时，无法直接 apt install</p>
+          </div>
+          <div class="pain-point flex items-start gap-3 p-4 border-l-2 border-red-400/60 bg-red-50/50 dark:bg-red-950/10 dark:border-red-500/40">
+            <span class="text-red-500 dark:text-red-400 font-mono text-sm shrink-0 mt-0.5">x</span>
+            <p class="text-sm text-slate-700 dark:text-zinc-300">旧版 V2Ray 内核不支持 VLESS/XTLS 等新协议，需要换用 Xray</p>
+          </div>
+        </div>
+        <p class="mt-8 text-sm text-slate-500 dark:text-zinc-500 leading-relaxed">
+          解决方案：在本地下载 .deb 包和 Xray 二进制文件，通过 scp/sftp 传到服务器手动安装。
+        </p>
+      </div>
+    </section>
+
+    <!-- Step 1: Install v2rayA -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 bg-slate-50/70 dark:bg-zinc-900/40">
+      <div class="max-w-3xl reveal-element">
+        <div class="step-header flex items-baseline gap-4 mb-8">
+          <span class="text-4xl md:text-5xl font-bold text-orange-500/20 dark:text-orange-500/15 font-mono">01</span>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-50">
+            安装 v2rayA 面板
+          </h2>
+        </div>
+
+        <div class="space-y-6">
+          <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+            从 GitHub Releases 下载对应架构的 .deb 包。如果本地能访问 GitHub，先下载到本地再传到服务器。
+          </p>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>下载 .deb 包 (本地机器)</span>
+            </div>
+            <pre class="cmd-pre"><code>wget https://github.com/v2rayA/v2rayA/releases/download/v2.2.6.5/installer_debian_x64_v2.2.6.5.deb</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>传输到服务器</span>
+            </div>
+            <pre class="cmd-pre"><code>scp installer_debian_x64_v2.2.6.5.deb root@your-server:/tmp/</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>在服务器上安装</span>
+            </div>
+            <pre class="cmd-pre"><code>sudo dpkg -i /tmp/installer_debian_x64_v2.2.6.5.deb
+sudo apt-get install -f</code></pre>
+          </div>
+
+          <div class="note-block">
+            <p><code class="code-inline">apt-get install -f</code> 用于修复可能缺失的依赖。安装完成后 v2rayA 的 Web 面板已就绪，但还缺少代理内核。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Install Xray Core -->
+    <section class="px-6 md:px-16 lg:px-24 py-20">
+      <div class="max-w-3xl reveal-element">
+        <div class="step-header flex items-baseline gap-4 mb-8">
+          <span class="text-4xl md:text-5xl font-bold text-orange-500/20 dark:text-orange-500/15 font-mono">02</span>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-50">
+            安装 Xray 内核
+          </h2>
+        </div>
+
+        <div class="space-y-6">
+          <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+            Xray 是 V2Ray 的超集分支，支持 VLESS、XTLS 等新协议。同样从 GitHub Releases 下载。
+          </p>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>下载 Xray (本地机器)</span>
+            </div>
+            <pre class="cmd-pre"><code>wget https://github.com/XTLS/Xray-core/releases/download/v25.6.8/Xray-linux-64.zip</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>传输并解压</span>
+            </div>
+            <pre class="cmd-pre"><code>scp Xray-linux-64.zip root@your-server:/tmp/
+# 在服务器上
+sudo mkdir -p /usr/local/share/xray
+sudo unzip /tmp/Xray-linux-64.zip -d /usr/local/share/xray
+sudo chmod +x /usr/local/share/xray/xray</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>创建软链接</span>
+            </div>
+            <pre class="cmd-pre"><code>sudo ln -sf /usr/local/share/xray/xray /usr/local/bin/xray</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>安装 geoip/geosite 数据文件</span>
+            </div>
+            <pre class="cmd-pre"><code>sudo mv /usr/local/share/xray/geoip.dat /usr/local/share/xray/geoip.dat
+sudo mv /usr/local/share/xray/geosite.dat /usr/local/share/xray/geosite.dat
+# 确认文件位置
+ls -la /usr/local/share/xray/</code></pre>
+          </div>
+
+          <div class="note-block">
+            <p>v2rayA 会自动检测 <code class="code-inline">/usr/local/bin/xray</code> 路径。geo 数据文件需要放在与 xray 二进制同目录或 <code class="code-inline">/usr/local/share/xray/</code> 下。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Start & Configure -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 bg-slate-50/70 dark:bg-zinc-900/40">
+      <div class="max-w-3xl reveal-element">
+        <div class="step-header flex items-baseline gap-4 mb-8">
+          <span class="text-4xl md:text-5xl font-bold text-orange-500/20 dark:text-orange-500/15 font-mono">03</span>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-50">
+            启动服务并配置
+          </h2>
+        </div>
+
+        <div class="space-y-6">
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>启动并设置开机自启</span>
+            </div>
+            <pre class="cmd-pre"><code>sudo systemctl enable --now v2raya</code></pre>
+          </div>
+
+          <div class="cmd-block">
+            <div class="cmd-label">
+              <span>检查运行状态</span>
+            </div>
+            <pre class="cmd-pre"><code>sudo systemctl status v2raya</code></pre>
+          </div>
+
+          <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+            服务启动后，访问 <code class="code-inline">http://your-server-ip:2017</code> 进入 Web 管理面板。
+          </p>
+
+          <div class="config-steps space-y-3 mt-6">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 border border-orange-500/30 shrink-0 mt-0.5">1</span>
+              <p class="text-sm text-slate-700 dark:text-zinc-300">首次访问需创建管理员账户</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 border border-orange-500/30 shrink-0 mt-0.5">2</span>
+              <p class="text-sm text-slate-700 dark:text-zinc-300">导入订阅链接或手动添加服务器节点</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 border border-orange-500/30 shrink-0 mt-0.5">3</span>
+              <p class="text-sm text-slate-700 dark:text-zinc-300">选择节点，点击左上角启动按钮</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 border border-orange-500/30 shrink-0 mt-0.5">4</span>
+              <p class="text-sm text-slate-700 dark:text-zinc-300">在设置中确认「透明代理/系统代理」已选择 Xray 作为核心</p>
+            </div>
+          </div>
+
+          <div class="cmd-block mt-6">
+            <div class="cmd-label">
+              <span>验证代理生效</span>
+            </div>
+            <pre class="cmd-pre"><code>curl -x socks5://127.0.0.1:20170 https://www.google.com -I</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Troubleshooting -->
+    <section class="px-6 md:px-16 lg:px-24 py-20">
+      <div class="max-w-3xl reveal-element">
+        <h2 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-50 mb-8">
+          <span class="text-orange-500 mr-2">?</span>常见问题排查
+        </h2>
+
+        <div class="space-y-6">
+          <details class="trouble-item group">
+            <summary class="flex items-center gap-3 cursor-pointer py-3 text-sm font-medium text-slate-800 dark:text-zinc-200">
+              <span class="text-orange-500 group-open:rotate-90 transition-transform text-xs font-mono">&#9654;</span>
+              v2rayA 面板打不开 (端口 2017 无响应)
+            </summary>
+            <div class="pl-6 pb-4 text-sm text-slate-600 dark:text-zinc-400 space-y-2">
+              <p>检查服务状态和防火墙：</p>
+              <pre class="cmd-pre cmd-pre-inline"><code>sudo systemctl status v2raya
+sudo ufw allow 2017/tcp</code></pre>
+            </div>
+          </details>
+
+          <details class="trouble-item group">
+            <summary class="flex items-center gap-3 cursor-pointer py-3 text-sm font-medium text-slate-800 dark:text-zinc-200">
+              <span class="text-orange-500 group-open:rotate-90 transition-transform text-xs font-mono">&#9654;</span>
+              面板提示「找不到核心」
+            </summary>
+            <div class="pl-6 pb-4 text-sm text-slate-600 dark:text-zinc-400 space-y-2">
+              <p>确认 xray 已正确放置且有执行权限：</p>
+              <pre class="cmd-pre cmd-pre-inline"><code>which xray
+xray version
+ls -la /usr/local/bin/xray</code></pre>
+            </div>
+          </details>
+
+          <details class="trouble-item group">
+            <summary class="flex items-center gap-3 cursor-pointer py-3 text-sm font-medium text-slate-800 dark:text-zinc-200">
+              <span class="text-orange-500 group-open:rotate-90 transition-transform text-xs font-mono">&#9654;</span>
+              启动后无法连接外网
+            </summary>
+            <div class="pl-6 pb-4 text-sm text-slate-600 dark:text-zinc-400 space-y-2">
+              <p>检查透明代理设置和 iptables 规则：</p>
+              <pre class="cmd-pre cmd-pre-inline"><code>sudo iptables -t nat -L -n | grep v2raya
+# 尝试重启服务
+sudo systemctl restart v2raya</code></pre>
+            </div>
+          </details>
+
+          <details class="trouble-item group">
+            <summary class="flex items-center gap-3 cursor-pointer py-3 text-sm font-medium text-slate-800 dark:text-zinc-200">
+              <span class="text-orange-500 group-open:rotate-90 transition-transform text-xs font-mono">&#9654;</span>
+              geoip.dat / geosite.dat 报错
+            </summary>
+            <div class="pl-6 pb-4 text-sm text-slate-600 dark:text-zinc-400 space-y-2">
+              <p>确认数据文件在正确路径且非空：</p>
+              <pre class="cmd-pre cmd-pre-inline"><code>ls -la /usr/local/share/xray/geo*.dat
+# 文件应各有几 MB 大小</code></pre>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30">
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-start gap-4 p-5 border border-green-500/20 bg-green-50/50 dark:bg-green-950/10">
+          <span class="text-green-600 dark:text-green-400 font-mono text-sm shrink-0 mt-0.5">OK</span>
+          <div class="text-sm text-slate-700 dark:text-zinc-300 space-y-1">
+            <p class="font-medium">部署完成后的状态</p>
+            <p class="text-slate-500 dark:text-zinc-500">v2rayA Web 面板运行于 :2017 | Xray 核心支持 VLESS/XTLS | 透明代理就绪</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 border-t border-slate-200 dark:border-zinc-800">
+      <div class="max-w-3xl flex flex-wrap gap-2 text-sm text-slate-500 dark:text-zinc-500">
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-0.5 text-xs font-mono border border-slate-300 dark:border-zinc-700">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .custom-landing {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+      .animate-pulse-slow {
+        animation: none;
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Command blocks */
+    .cmd-block {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    :global([data-theme="dracula"]) .cmd-block,
+    :global(.dark) .cmd-block {
+      border-color: rgba(63, 63, 70, 0.6);
+    }
+
+    .cmd-label {
+      padding: 6px 12px;
+      font-size: 11px;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      color: #64748b;
+      background: rgba(248, 250, 252, 0.8);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    :global([data-theme="dracula"]) .cmd-label,
+    :global(.dark) .cmd-label {
+      color: #71717a;
+      background: rgba(24, 24, 27, 0.6);
+      border-bottom-color: rgba(63, 63, 70, 0.6);
+    }
+
+    .cmd-pre {
+      margin: 0;
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      background: rgba(248, 250, 252, 0.4);
+      color: #1e293b;
+    }
+
+    :global([data-theme="dracula"]) .cmd-pre,
+    :global(.dark) .cmd-pre {
+      background: rgba(9, 9, 11, 0.5);
+      color: #e4e4e7;
+    }
+
+    .cmd-pre code {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .cmd-pre-inline {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 2px;
+      margin-top: 8px;
+    }
+
+    :global([data-theme="dracula"]) .cmd-pre-inline,
+    :global(.dark) .cmd-pre-inline {
+      border-color: rgba(63, 63, 70, 0.6);
+    }
+
+    /* Inline code */
+    .code-inline {
+      padding: 1px 5px;
+      font-size: 0.85em;
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.15);
+      border-radius: 2px;
+      color: #c2410c;
+    }
+
+    :global([data-theme="dracula"]) .code-inline,
+    :global(.dark) .code-inline {
+      background: rgba(249, 115, 22, 0.1);
+      border-color: rgba(249, 115, 22, 0.2);
+      color: #fb923c;
+    }
+
+    /* Note blocks */
+    .note-block {
+      padding: 12px 16px;
+      border-left: 2px solid #f97316;
+      background: rgba(249, 115, 22, 0.04);
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    :global([data-theme="dracula"]) .note-block,
+    :global(.dark) .note-block {
+      background: rgba(249, 115, 22, 0.05);
+      color: #a1a1aa;
+    }
+
+    /* Trouble items */
+    .trouble-item {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    :global([data-theme="dracula"]) .trouble-item,
+    :global(.dark) .trouble-item {
+      border-bottom-color: rgba(63, 63, 70, 0.4);
+    }
+
+    .trouble-item summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .trouble-item summary::marker {
+      content: "";
+    }
+  </style>
+
+  <script>
+    function initScrollReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initScrollReveal();
+    document.addEventListener("astro:after-swap", initScrollReveal);
+    document.addEventListener("astro:page-load", initScrollReveal);
+  </script>
+</BaseLayout>

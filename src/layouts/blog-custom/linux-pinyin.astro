@@ -1,0 +1,468 @@
+---
+/**
+ * Design Read: Troubleshooting narrative with terminal aesthetic.
+ * Warp.dev-inspired: dark-first, warm gradients, developer-tool feel, rounded cards.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned hero, alternating section backgrounds, prominent screenshots)
+ *   MOTION_INTENSITY: 3 (fade-up on scroll, subtle glow pulses on accent elements)
+ *   VISUAL_DENSITY: 4 (tighter spacing, more content per viewport, screenshot-heavy)
+ *
+ * Accent color: #06B6D4 (cyan-500) as primary, warm gradient #F59E0B to #EF4444 for frustration arc.
+ * Corner radius system: 8px (rounded-lg throughout, terminal window feel).
+ * Narrative arc: hope (cyan) -> frustration (amber/red gradient) -> resolution (cyan return).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+
+const imgBase = "/src/content/blog/image/linux-pinyin";
+---
+
+<BaseLayout title={title}>
+  <article class="linux-pinyin-landing -mx-4 -my-8">
+
+    <!-- Hero -->
+    <section class="hero-section min-h-[90dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 -z-20"></div>
+      <div class="absolute top-0 left-0 w-full h-full -z-10">
+        <div class="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse-slow"></span>
+          <span class="text-xs tracking-widest uppercase text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </span>
+        </div>
+        <h1 class="text-3xl md:text-5xl lg:text-[3.5rem] font-bold leading-tight tracking-tight text-zinc-50 mb-5">
+          Ubuntu 使用 IBus 拼音输入法<br class="hidden md:block" /><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-red-500">弃坑记录</span>
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-xl leading-relaxed font-mono">
+          原标题是教程，写着写着变成弃坑记录了。
+        </p>
+        <div class="mt-8 flex items-center gap-2 text-zinc-600 text-xs font-mono">
+          <span class="inline-block px-2 py-0.5 border border-zinc-700 rounded">Linux</span>
+          <span class="text-zinc-700">/</span>
+          <span class="inline-block px-2 py-0.5 border border-zinc-700 rounded">IBus</span>
+          <span class="text-zinc-700">/</span>
+          <span class="inline-block px-2 py-0.5 border border-zinc-700 rounded">Fcitx5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: The Problem Statement -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-900/50 relative">
+      <div class="absolute top-0 left-0 right-0 h-px bg-zinc-800"></div>
+      <div class="max-w-2xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-cyan-500"></span>
+          <span class="text-xs font-mono text-cyan-500 uppercase tracking-widest">Background</span>
+        </div>
+        <p class="text-lg md:text-xl text-zinc-200 leading-relaxed mb-6">
+          众所周知，Ubuntu 对拼音输入法的支持非常不友好。
+        </p>
+        <p class="text-base text-zinc-400 leading-loose">
+          作为一个从 Windows 切换到 Ubuntu 的开发者，中文输入法体验的落差是巨大的。
+          系统自带的 IBus 拼音模块，词库陈旧、匹配逻辑古老、缩写联想几乎不可用。
+          这篇文章记录了我从抱有希望到彻底放弃 IBus 的全过程。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 2: IBus Problems with Screenshot -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative">
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-amber-500"></span>
+          <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">Problem #1</span>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 mb-4 tracking-tight">
+          IBus 的词库有多古老？
+        </h2>
+        <p class="text-base text-zinc-400 leading-loose mb-10">
+          词典停留在上个时代，缩写匹配基本靠猜，输入体验让人怀疑自己是不是在用 2005 年的软件。
+        </p>
+
+        <!-- Screenshot: IBus interface -->
+        <div class="screenshot-card relative rounded-lg overflow-hidden border border-zinc-700/50 shadow-2xl shadow-black/30">
+          <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 border-b border-zinc-700/50">
+            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+            <span class="ml-3 text-xs text-zinc-500 font-mono">ibus-preferences</span>
+          </div>
+          <img
+            src={`${imgBase}/1753535240896.png`}
+            alt="IBus 拼音输入法界面截图"
+            class="w-full"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p class="mt-4 text-sm text-zinc-500 font-mono">
+          IBus 默认界面。看起来人畜无害，用起来令人绝望。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 3: Poor Matching Demo -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-900/50 relative">
+      <div class="absolute top-0 left-0 right-0 h-px bg-zinc-800"></div>
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-amber-500"></span>
+          <span class="text-xs font-mono text-amber-500 uppercase tracking-widest">Problem #2</span>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 mb-4 tracking-tight">
+          缩写匹配：基本不存在
+        </h2>
+        <p class="text-base text-zinc-400 leading-loose mb-10">
+          在搜狗或微信输入法上打 "nhy" 能直接出 "你好呀"，在 IBus 上你只能得到一堆不相关的候选词。
+          这不是智能输入法，这是字母排列组合器。
+        </p>
+
+        <!-- Screenshot: Poor matching -->
+        <div class="screenshot-card relative rounded-lg overflow-hidden border border-zinc-700/50 shadow-2xl shadow-black/30">
+          <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 border-b border-zinc-700/50">
+            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+            <span class="ml-3 text-xs text-zinc-500 font-mono">text-editor.py</span>
+          </div>
+          <img
+            src={`${imgBase}/1753535326134.png`}
+            alt="IBus 缩写匹配效果极差的演示截图"
+            class="w-full"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p class="mt-4 text-sm text-zinc-500 font-mono">
+          输入缩写后的匹配结果。与预期相差甚远。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 4: Attempted Solutions -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative">
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-zinc-500"></span>
+          <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">Attempts</span>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 mb-10 tracking-tight">
+          尝试过的方案
+        </h2>
+
+        <div class="space-y-6">
+          <!-- Attempt 1 -->
+          <div class="attempt-card p-5 rounded-lg border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 transition-colors">
+            <div class="flex items-start gap-4">
+              <span class="shrink-0 w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-400 font-mono">1</span>
+              <div>
+                <h3 class="text-base font-semibold text-zinc-200 mb-1">导入预设词库</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">
+                  从搜狗词库网站下载 .scel 文件，转换格式后导入 IBus。词库确实丰富了，但匹配算法依然是硬伤。
+                </p>
+                <span class="inline-block mt-3 text-xs font-mono px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">Failed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attempt 2 -->
+          <div class="attempt-card p-5 rounded-lg border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 transition-colors">
+            <div class="flex items-start gap-4">
+              <span class="shrink-0 w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-400 font-mono">2</span>
+              <div>
+                <h3 class="text-base font-semibold text-zinc-200 mb-1">手动编辑词频文件</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">
+                  找到 IBus 的用户词库文件，手动调整词频权重。改完重启后效果微乎其微，投入产出比极低。
+                </p>
+                <span class="inline-block mt-3 text-xs font-mono px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">Failed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attempt 3 -->
+          <div class="attempt-card p-5 rounded-lg border border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 transition-colors">
+            <div class="flex items-start gap-4">
+              <span class="shrink-0 w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-400 font-mono">3</span>
+              <div>
+                <h3 class="text-base font-semibold text-zinc-200 mb-1">使用 ibus-libpinyin 替代</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">
+                  切换到 libpinyin 引擎后体验略好，但仍然无法与现代输入法相比。长句输入时的断句能力堪忧。
+                </p>
+                <span class="inline-block mt-3 text-xs font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Partial</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: IBus Settings Screenshot -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-900/50 relative">
+      <div class="absolute top-0 left-0 right-0 h-px bg-zinc-800"></div>
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-zinc-500"></span>
+          <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">Configuration</span>
+        </div>
+        <p class="text-base text-zinc-400 leading-loose mb-8">
+          IBus 的设置界面倒是挺完整的，可惜能调的选项对实际体验影响甚微。
+        </p>
+        <div class="screenshot-card relative rounded-lg overflow-hidden border border-zinc-700/50 shadow-2xl shadow-black/30">
+          <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/80 border-b border-zinc-700/50">
+            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+            <span class="ml-3 text-xs text-zinc-500 font-mono">ibus-setup</span>
+          </div>
+          <img
+            src={`${imgBase}/1753536280545.png`}
+            alt="IBus 设置面板截图"
+            class="w-full"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <p class="mt-4 text-sm text-zinc-500 font-mono">
+          IBus 设置面板。选项不少，实际效果有限。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 6: The Turning Point - Fcitx5 -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative overflow-hidden">
+      <div class="absolute top-[30%] right-0 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-[80px] -z-10"></div>
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="w-4 h-px bg-cyan-500"></span>
+          <span class="text-xs font-mono text-cyan-500 uppercase tracking-widest">Solution</span>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 mb-4 tracking-tight">
+          转向 Fcitx5
+        </h2>
+        <p class="text-base text-zinc-400 leading-loose mb-8">
+          在几周的折腾之后，我决定彻底放弃 IBus，转投 Fcitx5 阵营。
+          安装和配置过程虽然也需要一些手动操作，但最终的输入体验有了质的飞跃。
+        </p>
+
+        <!-- Terminal-style install block -->
+        <div class="rounded-lg overflow-hidden border border-zinc-700/50 bg-zinc-950 shadow-2xl shadow-black/30 mb-8">
+          <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/50 border-b border-zinc-700/50">
+            <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+            <span class="ml-3 text-xs text-zinc-500 font-mono">bash</span>
+          </div>
+          <div class="p-5 font-mono text-sm leading-loose">
+            <p class="text-zinc-500"># Remove IBus</p>
+            <p class="text-zinc-200">sudo apt remove ibus</p>
+            <p class="text-zinc-200 mt-3">sudo apt autoremove</p>
+            <p class="text-zinc-500 mt-5"># Install Fcitx5</p>
+            <p class="text-zinc-200">sudo apt install fcitx5 fcitx5-chinese-addons</p>
+            <p class="text-zinc-500 mt-5"># Set as default input method</p>
+            <p class="text-zinc-200">im-config -n fcitx5</p>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
+          <p class="text-sm text-cyan-300 font-mono leading-relaxed">
+            Fcitx5 + fcitx5-chinese-addons 自带的拼音引擎已经能满足日常使用。
+            如果需要更好的体验，可以额外安装 fcitx5-rime 使用 RIME 引擎。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Verdict -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-900/50 relative">
+      <div class="absolute top-0 left-0 right-0 h-px bg-zinc-800"></div>
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="w-4 h-px bg-cyan-500"></span>
+          <span class="text-xs font-mono text-cyan-500 uppercase tracking-widest">Verdict</span>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 mb-12">
+          <div class="p-5 rounded-lg border border-red-500/20 bg-red-500/5">
+            <h3 class="text-base font-bold text-red-400 mb-3 font-mono">IBus</h3>
+            <ul class="space-y-2 text-sm text-zinc-400">
+              <li class="flex items-start gap-2">
+                <span class="text-red-500 shrink-0 mt-0.5">x</span>
+                <span>词库陈旧，缩写匹配极差</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-500 shrink-0 mt-0.5">x</span>
+                <span>长句断句能力弱</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-500 shrink-0 mt-0.5">x</span>
+                <span>候选词排序逻辑不明</span>
+              </li>
+            </ul>
+          </div>
+          <div class="p-5 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
+            <h3 class="text-base font-bold text-cyan-400 mb-3 font-mono">Fcitx5</h3>
+            <ul class="space-y-2 text-sm text-zinc-400">
+              <li class="flex items-start gap-2">
+                <span class="text-cyan-500 shrink-0 mt-0.5">+</span>
+                <span>现代词库，匹配准确</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-cyan-500 shrink-0 mt-0.5">+</span>
+                <span>支持模糊拼音和自定义</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-cyan-500 shrink-0 mt-0.5">+</span>
+                <span>可扩展 (RIME/云拼音)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <blockquote class="border-l-2 border-cyan-500 pl-6 py-2">
+          <p class="text-lg md:text-xl text-zinc-200 leading-relaxed font-semibold">
+            结论：在 Ubuntu 上，别折腾 IBus 了，直接装 Fcitx5。
+          </p>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- Final: Takeaway -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-900/50 to-transparent -z-10"></div>
+      <div class="max-w-2xl reveal-element">
+        <p class="text-sm text-zinc-500 font-mono mb-6">TL;DR</p>
+        <p class="text-xl md:text-2xl text-zinc-100 font-semibold leading-relaxed">
+          IBus 在 Ubuntu 上的中文输入体验停留在上个时代。
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600">Fcitx5</span> 是目前 Linux 桌面最务实的选择。
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 border-t border-zinc-800">
+      <div class="max-w-2xl flex flex-wrap gap-3 text-sm text-zinc-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2.5 py-1 border border-zinc-700 rounded-md uppercase tracking-wider text-xs font-mono">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2.5 py-1 text-xs font-mono text-zinc-600">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .linux-pinyin-landing {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #09090b;
+      color: #e4e4e7;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .screenshot-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .screenshot-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(6, 182, 212, 0.1);
+    }
+
+    .attempt-card {
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .attempt-card:hover {
+      background-color: rgba(24, 24, 27, 0.6);
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 3s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .screenshot-card:hover {
+        transform: none;
+      }
+
+      .animate-pulse-slow {
+        animation: none;
+      }
+    }
+  </style>
+
+  <script>
+    function initLinuxPinyinReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".linux-pinyin-landing .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".linux-pinyin-landing .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initLinuxPinyinReveal();
+
+    document.addEventListener("astro:after-swap", initLinuxPinyinReveal);
+    document.addEventListener("astro:page-load", initLinuxPinyinReveal);
+  </script>
+</BaseLayout>

@@ -1,0 +1,451 @@
+---
+/**
+ * Design Read: Academic-tool tutorial landing page. Typst-inspired clean document aesthetic,
+ * code-forward presentation with generous formatting. Technical but approachable.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned hero, alternating section rhythms, asymmetric code blocks)
+ *   MOTION_INTENSITY: 3 (subtle fade-ups on scroll, no flashy transitions)
+ *   VISUAL_DENSITY: 4 (dense code blocks with generous surrounding whitespace, tutorial rhythm)
+ *
+ * Accent color: #0D9488 (teal-600) locked for the entire page.
+ * Corner radius system: 2px (near-sharp, academic precision).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { Image } from "astro:assets";
+import previewImage from "../../content/blog/image/ai-paper-latex/1767271685315.png";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="custom-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-20 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-slate-50 to-white dark:from-zinc-950 dark:to-zinc-900 -z-10"></div>
+      <div class="absolute top-12 right-8 md:right-16 w-64 h-64 opacity-[0.04] dark:opacity-[0.03] -z-10">
+        <svg viewBox="0 0 100 100" class="w-full h-full text-teal-600">
+          <text x="5" y="30" font-size="8" fill="currentColor" font-family="monospace">\\documentclass</text>
+          <text x="5" y="45" font-size="8" fill="currentColor" font-family="monospace">\\begin&#123;document&#125;</text>
+          <text x="5" y="60" font-size="8" fill="currentColor" font-family="monospace">{"\\section{...}"}</text>
+          <text x="5" y="75" font-size="8" fill="currentColor" font-family="monospace">\\end&#123;document&#125;</text>
+        </svg>
+      </div>
+
+      <div class="max-w-3xl reveal-element">
+        <p class="text-sm tracking-widest uppercase text-slate-500 dark:text-zinc-500 mb-6 font-mono">
+          {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+        </p>
+        <h1 class="text-3xl md:text-5xl lg:text-[3.5rem] font-bold leading-tight tracking-tight text-slate-900 dark:text-zinc-50 mb-6">
+          用任意 AI 巧妙一口气生成<br class="hidden md:block" />图文并茂的论文/大作业
+        </h1>
+        <p class="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+          {description}
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 1: Background / Pain Point -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24">
+      <div class="max-w-2xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">01 / Background</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          学术写作的痛
+        </h2>
+        <div class="space-y-6 text-base md:text-lg text-slate-700 dark:text-zinc-300 leading-relaxed">
+          <p>
+            写论文或大作业时，你大概经历过这样的流程: 手搓公式，反复调 LaTeX 语法；用 Excel 或 Python 画图，导出再粘贴；来回切换工具，格式对不齐，版本乱成一团。
+          </p>
+          <p>
+            直接让 AI 写论文？它容易编造数据，公式排版也经常出错。复制粘贴过来的内容缺少计算过程，经不起推敲。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Core Idea -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24 bg-slate-50 dark:bg-zinc-900/50">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">02 / Core Idea</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          不让 AI 写论文，让 AI 写生成论文的代码
+        </h2>
+        <p class="text-base md:text-lg text-slate-700 dark:text-zinc-300 leading-relaxed mb-10">
+          核心思路的转变: 与其让 AI 直接输出一篇论文（容易幻觉、格式崩坏），不如让 AI 编写一个 Python 脚本。这个脚本负责:
+        </p>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="p-5 border border-slate-200 dark:border-zinc-700 rounded-sm">
+            <div class="w-8 h-8 flex items-center justify-center text-teal-600 dark:text-teal-400 font-mono font-bold text-lg mb-3">1</div>
+            <p class="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">自动计算所有数据</p>
+          </div>
+          <div class="p-5 border border-slate-200 dark:border-zinc-700 rounded-sm">
+            <div class="w-8 h-8 flex items-center justify-center text-teal-600 dark:text-teal-400 font-mono font-bold text-lg mb-3">2</div>
+            <p class="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">自动绘制高质量图表</p>
+          </div>
+          <div class="p-5 border border-slate-200 dark:border-zinc-700 rounded-sm">
+            <div class="w-8 h-8 flex items-center justify-center text-teal-600 dark:text-teal-400 font-mono font-bold text-lg mb-3">3</div>
+            <p class="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">自动生成完整 LaTeX 源码</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Three Modules -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">03 / Architecture</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-10 tracking-tight">
+          三大模块
+        </h2>
+        <div class="space-y-8">
+          <!-- Module 1 -->
+          <div class="flex items-start gap-5">
+            <div class="shrink-0 w-10 h-10 flex items-center justify-center border border-teal-600 dark:border-teal-400 rounded-sm">
+              <span class="text-sm font-mono text-teal-600 dark:text-teal-400">Np</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-2">Calculation Engine</h3>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                使用 NumPy / SciPy 进行所有数值计算。数据真实可复现，不依赖 AI 凭空生成数字。
+              </p>
+            </div>
+          </div>
+          <!-- Module 2 -->
+          <div class="flex items-start gap-5">
+            <div class="shrink-0 w-10 h-10 flex items-center justify-center border border-teal-600 dark:border-teal-400 rounded-sm">
+              <span class="text-sm font-mono text-teal-600 dark:text-teal-400">Plt</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-2">Plot Engine</h3>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                使用 Matplotlib 绘制论文级图表，直接输出为 PDF 矢量图，嵌入 LaTeX 时无损缩放。
+              </p>
+            </div>
+          </div>
+          <!-- Module 3 -->
+          <div class="flex items-start gap-5">
+            <div class="shrink-0 w-10 h-10 flex items-center justify-center border border-teal-600 dark:border-teal-400 rounded-sm">
+              <span class="text-sm font-mono text-teal-600 dark:text-teal-400">TeX</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-2">Document Generator</h3>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                Python 脚本内嵌 LaTeX 模板字符串，将计算结果和图表路径填入，生成一份完整的 .tex 文件。一键 pdflatex 编译即可。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Case Study -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24 bg-slate-50 dark:bg-zinc-900/50">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">04 / Case Study</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-6 tracking-tight">
+          案例: 量子力学作业
+        </h2>
+        <p class="text-base md:text-lg text-slate-700 dark:text-zinc-300 leading-relaxed mb-8">
+          以「无限深势阱中粒子的波函数与能级」为例。传统做法: 手算公式、手绘波函数图、手排 LaTeX。用这套方法: 一个 prompt 让 AI 写出完整脚本，运行后直接得到 PDF。
+        </p>
+        <div class="p-5 bg-white dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-sm">
+          <p class="text-sm text-slate-500 dark:text-zinc-500 font-mono mb-3">workflow</p>
+          <div class="flex items-center gap-3 text-sm text-slate-700 dark:text-zinc-300 flex-wrap">
+            <span class="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-mono rounded-sm">Prompt</span>
+            <span class="text-slate-400 dark:text-zinc-600">&rarr;</span>
+            <span class="px-3 py-1.5 bg-slate-100 dark:bg-zinc-700 font-mono rounded-sm">AI writes .py</span>
+            <span class="text-slate-400 dark:text-zinc-600">&rarr;</span>
+            <span class="px-3 py-1.5 bg-slate-100 dark:bg-zinc-700 font-mono rounded-sm">python run</span>
+            <span class="text-slate-400 dark:text-zinc-600">&rarr;</span>
+            <span class="px-3 py-1.5 bg-slate-100 dark:bg-zinc-700 font-mono rounded-sm">.tex + plots</span>
+            <span class="text-slate-400 dark:text-zinc-600">&rarr;</span>
+            <span class="px-3 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-mono rounded-sm">PDF</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Code Snippet -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">05 / Code</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          脚本结构一览
+        </h2>
+        <p class="text-base text-slate-600 dark:text-zinc-400 leading-relaxed mb-8">
+          整个 Python 脚本的骨架大致如下。AI 生成的代码覆盖计算、绘图、文档拼接三个阶段:
+        </p>
+        <div class="code-block-wrapper relative">
+          <div class="absolute top-0 left-0 right-0 h-10 flex items-center px-4 bg-slate-100 dark:bg-zinc-800 border-b border-slate-200 dark:border-zinc-700 rounded-t-sm">
+            <span class="text-xs font-mono text-slate-500 dark:text-zinc-500">generate_paper.py</span>
+          </div>
+          <pre class="pt-12 pb-5 px-5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-sm overflow-x-auto text-sm leading-relaxed"><code class="text-slate-800 dark:text-zinc-200 font-mono"><span class="text-teal-600 dark:text-teal-400">import</span> numpy <span class="text-teal-600 dark:text-teal-400">as</span> np
+<span class="text-teal-600 dark:text-teal-400">import</span> matplotlib.pyplot <span class="text-teal-600 dark:text-teal-400">as</span> plt
+
+<span class="text-slate-500 dark:text-zinc-500"># --- Stage 1: Calculation ---</span>
+<span class="text-teal-600 dark:text-teal-400">def</span> <span class="text-slate-900 dark:text-zinc-100">compute_wavefunctions</span>(n_max, L, x_points):
+    x = np.linspace(0, L, x_points)
+    psi = &#123;&#125;
+    <span class="text-teal-600 dark:text-teal-400">for</span> n <span class="text-teal-600 dark:text-teal-400">in</span> range(1, n_max + 1):
+        psi[n] = np.sqrt(2/L) * np.sin(n * np.pi * x / L)
+    <span class="text-teal-600 dark:text-teal-400">return</span> x, psi
+
+<span class="text-slate-500 dark:text-zinc-500"># --- Stage 2: Plotting ---</span>
+<span class="text-teal-600 dark:text-teal-400">def</span> <span class="text-slate-900 dark:text-zinc-100">generate_plots</span>(x, psi):
+    fig, ax = plt.subplots(figsize=(8, 5))
+    <span class="text-teal-600 dark:text-teal-400">for</span> n, y <span class="text-teal-600 dark:text-teal-400">in</span> psi.items():
+        ax.plot(x, y, label=f<span class="text-amber-700 dark:text-amber-300">"n=&#123;n&#125;"</span>)
+    ax.legend()
+    fig.savefig(<span class="text-amber-700 dark:text-amber-300">"wavefunctions.pdf"</span>)
+
+<span class="text-slate-500 dark:text-zinc-500"># --- Stage 3: LaTeX Generation ---</span>
+<span class="text-teal-600 dark:text-teal-400">def</span> <span class="text-slate-900 dark:text-zinc-100">generate_latex</span>(psi):
+    template = <span class="text-amber-700 dark:text-amber-300">r"""
+    \documentclass&#123;article&#125;
+    \usepackage&#123;graphicx, amsmath&#125;
+    \begin&#123;document&#125;
+    \title&#123;Infinite Potential Well&#125;
+    \maketitle
+    \section&#123;Results&#125;
+    \includegraphics&#123;wavefunctions.pdf&#125;
+    \end&#123;document&#125;
+    """</span>
+    <span class="text-teal-600 dark:text-teal-400">with</span> open(<span class="text-amber-700 dark:text-amber-300">"paper.tex"</span>, <span class="text-amber-700 dark:text-amber-300">"w"</span>) <span class="text-teal-600 dark:text-teal-400">as</span> f:
+        f.write(template)
+
+<span class="text-slate-500 dark:text-zinc-500"># --- Main ---</span>
+x, psi = compute_wavefunctions(5, 1.0, 500)
+generate_plots(x, psi)
+generate_latex(psi)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Prompt Engineering Tips -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24 bg-slate-50 dark:bg-zinc-900/50">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">06 / Prompt Tips</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          Prompt 工程技巧
+        </h2>
+        <p class="text-base text-slate-600 dark:text-zinc-400 leading-relaxed mb-10">
+          让 AI 顺利写出这类脚本的关键在于明确约束。以下是实测有效的指令要点:
+        </p>
+        <ol class="space-y-6">
+          <li class="flex items-start gap-4">
+            <span class="shrink-0 w-7 h-7 flex items-center justify-center text-sm font-mono font-bold text-teal-600 dark:text-teal-400 border border-teal-600 dark:border-teal-400 rounded-sm">1</span>
+            <div>
+              <p class="text-base text-slate-800 dark:text-zinc-200 font-medium mb-1">明确输出形式</p>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                告诉 AI: "请写一个 Python 脚本，运行后在当前目录生成 paper.tex 和所有图表文件。" 不要让它直接输出 LaTeX 或论文正文。
+              </p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <span class="shrink-0 w-7 h-7 flex items-center justify-center text-sm font-mono font-bold text-teal-600 dark:text-teal-400 border border-teal-600 dark:border-teal-400 rounded-sm">2</span>
+            <div>
+              <p class="text-base text-slate-800 dark:text-zinc-200 font-medium mb-1">给定物理公式和参数</p>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                在 prompt 中写明所有需要用到的公式。AI 的强项是翻译公式为代码，而不是自己推导物理学。
+              </p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <span class="shrink-0 w-7 h-7 flex items-center justify-center text-sm font-mono font-bold text-teal-600 dark:text-teal-400 border border-teal-600 dark:border-teal-400 rounded-sm">3</span>
+            <div>
+              <p class="text-base text-slate-800 dark:text-zinc-200 font-medium mb-1">要求脚本自包含</p>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                "脚本中所有数据必须通过计算得来，禁止硬编码数值结果。" 这避免 AI 偷懒直接 print 答案。
+              </p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <span class="shrink-0 w-7 h-7 flex items-center justify-center text-sm font-mono font-bold text-teal-600 dark:text-teal-400 border border-teal-600 dark:border-teal-400 rounded-sm">4</span>
+            <div>
+              <p class="text-base text-slate-800 dark:text-zinc-200 font-medium mb-1">指定 LaTeX 文档类和包</p>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                "使用 ctexart 文档类（支持中文），graphicx 引入图片，amsmath 排版公式。" 具体到包名，减少来回修改。
+              </p>
+            </div>
+          </li>
+          <li class="flex items-start gap-4">
+            <span class="shrink-0 w-7 h-7 flex items-center justify-center text-sm font-mono font-bold text-teal-600 dark:text-teal-400 border border-teal-600 dark:border-teal-400 rounded-sm">5</span>
+            <div>
+              <p class="text-base text-slate-800 dark:text-zinc-200 font-medium mb-1">一次生成，多次运行</p>
+              <p class="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
+                如果脚本报错，把错误信息扔回给 AI 让它修。这比让 AI 重新写一整篇论文高效得多。
+              </p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 7: Output Showcase -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24">
+      <div class="max-w-3xl reveal-element">
+        <span class="inline-block text-xs font-mono tracking-widest text-teal-600 dark:text-teal-400 uppercase mb-6">07 / Output</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          生成效果
+        </h2>
+        <p class="text-base text-slate-600 dark:text-zinc-400 leading-relaxed mb-10">
+          以下是脚本运行后编译得到的 PDF 预览。图表、公式、排版均由代码自动完成:
+        </p>
+        <div class="relative">
+          <div class="absolute -inset-px bg-gradient-to-br from-teal-600/10 to-transparent rounded-sm"></div>
+          <div class="relative border border-slate-200 dark:border-zinc-700 rounded-sm overflow-hidden shadow-lg">
+            <Image
+              src={previewImage}
+              alt="AI 生成的量子力学论文 PDF 预览，包含波函数图表和 LaTeX 排版的公式"
+              class="w-full"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+        <p class="mt-6 text-sm text-slate-500 dark:text-zinc-500">
+          完整的图文并茂论文，由一个 Python 脚本自动生成。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 8: Summary -->
+    <section class="py-24 md:py-32 px-6 md:px-16 lg:px-24 bg-slate-50 dark:bg-zinc-900/50">
+      <div class="max-w-2xl reveal-element">
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-zinc-100 mb-8 tracking-tight">
+          总结
+        </h2>
+        <div class="space-y-6 text-base md:text-lg text-slate-700 dark:text-zinc-300 leading-relaxed">
+          <p>
+            这套方法的本质: 把 AI 的角色从「写手」变成「程序员」。论文质量不取决于 AI 的文笔，而取决于代码是否正确运行。
+          </p>
+          <p>
+            数据来自真实计算，图表来自代码绘制，LaTeX 排版由模板保证。三者合一，就是一篇经得起检验的论文。
+          </p>
+        </div>
+        <blockquote class="mt-10 border-l-4 border-teal-600 dark:border-teal-400 pl-6 py-2">
+          <p class="text-lg font-medium text-slate-900 dark:text-zinc-100 leading-relaxed">
+            不要让 AI 替你写论文。让 AI 替你写生成论文的代码。
+          </p>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 border-t border-slate-200 dark:border-zinc-800">
+      <div class="max-w-2xl flex flex-wrap gap-3 text-sm text-slate-500 dark:text-zinc-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-slate-300 dark:border-zinc-700 uppercase tracking-wider text-xs rounded-sm">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-1 text-xs">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .custom-landing {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .custom-landing h1,
+    .custom-landing h2,
+    .custom-landing h3 {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .custom-landing code,
+    .custom-landing pre,
+    .custom-landing .font-mono {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+
+    .code-block-wrapper pre {
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+
+    .code-block-wrapper pre::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .code-block-wrapper pre::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .code-block-wrapper pre::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 3px;
+    }
+
+    :global([data-theme="dracula"]) .code-block-wrapper pre::-webkit-scrollbar-thumb {
+      background: #52525b;
+    }
+  </style>
+
+  <script>
+    function initScrollReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: "0px 0px -50px 0px",
+        }
+      );
+
+      document.querySelectorAll(".reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initScrollReveal();
+
+    document.addEventListener("astro:after-swap", initScrollReveal);
+    document.addEventListener("astro:page-load", initScrollReveal);
+  </script>
+</BaseLayout>

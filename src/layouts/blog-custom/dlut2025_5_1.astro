@@ -1,0 +1,445 @@
+---
+/**
+ * Design Read: Multi-category CTF writeup. Clean editorial portfolio feel (read.cv reference).
+ * Dense content managed through collapsible challenges and category navigation.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 5 (left-aligned hero, category cards, collapsible prose)
+ *   MOTION_INTENSITY: 2 (scroll reveals, accordion open/close, nav highlight)
+ *   VISUAL_DENSITY: 6 (dense code-heavy content, tight spacing, collapsed by default)
+ *
+ * Accent color: #EC4899 (pink-500) locked for the entire page.
+ * Corner radius system: 6px.
+ * Content rendered from MDX via <Content />, then manipulated with client JS
+ * to inject collapsible sections and category navigation.
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const { Content } = await blog.render();
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="writeup-page -mx-4 -my-8">
+
+    <!-- Hero -->
+    <section class="hero-section px-6 md:px-16 lg:px-24 pt-32 pb-20 relative overflow-hidden">
+      <div class="absolute inset-0 bg-zinc-950 -z-10"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EC4899]/40 to-transparent"></div>
+
+      <div class="max-w-3xl reveal-el">
+        <p class="text-xs tracking-[0.25em] uppercase text-zinc-500 font-mono mb-6">
+          {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+        </p>
+        <h1 class="text-2xl md:text-4xl lg:text-[2.75rem] font-bold leading-tight tracking-tight text-zinc-50 mb-4">
+          {title}
+        </h1>
+        <p class="text-base text-zinc-400 max-w-xl leading-relaxed mb-10">
+          {description}
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {tags && tags.map((tag: string) => (
+            <span class="px-3 py-1 border border-[#EC4899]/30 text-[#EC4899] text-xs font-mono uppercase tracking-wider rounded-[6px]">{tag}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Navigation -->
+    <nav class="cat-nav sticky top-0 z-50 px-6 md:px-16 lg:px-24 py-3 border-b border-zinc-800/60 bg-zinc-950/95 backdrop-blur-sm">
+      <div class="max-w-3xl flex flex-wrap gap-2">
+        <button class="cat-btn active" data-cat="all">All</button>
+        <button class="cat-btn" data-cat="reverse">Reverse</button>
+        <button class="cat-btn" data-cat="misc">Misc</button>
+        <button class="cat-btn" data-cat="pwn">Pwn</button>
+        <button class="cat-btn" data-cat="web">Web</button>
+        <button class="cat-btn" data-cat="crypto">Crypto</button>
+      </div>
+    </nav>
+
+    <!-- Content Area -->
+    <section class="content-area px-6 md:px-16 lg:px-24 py-12 bg-zinc-950">
+      <div class="max-w-3xl writeup-content">
+        <Content />
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 border-t border-zinc-800/40 bg-zinc-950">
+      <div class="max-w-3xl flex flex-wrap gap-3 text-sm text-zinc-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-[#EC4899]/20 text-[#EC4899]/70 uppercase tracking-wider text-xs font-mono rounded-[6px]">{cat}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .writeup-page {
+      background: #09090b;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    }
+
+    /* Category nav buttons */
+    .cat-btn {
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a1a1aa;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cat-btn:hover {
+      color: #EC4899;
+      border-color: #EC4899;
+    }
+    .cat-btn.active {
+      color: #EC4899;
+      border-color: #EC4899;
+      background: rgba(236, 72, 153, 0.08);
+    }
+
+    /* Category sections */
+    .writeup-content .cat-section {
+      margin-bottom: 3rem;
+    }
+    .writeup-content .cat-section.hidden-cat {
+      display: none;
+    }
+    .writeup-content .cat-section > .cat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #27272a;
+    }
+    .writeup-content .cat-section > .cat-header > .cat-label {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fafafa;
+      letter-spacing: -0.01em;
+    }
+    .writeup-content .cat-section > .cat-header > .cat-count {
+      font-size: 0.7rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #EC4899;
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.2);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* Challenge collapsible */
+    .writeup-content .challenge-block {
+      margin-bottom: 0.5rem;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+    .writeup-content .challenge-block:hover {
+      border-color: #3f3f46;
+    }
+    .writeup-content .challenge-block.open {
+      border-color: rgba(236, 72, 153, 0.3);
+    }
+    .writeup-content .challenge-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
+      background: #18181b;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease;
+    }
+    .writeup-content .challenge-toggle:hover {
+      background: #1f1f23;
+    }
+    .writeup-content .challenge-toggle .toggle-icon {
+      width: 16px;
+      height: 16px;
+      color: #71717a;
+      transition: transform 0.2s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .writeup-content .challenge-block.open .toggle-icon {
+      transform: rotate(90deg);
+      color: #EC4899;
+    }
+    .writeup-content .challenge-toggle .toggle-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e4e4e7;
+    }
+    .writeup-content .challenge-body {
+      display: none;
+      padding: 16px 20px 20px;
+      background: #0c0c0e;
+    }
+    .writeup-content .challenge-block.open .challenge-body {
+      display: block;
+    }
+
+    /* Markdown content styling inside challenge body */
+    .writeup-content .challenge-body p {
+      color: #d4d4d8;
+      line-height: 1.7;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .writeup-content .challenge-body strong {
+      color: #fafafa;
+      font-weight: 600;
+    }
+    .writeup-content .challenge-body a {
+      color: #EC4899;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .writeup-content .challenge-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      margin: 1rem 0;
+    }
+    .writeup-content .challenge-body ul,
+    .writeup-content .challenge-body ol {
+      padding-left: 1.25rem;
+      margin-bottom: 0.75rem;
+      color: #d4d4d8;
+      font-size: 0.9rem;
+    }
+    .writeup-content .challenge-body li {
+      margin-bottom: 0.35rem;
+      line-height: 1.6;
+    }
+    .writeup-content .challenge-body code:not(pre code) {
+      background: rgba(236, 72, 153, 0.08);
+      color: #f472b6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .writeup-content .challenge-body pre {
+      background: #111113;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .writeup-content .challenge-body pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #d4d4d8;
+      background: none;
+      padding: 0;
+    }
+    .writeup-content .challenge-body kbd {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.8rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #e4e4e7;
+    }
+    .writeup-content .challenge-body h3,
+    .writeup-content .challenge-body h4 {
+      color: #fafafa;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Scroll reveal */
+    .reveal-el {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .reveal-el.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-el {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+      .writeup-content .challenge-toggle .toggle-icon {
+        transition: none;
+      }
+    }
+
+    /* Frosti code block override inside our layout */
+    .writeup-content .challenge-body .frosti-code {
+      margin: 0.75rem 0;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+    }
+  </style>
+
+  <script>
+    function initWriteup() {
+      const container = document.querySelector(".writeup-content");
+      if (!container) return;
+
+      // --- Step 1: Parse the rendered MDX into category/challenge structure ---
+      // The MDX renders h1 = category, h2 = challenge name
+      const children = Array.from(container.children);
+      const categories: { id: string; name: string; challenges: { name: string; elements: Element[] }[] }[] = [];
+      let currentCat: typeof categories[0] | null = null;
+      let currentChallenge: { name: string; elements: Element[] } | null = null;
+
+      for (const el of children) {
+        const tag = el.tagName?.toLowerCase();
+        if (tag === "h1") {
+          // Start a new category
+          if (currentChallenge && currentCat) {
+            currentCat.challenges.push(currentChallenge);
+          }
+          currentChallenge = null;
+          const name = el.textContent?.trim() || "";
+          currentCat = { id: name.toLowerCase().replace(/[^a-z]/g, ""), name, challenges: [] };
+          categories.push(currentCat);
+        } else if (tag === "h2") {
+          // Start a new challenge within current category
+          if (currentChallenge && currentCat) {
+            currentCat.challenges.push(currentChallenge);
+          }
+          const name = el.textContent?.trim() || "";
+          currentChallenge = { name, elements: [] };
+        } else {
+          // Content element belongs to current challenge
+          if (currentChallenge) {
+            currentChallenge.elements.push(el);
+          }
+        }
+      }
+      // Push last challenge
+      if (currentChallenge && currentCat) {
+        currentCat.challenges.push(currentChallenge);
+      }
+
+      // --- Step 2: Rebuild the DOM with structured sections ---
+      container.innerHTML = "";
+
+      for (const cat of categories) {
+        const section = document.createElement("div");
+        section.className = "cat-section";
+        section.dataset.category = cat.id;
+
+        // Category header
+        const header = document.createElement("div");
+        header.className = "cat-header";
+        header.innerHTML = `
+          <span class="cat-label">${cat.name}</span>
+          <span class="cat-count">${cat.challenges.length} challenges</span>
+        `;
+        section.appendChild(header);
+
+        // Challenge blocks
+        for (const ch of cat.challenges) {
+          const block = document.createElement("div");
+          block.className = "challenge-block";
+
+          const toggle = document.createElement("button");
+          toggle.className = "challenge-toggle";
+          toggle.innerHTML = `
+            <svg class="toggle-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M6 4l4 4-4 4"/>
+            </svg>
+            <span class="toggle-title">${ch.name}</span>
+          `;
+          block.appendChild(toggle);
+
+          const body = document.createElement("div");
+          body.className = "challenge-body";
+          for (const el of ch.elements) {
+            body.appendChild(el);
+          }
+          block.appendChild(body);
+
+          // Toggle behavior
+          toggle.addEventListener("click", () => {
+            block.classList.toggle("open");
+          });
+
+          section.appendChild(block);
+        }
+
+        container.appendChild(section);
+      }
+
+      // --- Step 3: Category filter ---
+      const catBtns = document.querySelectorAll(".cat-btn");
+      const catSections = container.querySelectorAll(".cat-section");
+
+      catBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          catBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const target = (btn as HTMLElement).dataset.cat;
+
+          catSections.forEach(sec => {
+            const secEl = sec as HTMLElement;
+            if (target === "all" || secEl.dataset.category === target) {
+              secEl.classList.remove("hidden-cat");
+            } else {
+              secEl.classList.add("hidden-cat");
+            }
+          });
+        });
+      });
+
+      // --- Step 4: Scroll reveal for hero ---
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const revealEls = document.querySelectorAll(".writeup-page .reveal-el");
+
+      if (prefersReduced) {
+        revealEls.forEach(el => el.classList.add("revealed"));
+      } else {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("revealed");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+        );
+        revealEls.forEach(el => observer.observe(el));
+      }
+    }
+
+    // Run on initial load and after Astro page transitions
+    initWriteup();
+    document.addEventListener("astro:after-swap", initWriteup);
+    document.addEventListener("astro:page-load", initWriteup);
+  </script>
+</BaseLayout>

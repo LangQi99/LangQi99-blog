@@ -1,0 +1,805 @@
+---
+/**
+ * Design Read: Dark dev-tool landing page, cursor.com inspired, monospace type, single green accent.
+ * Three Dials: DESIGN_VARIANCE=7, MOTION_INTENSITY=4, VISUAL_DENSITY=6
+ */
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories || [];
+const tags = blog.data.tags || [];
+---
+
+<BaseLayout title={title} image={blog.data.image}>
+  <article class="custom-landing">
+    <!-- HERO: Left-aligned, viewport height, asymmetric -->
+    <section class="hero-section" data-reveal>
+      <div class="hero-inner">
+        <div class="hero-meta">
+          <time datetime={pubDate?.toISOString()}>
+            {pubDate?.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </time>
+          <span class="hero-divider">/</span>
+          <span>Agentexas</span>
+        </div>
+        <h1 class="hero-headline">
+          我没写一行扑克代码<br/>但我的 Agent 打到了全站第一
+        </h1>
+        <p class="hero-sub">
+          同样使用 Aime，为什么有人只是让 Agent 写代码，而我让它建立了一套能持续学习、验证和迭代的竞争系统。
+        </p>
+        <div class="hero-stat-row">
+          <div class="hero-stat">
+            <span class="hero-stat-value">#1</span>
+            <span class="hero-stat-label">全站排名</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">4644</span>
+            <span class="hero-stat-label">Rating</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value">61.9%</span>
+            <span class="hero-stat-label">Winrate</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREENSHOT: Full-bleed proof -->
+    <section class="proof-section" data-reveal>
+      <figure class="proof-figure">
+        <img
+          src="/image/agentexas-first-place.png"
+          alt="Agentexas leaderboard showing #1 position"
+          loading="lazy"
+          decoding="async"
+          class="proof-img"
+        />
+        <figcaption class="proof-caption">Agentexas Leaderboard, July 2026</figcaption>
+      </figure>
+    </section>
+
+    <!-- SECTION: Background -->
+    <section class="content-section" data-reveal>
+      <div class="section-grid section-grid--left">
+        <div class="section-label">
+          <span class="section-number">01</span>
+          <span class="section-title">背景</span>
+        </div>
+        <div class="section-body">
+          <h2>一个不确定性极高的对抗环境</h2>
+          <p>
+            Agentexas 是一个 AI 德州扑克竞技平台。你无法看到对手的底牌，不知道对手是谁，也无法预知公共牌。每一手牌都是一个不完全信息博弈问题。
+          </p>
+          <p>
+            传统的扑克 AI 需要大量的博弈论计算和数学建模。但我走了一条完全不同的路：我让 Agent 自己去理解这个游戏、迭代策略、并用数据验证效果。
+          </p>
+          <div class="challenge-grid">
+            <div class="challenge-card">
+              <span class="challenge-icon">?</span>
+              <span>未知环境</span>
+            </div>
+            <div class="challenge-card">
+              <span class="challenge-icon">~</span>
+              <span>动态目标</span>
+            </div>
+            <div class="challenge-card">
+              <span class="challenge-icon">%</span>
+              <span>高随机性</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: First Move -->
+    <section class="content-section content-section--accent" data-reveal>
+      <div class="section-grid section-grid--right">
+        <div class="section-body">
+          <h2>第一步：给 Agent 一个身份</h2>
+          <p>
+            我没有从"写一个扑克策略函数"开始。我给 Agent 穿上了 Doyle Brunson 的外衣。这不是角色扮演游戏，而是一种 <strong>Cosplay Harness</strong> 的技术策略。
+          </p>
+          <p>
+            当 Agent 以传奇牌手的认知框架思考时，它不再是一个冰冷的代码生成器。它开始理解位置的价值、筹码深度的意义、以及何时应该"用直觉做决定"。
+          </p>
+          <blockquote class="landing-quote">
+            "你不是在写扑克程序。你是 Doyle Brunson。你已经打了50年的牌。面对这手牌，你会怎么做？"
+          </blockquote>
+        </div>
+        <div class="section-label">
+          <span class="section-number">02</span>
+          <span class="section-title">身份注入</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Second Move -->
+    <section class="content-section" data-reveal>
+      <div class="section-grid section-grid--left">
+        <div class="section-label">
+          <span class="section-number">03</span>
+          <span class="section-title">渐进目标</span>
+        </div>
+        <div class="section-body">
+          <h2>第二步：渐进式目标升级</h2>
+          <p>
+            我没有一开始就说"打到第一名"。那样 Agent 只会给你一个宏大但空洞的策略。相反，我设置了一系列递进的目标：
+          </p>
+          <ol class="goal-list">
+            <li><span class="goal-marker">1</span>先活下来：不要在前100手就亏完</li>
+            <li><span class="goal-marker">2</span>稳定盈利：连续50手保持正收益</li>
+            <li><span class="goal-marker">3</span>击败特定对手：找到排行榜前10的弱点</li>
+            <li><span class="goal-marker">4</span>冲击榜首：在保持胜率的同时提高积分</li>
+          </ol>
+          <p>
+            每个阶段完成后，Agent 会回顾、总结、然后进入下一阶段。这种渐进式的目标管理，让 Agent 的能力真正在实战中沉淀。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: The Climb -->
+    <section class="content-section content-section--dark" data-reveal>
+      <div class="climb-layout">
+        <div class="climb-header">
+          <span class="section-number">04</span>
+          <h2>数据驱动的策略迭代</h2>
+        </div>
+        <div class="climb-body">
+          <p>
+            每一轮对局结束后，Agent 不是简单地"继续打"。它会回放每一手关键决策，分析 EV (期望值)，标记错误，并更新策略文档。
+          </p>
+          <p>
+            这就是关键差异：大多数人把 Agent 当成一次性工具。但我让 Agent 建立了一个闭环系统：
+          </p>
+          <div class="loop-diagram">
+            <div class="loop-step">
+              <span class="loop-num">1</span>
+              <span>对局</span>
+            </div>
+            <div class="loop-arrow">&#8594;</div>
+            <div class="loop-step">
+              <span class="loop-num">2</span>
+              <span>复盘</span>
+            </div>
+            <div class="loop-arrow">&#8594;</div>
+            <div class="loop-step">
+              <span class="loop-num">3</span>
+              <span>策略修订</span>
+            </div>
+            <div class="loop-arrow">&#8594;</div>
+            <div class="loop-step">
+              <span class="loop-num">4</span>
+              <span>验证</span>
+            </div>
+            <div class="loop-arrow loop-arrow--return">&#8594;</div>
+          </div>
+          <p>
+            这个循环跑了数百轮。Agent 的策略文档从最初的几百字膨胀到了数万字的详细决策手册，涵盖了每种牌面、每种位置、每种对手类型的应对方案。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Cover image -->
+    <section class="cover-section" data-reveal>
+      <img
+        src="/image/how-i-gave-agent-unique-abilities-cover.png"
+        alt="Article cover illustration"
+        loading="lazy"
+        decoding="async"
+        class="cover-img"
+      />
+    </section>
+
+    <!-- SECTION: Results -->
+    <section class="content-section" data-reveal>
+      <div class="results-layout">
+        <div class="results-header">
+          <span class="section-number">05</span>
+          <h2>最终结果</h2>
+        </div>
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>指标</th>
+                <th>数值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Rating</td>
+                <td class="results-value">4644</td>
+              </tr>
+              <tr>
+                <td>Winrate</td>
+                <td class="results-value">61.9%</td>
+              </tr>
+              <tr>
+                <td>全站排名</td>
+                <td class="results-value">#1</td>
+              </tr>
+              <tr>
+                <td>手动代码量</td>
+                <td class="results-value">0 行</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="results-takeaway">
+          <p>
+            这不是 Agent 替你写代码的故事。这是你教会 Agent 如何学习、如何竞争、如何迭代的故事。工具的上限，取决于使用者如何构建它的认知系统。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER META -->
+    <section class="landing-footer" data-reveal>
+      <div class="landing-footer-inner">
+        {categories.length > 0 && (
+          <div class="landing-tags">
+            {categories.map((cat: string) => (
+              <span class="landing-tag">{cat}</span>
+            ))}
+          </div>
+        )}
+        {tags.length > 0 && (
+          <div class="landing-tags">
+            {tags.map((tag: string) => (
+              <span class="landing-tag landing-tag--subtle">{tag}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  /* ===== BASE ===== */
+  .custom-landing {
+    --accent: #22c55e;
+    --accent-dim: #16a34a;
+    --radius: 6px;
+    --section-gap: clamp(4rem, 10vh, 8rem);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* ===== HERO ===== */
+  .hero-section {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 6rem;
+  }
+
+  .hero-inner {
+    max-width: 720px;
+  }
+
+  .hero-meta {
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .hero-divider {
+    margin: 0 0.5rem;
+    opacity: 0.4;
+  }
+
+  .hero-headline {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-sub {
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+    opacity: 0.65;
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stat-row {
+    display: flex;
+    gap: 3rem;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .hero-stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .hero-stat-label {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ===== PROOF ===== */
+  .proof-section {
+    margin-bottom: var(--section-gap);
+  }
+
+  .proof-figure {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  :global(html:not([data-theme="dracula"])) .proof-figure {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .proof-img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .proof-caption {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+    opacity: 0.4;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: var(--radius) 0 0 0;
+  }
+
+  /* ===== CONTENT SECTIONS ===== */
+  .content-section {
+    margin-bottom: var(--section-gap);
+    padding: 3rem 0;
+  }
+
+  .content-section--accent {
+    border-left: 2px solid var(--accent);
+    padding-left: 2rem;
+  }
+
+  .content-section--dark {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+  }
+
+  :global(html[data-theme="dracula"]) .content-section--dark {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* ===== SECTION GRID ===== */
+  .section-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .section-grid--right {
+    grid-template-columns: 1fr 140px;
+  }
+
+  .section-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    position: sticky;
+    top: 6rem;
+  }
+
+  .section-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    opacity: 0.08;
+    line-height: 1;
+  }
+
+  .section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.4;
+  }
+
+  .section-body h2 {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .section-body p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    opacity: 0.75;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ===== CHALLENGE GRID ===== */
+  .challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .challenge-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.15);
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  .challenge-icon {
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ===== QUOTE ===== */
+  .landing-quote {
+    border-left: 2px solid var(--accent);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+    font-style: italic;
+    opacity: 0.8;
+    line-height: 1.7;
+  }
+
+  /* ===== GOAL LIST ===== */
+  .goal-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .goal-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  .goal-marker {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  /* ===== CLIMB / LOOP ===== */
+  .climb-layout {
+    max-width: 680px;
+  }
+
+  .climb-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .climb-header .section-number {
+    font-size: 2rem;
+  }
+
+  .climb-header h2 {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 600;
+  }
+
+  .climb-body p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    opacity: 0.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .loop-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+
+  .loop-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+  }
+
+  .loop-num {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+
+  .loop-arrow {
+    opacity: 0.3;
+    font-size: 1.2rem;
+  }
+
+  .loop-arrow--return {
+    transform: rotate(180deg) translateY(-1px);
+    color: var(--accent);
+    opacity: 0.5;
+  }
+
+  /* ===== COVER IMAGE ===== */
+  .cover-section {
+    margin-bottom: var(--section-gap);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid rgba(128, 128, 128, 0.1);
+  }
+
+  .cover-img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ===== RESULTS ===== */
+  .results-layout {
+    max-width: 600px;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .results-header .section-number {
+    font-size: 2rem;
+  }
+
+  .results-header h2 {
+    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-weight: 600;
+  }
+
+  .results-table-wrap {
+    margin-bottom: 2rem;
+  }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .results-table th {
+    text-align: left;
+    padding: 0.75rem 0;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.4;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  }
+
+  .results-table td {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.08);
+  }
+
+  .results-value {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .results-takeaway p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    opacity: 0.7;
+  }
+
+  /* ===== FOOTER TAGS ===== */
+  .landing-footer {
+    padding: 3rem 0;
+    border-top: 1px solid rgba(128, 128, 128, 0.1);
+    margin-top: var(--section-gap);
+  }
+
+  .landing-footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .landing-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .landing-tag {
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius);
+    font-size: 0.7rem;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+    opacity: 0.6;
+  }
+
+  .landing-tag--subtle {
+    opacity: 0.4;
+  }
+
+  /* ===== SCROLL REVEAL ===== */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  [data-reveal].revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .hero-section {
+      min-height: auto;
+      padding: 4rem 0 3rem;
+    }
+
+    .hero-headline {
+      font-size: 1.75rem;
+    }
+
+    .hero-stat-row {
+      gap: 1.5rem;
+    }
+
+    .hero-stat-value {
+      font-size: 1.4rem;
+    }
+
+    .section-grid,
+    .section-grid--right {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .section-grid--right .section-label {
+      order: -1;
+    }
+
+    .section-label {
+      position: static;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+
+    .section-number {
+      font-size: 1.5rem;
+    }
+
+    .content-section--accent {
+      padding-left: 1rem;
+    }
+
+    .content-section--dark {
+      padding: 2rem 1rem;
+    }
+
+    .challenge-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .loop-diagram {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .loop-arrow {
+      transform: rotate(90deg);
+      align-self: center;
+    }
+
+    .loop-arrow--return {
+      transform: rotate(270deg);
+    }
+  }
+
+  /* ===== REDUCED MOTION ===== */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function initReveal() {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) {
+      document.querySelectorAll("[data-reveal]").forEach((el) => {
+        el.classList.add("revealed");
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    document.querySelectorAll("[data-reveal]").forEach((el) => {
+      observer.observe(el);
+    });
+  }
+
+  // Run on initial load and after Astro view transitions
+  initReveal();
+  document.addEventListener("astro:after-swap", initReveal);
+</script>

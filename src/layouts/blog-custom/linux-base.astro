@@ -1,0 +1,992 @@
+---
+/**
+ * Design Read: Linux reference-manual landing page. Pop!_OS meets terminal handbook.
+ * Bold system-font headings, monospace command blocks, hardware-meets-software density.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned hero, terminal-block sections, sticky nav rail)
+ *   MOTION_INTENSITY: 2 (scroll reveals only, no decorative animation)
+ *   VISUAL_DENSITY: 7 (dense reference material, compact command listings)
+ *
+ * Accent color: #48B9C7 (Pop!_OS teal) locked for the entire page.
+ * Corner radius system: 0px (terminal aesthetic, sharp edges throughout).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+
+const sections = [
+  { id: "fhs", label: "FHS", title: "File System Hierarchy" },
+  { id: "directories", label: "DIR", title: "Key Directories" },
+  { id: "file-ops", label: "FILE", title: "File Operations" },
+  { id: "users", label: "USER", title: "User Management" },
+  { id: "process", label: "PROC", title: "Process Management" },
+  { id: "packages", label: "PKG", title: "Package Management" },
+  { id: "network", label: "NET", title: "Network Commands" },
+  { id: "text", label: "TEXT", title: "Text Processing" },
+  { id: "compress", label: "TAR", title: "Compression" },
+  { id: "shell", label: "SH", title: "Shell Scripting" },
+];
+---
+
+<BaseLayout title={title}>
+  <article class="linux-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[70dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 -z-10"></div>
+      <div class="absolute top-0 left-0 w-full h-full opacity-[0.04] -z-10">
+        <div class="w-full h-full bg-[repeating-linear-gradient(0deg,transparent,transparent_24px,rgba(72,185,199,0.3)_24px,rgba(72,185,199,0.3)_25px)]"></div>
+      </div>
+      <div class="absolute bottom-0 right-0 w-1/3 h-1/2 opacity-[0.06] -z-10">
+        <div class="w-full h-full bg-[radial-gradient(circle_at_80%_80%,_#48B9C7_0%,_transparent_60%)]"></div>
+      </div>
+
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-block w-3 h-3 bg-[#48B9C7]"></span>
+          <span class="text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+          </span>
+          {categories && categories.map((cat: string) => (
+            <span class="text-xs tracking-[0.2em] uppercase text-zinc-600 font-mono">/ {cat}</span>
+          ))}
+        </div>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-[0.95] tracking-tight text-zinc-50 mb-4">
+          Linux 基础
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-xl leading-relaxed font-mono">
+          {description}
+        </p>
+        <div class="mt-10 flex flex-wrap gap-2">
+          {tags && tags.map((tag: string) => (
+            <span class="px-2 py-1 text-xs font-mono text-[#48B9C7] border border-[#48B9C7]/30 bg-[#48B9C7]/5">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Navigation Rail -->
+    <nav class="section-nav hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 z-50 flex-col gap-1" aria-label="Section navigation">
+      {sections.map((s) => (
+        <a
+          href={`#${s.id}`}
+          class="nav-pip group flex items-center gap-2 py-1"
+          data-section={s.id}
+          title={s.title}
+        >
+          <span class="block w-6 h-[2px] bg-zinc-600 group-hover:bg-[#48B9C7] transition-colors duration-200 nav-pip-bar"></span>
+          <span class="text-[10px] font-mono text-zinc-600 group-hover:text-[#48B9C7] transition-colors duration-200 opacity-0 group-hover:opacity-100 nav-pip-label">
+            {s.label}
+          </span>
+        </a>
+      ))}
+    </nav>
+
+    <!-- Mobile section nav -->
+    <div class="section-nav-mobile lg:hidden sticky top-0 z-40 bg-zinc-900/95 backdrop-blur border-b border-zinc-800 overflow-x-auto">
+      <div class="flex px-4 py-2 gap-1 min-w-max">
+        {sections.map((s) => (
+          <a
+            href={`#${s.id}`}
+            class="mobile-nav-item px-2 py-1 text-[10px] font-mono text-zinc-500 hover:text-[#48B9C7] transition-colors whitespace-nowrap"
+            data-section={s.id}
+          >
+            {s.label}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Content Container -->
+    <div class="content-body bg-zinc-950 px-4 md:px-16 lg:px-24 py-16 lg:py-24">
+      <div class="max-w-4xl mx-auto space-y-24 lg:space-y-32">
+
+        <!-- Section 1: File System Hierarchy -->
+        <section id="fhs" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">01 / filesystem</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">File System Hierarchy (FHS)</h2>
+          </div>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+            Linux 文件系统采用树状结构，所有文件和目录都从根目录 <code class="cmd-inline">/</code> 开始。FHS (Filesystem Hierarchy Standard) 定义了各目录的用途。
+          </p>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">filesystem tree</span>
+            </div>
+            <pre class="terminal-body"><code>/
+├── bin/          # 基本用户命令 (ls, cp, mv)
+├── boot/         # 启动引导文件 (vmlinuz, grub)
+├── dev/          # 设备文件 (sda, tty, null)
+├── etc/          # 系统配置文件
+│   ├── passwd    # 用户账户信息
+│   ├── fstab     # 文件系统挂载表
+│   └── nginx/    # 应用配置目录
+├── home/         # 用户主目录
+│   └── user/     # 个人文件和配置
+├── lib/          # 共享库文件
+├── media/        # 可移动设备挂载点
+├── mnt/          # 临时挂载点
+├── opt/          # 第三方软件
+├── proc/         # 进程和内核信息 (虚拟)
+├── root/         # root 用户主目录
+├── sbin/         # 系统管理命令
+├── srv/          # 服务数据
+├── sys/          # 内核设备树 (虚拟)
+├── tmp/          # 临时文件
+├── usr/          # 用户程序和数据
+│   ├── bin/      # 用户命令
+│   ├── lib/      # 库文件
+│   ├── local/    # 本地安装的软件
+│   └── share/    # 共享数据
+└── var/          # 可变数据
+    ├── log/      # 日志文件
+    ├── cache/    # 缓存
+    └── www/      # Web 服务器数据</code></pre>
+          </div>
+        </section>
+
+        <!-- Section 2: Key Directories -->
+        <section id="directories" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">02 / directories</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Key Directories</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="dir-card">
+              <h3 class="dir-path">/etc</h3>
+              <p class="dir-desc">系统全局配置。几乎所有服务的配置文件都存放于此。修改后通常需要重启对应服务。</p>
+            </div>
+            <div class="dir-card">
+              <h3 class="dir-path">/var/log</h3>
+              <p class="dir-desc">系统和应用日志。排查问题时首先查看此目录，如 syslog、auth.log、nginx/error.log。</p>
+            </div>
+            <div class="dir-card">
+              <h3 class="dir-path">/proc</h3>
+              <p class="dir-desc">虚拟文件系统，映射内核和进程状态。/proc/cpuinfo 查看 CPU，/proc/meminfo 查看内存。</p>
+            </div>
+            <div class="dir-card">
+              <h3 class="dir-path">/dev</h3>
+              <p class="dir-desc">设备文件。/dev/sda 是磁盘，/dev/null 是黑洞，/dev/urandom 提供随机数。</p>
+            </div>
+            <div class="dir-card">
+              <h3 class="dir-path">/tmp</h3>
+              <p class="dir-desc">临时文件存储，重启后清空。所有用户可写。适合存放一次性数据。</p>
+            </div>
+            <div class="dir-card">
+              <h3 class="dir-path">/usr/local</h3>
+              <p class="dir-desc">手动编译安装的软件存放位置。不会被包管理器覆盖，适合自定义程序。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: File Operations -->
+        <section id="file-ops" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">03 / file operations</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">File Operations</h2>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">ls - List directory contents</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">ls</span>
+              </div>
+              <pre class="terminal-body"><code><span class="cmd-prompt">$</span> ls              <span class="cmd-comment"># 列出当前目录</span>
+<span class="cmd-prompt">$</span> ls -la          <span class="cmd-comment"># 列出所有文件 (含隐藏) 的详细信息</span>
+<span class="cmd-prompt">$</span> ls -lh          <span class="cmd-comment"># 人类可读的文件大小</span>
+<span class="cmd-prompt">$</span> ls -lt          <span class="cmd-comment"># 按修改时间排序</span>
+<span class="cmd-prompt">$</span> ls -R           <span class="cmd-comment"># 递归列出子目录</span>
+<span class="cmd-prompt">$</span> ls -d */        <span class="cmd-comment"># 只列出目录</span></code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">cd - Change directory</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">cd</span>
+              </div>
+              <pre class="terminal-body"><code><span class="cmd-prompt">$</span> cd /etc         <span class="cmd-comment"># 跳转到绝对路径</span>
+<span class="cmd-prompt">$</span> cd ~            <span class="cmd-comment"># 回到用户主目录</span>
+<span class="cmd-prompt">$</span> cd -            <span class="cmd-comment"># 返回上次所在目录</span>
+<span class="cmd-prompt">$</span> cd ..           <span class="cmd-comment"># 回到上一级</span>
+<span class="cmd-prompt">$</span> cd ../..        <span class="cmd-comment"># 回到上两级</span></code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">cp, mv, rm - Copy, Move, Remove</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">file manipulation</span>
+              </div>
+              <pre class="terminal-body"><code><span class="cmd-comment"># 复制</span>
+<span class="cmd-prompt">$</span> cp file.txt backup.txt         <span class="cmd-comment"># 复制文件</span>
+<span class="cmd-prompt">$</span> cp -r dir/ dir_backup/          <span class="cmd-comment"># 递归复制目录</span>
+<span class="cmd-prompt">$</span> cp -p file.txt /tmp/            <span class="cmd-comment"># 保留权限和时间戳</span>
+
+<span class="cmd-comment"># 移动/重命名</span>
+<span class="cmd-prompt">$</span> mv old.txt new.txt              <span class="cmd-comment"># 重命名</span>
+<span class="cmd-prompt">$</span> mv file.txt /opt/               <span class="cmd-comment"># 移动到其他目录</span>
+
+<span class="cmd-comment"># 删除</span>
+<span class="cmd-prompt">$</span> rm file.txt                     <span class="cmd-comment"># 删除文件</span>
+<span class="cmd-prompt">$</span> rm -r dir/                      <span class="cmd-comment"># 递归删除目录</span>
+<span class="cmd-prompt">$</span> rm -rf dir/                     <span class="cmd-comment"># 强制递归删除 (危险!)</span></code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">mkdir, find - Create dirs & Search</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">mkdir & find</span>
+              </div>
+              <pre class="terminal-body"><code><span class="cmd-prompt">$</span> mkdir project                   <span class="cmd-comment"># 创建目录</span>
+<span class="cmd-prompt">$</span> mkdir -p a/b/c                  <span class="cmd-comment"># 递归创建多级目录</span>
+
+<span class="cmd-prompt">$</span> find / -name "*.conf"           <span class="cmd-comment"># 按名称搜索</span>
+<span class="cmd-prompt">$</span> find . -type f -size +100M      <span class="cmd-comment"># 查找大于 100MB 的文件</span>
+<span class="cmd-prompt">$</span> find . -mtime -7                <span class="cmd-comment"># 最近 7 天修改过的文件</span>
+<span class="cmd-prompt">$</span> find . -name "*.log" -delete    <span class="cmd-comment"># 查找并删除</span>
+<span class="cmd-prompt">$</span> find . -perm 777                <span class="cmd-comment"># 查找特定权限的文件</span></code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">chmod, chown - Permissions</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">permissions</span>
+              </div>
+              <pre class="terminal-body"><code><span class="cmd-comment"># 权限数字: r=4, w=2, x=1</span>
+<span class="cmd-prompt">$</span> chmod 755 script.sh             <span class="cmd-comment"># rwxr-xr-x</span>
+<span class="cmd-prompt">$</span> chmod 644 config.txt            <span class="cmd-comment"># rw-r--r--</span>
+<span class="cmd-prompt">$</span> chmod +x script.sh              <span class="cmd-comment"># 添加执行权限</span>
+<span class="cmd-prompt">$</span> chmod -R 755 dir/               <span class="cmd-comment"># 递归设置权限</span>
+
+<span class="cmd-prompt">$</span> chown user:group file.txt       <span class="cmd-comment"># 修改所有者和组</span>
+<span class="cmd-prompt">$</span> chown -R www-data:www-data /var/www  <span class="cmd-comment"># 递归修改</span></code></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 4: User Management -->
+        <section id="users" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">04 / users</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">User Management</h2>
+          </div>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+            Linux 是多用户系统。每个用户有 UID，属于一个或多个组 (GID)。root (UID=0) 拥有最高权限。
+          </p>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">user & group</span>
+            </div>
+            <pre class="terminal-body"><code><span class="cmd-comment"># 用户管理</span>
+<span class="cmd-prompt">$</span> useradd -m -s /bin/bash alice    <span class="cmd-comment"># 创建用户 (含主目录)</span>
+<span class="cmd-prompt">$</span> passwd alice                     <span class="cmd-comment"># 设置/修改密码</span>
+<span class="cmd-prompt">$</span> userdel -r alice                 <span class="cmd-comment"># 删除用户及其主目录</span>
+<span class="cmd-prompt">$</span> usermod -aG docker alice         <span class="cmd-comment"># 将用户加入组</span>
+<span class="cmd-prompt">$</span> id alice                         <span class="cmd-comment"># 查看用户 UID/GID 信息</span>
+<span class="cmd-prompt">$</span> whoami                           <span class="cmd-comment"># 当前用户名</span>
+<span class="cmd-prompt">$</span> who                              <span class="cmd-comment"># 当前登录的用户</span>
+
+<span class="cmd-comment"># 组管理</span>
+<span class="cmd-prompt">$</span> groupadd developers              <span class="cmd-comment"># 创建组</span>
+<span class="cmd-prompt">$</span> groups alice                     <span class="cmd-comment"># 查看用户所属组</span>
+<span class="cmd-prompt">$</span> gpasswd -d alice developers      <span class="cmd-comment"># 从组中移除用户</span>
+
+<span class="cmd-comment"># 提权</span>
+<span class="cmd-prompt">$</span> su - root                        <span class="cmd-comment"># 切换到 root</span>
+<span class="cmd-prompt">$</span> sudo command                     <span class="cmd-comment"># 以 root 权限执行</span>
+<span class="cmd-prompt">$</span> visudo                           <span class="cmd-comment"># 编辑 sudoers 文件</span>
+
+<span class="cmd-comment"># 重要文件</span>
+<span class="cmd-comment"># /etc/passwd  - 用户账户信息</span>
+<span class="cmd-comment"># /etc/shadow  - 加密密码</span>
+<span class="cmd-comment"># /etc/group   - 组定义</span></code></pre>
+          </div>
+        </section>
+
+        <!-- Section 5: Process Management -->
+        <section id="process" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">05 / processes</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Process Management</h2>
+          </div>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+            每个运行中的程序都是一个进程，由 PID 标识。进程可以前台/后台运行，通过信号控制。
+          </p>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">process control</span>
+            </div>
+            <pre class="terminal-body"><code><span class="cmd-comment"># 查看进程</span>
+<span class="cmd-prompt">$</span> ps aux                          <span class="cmd-comment"># 所有进程详细列表</span>
+<span class="cmd-prompt">$</span> ps aux | grep nginx              <span class="cmd-comment"># 过滤特定进程</span>
+<span class="cmd-prompt">$</span> top                              <span class="cmd-comment"># 实时进程监控</span>
+<span class="cmd-prompt">$</span> htop                             <span class="cmd-comment"># 增强版 top (需安装)</span>
+<span class="cmd-prompt">$</span> pstree                           <span class="cmd-comment"># 进程树</span>
+
+<span class="cmd-comment"># 信号与控制</span>
+<span class="cmd-prompt">$</span> kill PID                         <span class="cmd-comment"># 发送 SIGTERM (优雅终止)</span>
+<span class="cmd-prompt">$</span> kill -9 PID                      <span class="cmd-comment"># 发送 SIGKILL (强制终止)</span>
+<span class="cmd-prompt">$</span> killall nginx                    <span class="cmd-comment"># 按名称终止进程</span>
+<span class="cmd-prompt">$</span> pkill -f "python app"            <span class="cmd-comment"># 按模式终止</span>
+
+<span class="cmd-comment"># 前台/后台</span>
+<span class="cmd-prompt">$</span> command &amp;                        <span class="cmd-comment"># 后台运行</span>
+<span class="cmd-prompt">$</span> jobs                             <span class="cmd-comment"># 查看后台任务</span>
+<span class="cmd-prompt">$</span> fg %1                            <span class="cmd-comment"># 将任务 1 调回前台</span>
+<span class="cmd-prompt">$</span> bg %1                            <span class="cmd-comment"># 将任务 1 送到后台</span>
+<span class="cmd-prompt">$</span> nohup command &amp;                  <span class="cmd-comment"># 退出终端后仍运行</span>
+
+<span class="cmd-comment"># systemd 服务管理</span>
+<span class="cmd-prompt">$</span> systemctl start nginx            <span class="cmd-comment"># 启动服务</span>
+<span class="cmd-prompt">$</span> systemctl stop nginx             <span class="cmd-comment"># 停止服务</span>
+<span class="cmd-prompt">$</span> systemctl restart nginx          <span class="cmd-comment"># 重启服务</span>
+<span class="cmd-prompt">$</span> systemctl status nginx           <span class="cmd-comment"># 查看状态</span>
+<span class="cmd-prompt">$</span> systemctl enable nginx           <span class="cmd-comment"># 开机自启</span>
+<span class="cmd-prompt">$</span> systemctl disable nginx          <span class="cmd-comment"># 取消自启</span>
+<span class="cmd-prompt">$</span> journalctl -u nginx -f           <span class="cmd-comment"># 查看服务日志 (实时)</span></code></pre>
+          </div>
+        </section>
+
+        <!-- Section 6: Package Management -->
+        <section id="packages" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">06 / packages</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Package Management</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="text-sm font-bold text-zinc-300 mb-3 font-mono">APT (Debian/Ubuntu)</h3>
+              <div class="terminal-block">
+                <div class="terminal-header">
+                  <span class="terminal-dot bg-red-500"></span>
+                  <span class="terminal-dot bg-yellow-500"></span>
+                  <span class="terminal-dot bg-green-500"></span>
+                  <span class="terminal-title">apt</span>
+                </div>
+                <pre class="terminal-body text-xs"><code><span class="cmd-prompt">$</span> apt update
+<span class="cmd-prompt">$</span> apt upgrade
+<span class="cmd-prompt">$</span> apt install nginx
+<span class="cmd-prompt">$</span> apt remove nginx
+<span class="cmd-prompt">$</span> apt purge nginx
+<span class="cmd-prompt">$</span> apt search keyword
+<span class="cmd-prompt">$</span> apt list --installed
+<span class="cmd-prompt">$</span> apt autoremove</code></pre>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-zinc-300 mb-3 font-mono">YUM/DNF (RHEL/Fedora)</h3>
+              <div class="terminal-block">
+                <div class="terminal-header">
+                  <span class="terminal-dot bg-red-500"></span>
+                  <span class="terminal-dot bg-yellow-500"></span>
+                  <span class="terminal-dot bg-green-500"></span>
+                  <span class="terminal-title">yum/dnf</span>
+                </div>
+                <pre class="terminal-body text-xs"><code><span class="cmd-prompt">$</span> yum update
+<span class="cmd-prompt">$</span> yum install nginx
+<span class="cmd-prompt">$</span> yum remove nginx
+<span class="cmd-prompt">$</span> yum search keyword
+<span class="cmd-prompt">$</span> yum list installed
+<span class="cmd-prompt">$</span> dnf install nginx
+<span class="cmd-prompt">$</span> dnf upgrade --refresh</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 7: Network Commands -->
+        <section id="network" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">07 / network</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Network Commands</h2>
+          </div>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">networking</span>
+            </div>
+            <pre class="terminal-body"><code><span class="cmd-comment"># 网络接口与地址</span>
+<span class="cmd-prompt">$</span> ip addr show                     <span class="cmd-comment"># 查看所有网络接口</span>
+<span class="cmd-prompt">$</span> ip route show                    <span class="cmd-comment"># 查看路由表</span>
+<span class="cmd-prompt">$</span> ip link set eth0 up              <span class="cmd-comment"># 启用网卡</span>
+
+<span class="cmd-comment"># 连通性测试</span>
+<span class="cmd-prompt">$</span> ping -c 4 google.com             <span class="cmd-comment"># Ping 4 次</span>
+<span class="cmd-prompt">$</span> traceroute google.com            <span class="cmd-comment"># 路由追踪</span>
+<span class="cmd-prompt">$</span> dig example.com                  <span class="cmd-comment"># DNS 查询</span>
+<span class="cmd-prompt">$</span> nslookup example.com             <span class="cmd-comment"># DNS 查询 (旧版)</span>
+
+<span class="cmd-comment"># 数据传输</span>
+<span class="cmd-prompt">$</span> curl -O https://example.com/file <span class="cmd-comment"># 下载文件</span>
+<span class="cmd-prompt">$</span> curl -X POST -d "data" url       <span class="cmd-comment"># POST 请求</span>
+<span class="cmd-prompt">$</span> curl -I url                      <span class="cmd-comment"># 只获取响应头</span>
+<span class="cmd-prompt">$</span> wget url                         <span class="cmd-comment"># 下载文件</span>
+<span class="cmd-prompt">$</span> wget -r -l 2 url                 <span class="cmd-comment"># 递归下载 (2 层)</span>
+
+<span class="cmd-comment"># 端口与连接</span>
+<span class="cmd-prompt">$</span> ss -tulnp                        <span class="cmd-comment"># 监听中的端口</span>
+<span class="cmd-prompt">$</span> ss -s                            <span class="cmd-comment"># 连接统计</span>
+<span class="cmd-prompt">$</span> netstat -tulnp                   <span class="cmd-comment"># 同上 (旧版)</span>
+<span class="cmd-prompt">$</span> lsof -i :80                      <span class="cmd-comment"># 查看占用 80 端口的进程</span>
+
+<span class="cmd-comment"># 防火墙 (ufw)</span>
+<span class="cmd-prompt">$</span> ufw enable                       <span class="cmd-comment"># 启用防火墙</span>
+<span class="cmd-prompt">$</span> ufw allow 22/tcp                 <span class="cmd-comment"># 允许 SSH</span>
+<span class="cmd-prompt">$</span> ufw allow 80,443/tcp             <span class="cmd-comment"># 允许 HTTP/HTTPS</span>
+<span class="cmd-prompt">$</span> ufw status                       <span class="cmd-comment"># 查看规则</span></code></pre>
+          </div>
+        </section>
+
+        <!-- Section 8: Text Processing -->
+        <section id="text" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">08 / text processing</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Text Processing</h2>
+          </div>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+            Linux 哲学: 一切皆文件。文本处理工具是最强大的武器，通过管道 (<code class="cmd-inline">|</code>) 组合使用。
+          </p>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">text tools</span>
+            </div>
+            <pre class="terminal-body"><code><span class="cmd-comment"># 查看文件内容</span>
+<span class="cmd-prompt">$</span> cat file.txt                     <span class="cmd-comment"># 输出全部内容</span>
+<span class="cmd-prompt">$</span> head -n 20 file.txt              <span class="cmd-comment"># 前 20 行</span>
+<span class="cmd-prompt">$</span> tail -n 20 file.txt              <span class="cmd-comment"># 后 20 行</span>
+<span class="cmd-prompt">$</span> tail -f /var/log/syslog          <span class="cmd-comment"># 实时追踪日志</span>
+<span class="cmd-prompt">$</span> less file.txt                    <span class="cmd-comment"># 分页查看</span>
+
+<span class="cmd-comment"># grep - 文本搜索</span>
+<span class="cmd-prompt">$</span> grep "error" log.txt             <span class="cmd-comment"># 搜索关键词</span>
+<span class="cmd-prompt">$</span> grep -i "error" log.txt          <span class="cmd-comment"># 忽略大小写</span>
+<span class="cmd-prompt">$</span> grep -r "TODO" src/              <span class="cmd-comment"># 递归搜索目录</span>
+<span class="cmd-prompt">$</span> grep -n "pattern" file           <span class="cmd-comment"># 显示行号</span>
+<span class="cmd-prompt">$</span> grep -v "debug" log.txt          <span class="cmd-comment"># 反向匹配 (排除)</span>
+<span class="cmd-prompt">$</span> grep -E "err|warn" log.txt       <span class="cmd-comment"># 正则匹配</span>
+
+<span class="cmd-comment"># sed - 流编辑器</span>
+<span class="cmd-prompt">$</span> sed 's/old/new/' file            <span class="cmd-comment"># 替换首个匹配</span>
+<span class="cmd-prompt">$</span> sed 's/old/new/g' file           <span class="cmd-comment"># 替换所有匹配</span>
+<span class="cmd-prompt">$</span> sed -i 's/old/new/g' file        <span class="cmd-comment"># 原地修改文件</span>
+<span class="cmd-prompt">$</span> sed -n '5,10p' file              <span class="cmd-comment"># 只打印第 5-10 行</span>
+<span class="cmd-prompt">$</span> sed '/^#/d' file                 <span class="cmd-comment"># 删除注释行</span>
+
+<span class="cmd-comment"># awk - 文本分析</span>
+<span class="cmd-prompt">$</span> awk '&#123;print $1&#125;' file            <span class="cmd-comment"># 打印第一列</span>
+<span class="cmd-prompt">$</span> awk -F: '&#123;print $1&#125;' /etc/passwd <span class="cmd-comment"># 指定分隔符</span>
+<span class="cmd-prompt">$</span> awk '$3 > 100' file              <span class="cmd-comment"># 条件过滤</span>
+<span class="cmd-prompt">$</span> awk '&#123;sum+=$1&#125; END &#123;print sum&#125;'  <span class="cmd-comment"># 求和</span>
+<span class="cmd-prompt">$</span> awk 'NR==5,NR==10' file          <span class="cmd-comment"># 打印第 5-10 行</span>
+
+<span class="cmd-comment"># 排序与统计</span>
+<span class="cmd-prompt">$</span> sort file.txt                    <span class="cmd-comment"># 排序</span>
+<span class="cmd-prompt">$</span> sort -n file.txt                 <span class="cmd-comment"># 数值排序</span>
+<span class="cmd-prompt">$</span> sort -u file.txt                 <span class="cmd-comment"># 排序并去重</span>
+<span class="cmd-prompt">$</span> uniq file.txt                    <span class="cmd-comment"># 去除连续重复行</span>
+<span class="cmd-prompt">$</span> wc -l file.txt                   <span class="cmd-comment"># 统计行数</span>
+<span class="cmd-prompt">$</span> wc -w file.txt                   <span class="cmd-comment"># 统计单词数</span>
+
+<span class="cmd-comment"># 管道组合实战</span>
+<span class="cmd-prompt">$</span> cat access.log | awk '&#123;print $1&#125;' | sort | uniq -c | sort -rn | head
+<span class="cmd-comment"># 统计访问量最高的 10 个 IP</span></code></pre>
+          </div>
+        </section>
+
+        <!-- Section 9: Compression -->
+        <section id="compress" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">09 / compression</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Compression & Archives</h2>
+          </div>
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="terminal-title">tar & compression</span>
+            </div>
+            <pre class="terminal-body"><code><span class="cmd-comment"># tar (打包 + 压缩)</span>
+<span class="cmd-prompt">$</span> tar -czf archive.tar.gz dir/     <span class="cmd-comment"># 打包并 gzip 压缩</span>
+<span class="cmd-prompt">$</span> tar -xzf archive.tar.gz          <span class="cmd-comment"># 解压 .tar.gz</span>
+<span class="cmd-prompt">$</span> tar -cjf archive.tar.bz2 dir/    <span class="cmd-comment"># 打包并 bzip2 压缩</span>
+<span class="cmd-prompt">$</span> tar -xjf archive.tar.bz2         <span class="cmd-comment"># 解压 .tar.bz2</span>
+<span class="cmd-prompt">$</span> tar -tf archive.tar.gz           <span class="cmd-comment"># 查看归档内容</span>
+<span class="cmd-prompt">$</span> tar -xzf archive.tar.gz -C /opt  <span class="cmd-comment"># 解压到指定目录</span>
+
+<span class="cmd-comment"># gzip</span>
+<span class="cmd-prompt">$</span> gzip file.txt                    <span class="cmd-comment"># 压缩 (删除原文件)</span>
+<span class="cmd-prompt">$</span> gunzip file.txt.gz               <span class="cmd-comment"># 解压</span>
+<span class="cmd-prompt">$</span> gzip -k file.txt                 <span class="cmd-comment"># 压缩 (保留原文件)</span>
+
+<span class="cmd-comment"># zip</span>
+<span class="cmd-prompt">$</span> zip -r archive.zip dir/          <span class="cmd-comment"># 压缩目录</span>
+<span class="cmd-prompt">$</span> unzip archive.zip                <span class="cmd-comment"># 解压</span>
+<span class="cmd-prompt">$</span> unzip -l archive.zip             <span class="cmd-comment"># 列出内容</span>
+<span class="cmd-prompt">$</span> unzip archive.zip -d /opt        <span class="cmd-comment"># 解压到指定目录</span></code></pre>
+          </div>
+        </section>
+
+        <!-- Section 10: Shell Scripting -->
+        <section id="shell" class="scroll-mt-16 reveal-element">
+          <div class="section-header mb-8">
+            <span class="text-[10px] font-mono tracking-[0.3em] uppercase text-[#48B9C7]/70 block mb-2">10 / shell scripting</span>
+            <h2 class="text-2xl md:text-3xl font-bold text-zinc-100">Shell Scripting Basics</h2>
+          </div>
+          <p class="text-sm text-zinc-400 leading-relaxed mb-6">
+            Shell 脚本将命令序列化为可执行程序。首行 <code class="cmd-inline">#!/bin/bash</code> 声明解释器。
+          </p>
+
+          <div class="command-group">
+            <h3 class="command-title">Variables & Input</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">variables.sh</span>
+              </div>
+              <pre class="terminal-body"><code>#!/bin/bash
+
+<span class="cmd-comment"># 变量 (等号两侧不能有空格)</span>
+NAME="Linux"
+VERSION=6.1
+echo "Kernel: $NAME $VERSION"
+
+<span class="cmd-comment"># 命令替换</span>
+TODAY=$(date +%Y-%m-%d)
+FILES=$(ls | wc -l)
+
+<span class="cmd-comment"># 读取用户输入</span>
+read -p "Enter your name: " USERNAME
+echo "Hello, $USERNAME"
+
+<span class="cmd-comment"># 特殊变量</span>
+echo $0     <span class="cmd-comment"># 脚本名</span>
+echo $1     <span class="cmd-comment"># 第一个参数</span>
+echo $#     <span class="cmd-comment"># 参数个数</span>
+echo $?     <span class="cmd-comment"># 上条命令退出码</span>
+echo $$     <span class="cmd-comment"># 当前 PID</span></code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">Conditionals & Loops</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">control-flow.sh</span>
+              </div>
+              <pre class="terminal-body"><code>#!/bin/bash
+
+<span class="cmd-comment"># if/elif/else</span>
+if [ -f "/etc/passwd" ]; then
+    echo "File exists"
+elif [ -d "/tmp" ]; then
+    echo "Directory exists"
+else
+    echo "Neither"
+fi
+
+<span class="cmd-comment"># 数值比较: -eq -ne -gt -lt -ge -le</span>
+if [ $# -eq 0 ]; then
+    echo "No arguments provided"
+    exit 1
+fi
+
+<span class="cmd-comment"># 字符串比较</span>
+if [ "$USER" = "root" ]; then
+    echo "Running as root"
+fi
+
+<span class="cmd-comment"># for 循环</span>
+for file in *.log; do
+    echo "Processing: $file"
+    gzip "$file"
+done
+
+for i in &#123;1..10&#125;; do
+    echo "Iteration $i"
+done
+
+<span class="cmd-comment"># while 循环</span>
+count=0
+while [ $count -lt 5 ]; do
+    echo "Count: $count"
+    count=$((count + 1))
+done
+
+<span class="cmd-comment"># 读取文件逐行处理</span>
+while IFS= read -r line; do
+    echo "Line: $line"
+done &lt; input.txt</code></pre>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <h3 class="command-title">Functions & Error Handling</h3>
+            <div class="terminal-block">
+              <div class="terminal-header">
+                <span class="terminal-dot bg-red-500"></span>
+                <span class="terminal-dot bg-yellow-500"></span>
+                <span class="terminal-dot bg-green-500"></span>
+                <span class="terminal-title">functions.sh</span>
+              </div>
+              <pre class="terminal-body"><code>#!/bin/bash
+set -euo pipefail  <span class="cmd-comment"># 严格模式: 出错即退出</span>
+
+<span class="cmd-comment"># 函数定义</span>
+backup() &#123;
+    local src="$1"
+    local dest="$2"
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+
+    if [ ! -e "$src" ]; then
+        echo "Error: $src not found" &gt;&amp;2
+        return 1
+    fi
+
+    cp -r "$src" "&#123;dest&#125;/backup_&#123;timestamp&#125;"
+    echo "Backup complete: &#123;dest&#125;/backup_&#123;timestamp&#125;"
+&#125;
+
+<span class="cmd-comment"># 调用函数</span>
+backup "/etc/nginx" "/var/backups"
+
+<span class="cmd-comment"># trap: 捕获信号, 清理临时文件</span>
+cleanup() &#123;
+    rm -f /tmp/myapp_*.tmp
+    echo "Cleaned up"
+&#125;
+trap cleanup EXIT
+
+<span class="cmd-comment"># 实用模式: 日志函数</span>
+log() &#123;
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+&#125;
+log "Script started"
+log "Processing complete"</code></pre>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </article>
+
+  <!-- Styles -->
+  <style>
+    .linux-landing {
+      --accent: #48B9C7;
+      --accent-dim: rgba(72, 185, 199, 0.15);
+      color: #e4e4e7;
+    }
+
+    /* Terminal blocks */
+    .terminal-block {
+      background: #18181b;
+      border: 1px solid #27272a;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #09090b;
+      border-bottom: 1px solid #27272a;
+    }
+
+    .terminal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      color: #52525b;
+    }
+
+    .terminal-body {
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.7;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      color: #d4d4d8;
+      margin: 0;
+    }
+
+    .terminal-body code {
+      font-family: inherit;
+      background: none;
+      padding: 0;
+    }
+
+    /* Command styling */
+    .cmd-prompt {
+      color: var(--accent);
+      user-select: none;
+    }
+
+    .cmd-comment {
+      color: #52525b;
+    }
+
+    .cmd-inline {
+      background: #27272a;
+      padding: 1px 6px;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      font-size: 0.85em;
+      color: var(--accent);
+      border: 1px solid #3f3f46;
+    }
+
+    /* Command groups */
+    .command-group {
+      margin-bottom: 2rem;
+    }
+
+    .command-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #a1a1aa;
+      margin-bottom: 8px;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+    }
+
+    /* Directory cards */
+    .dir-card {
+      padding: 16px;
+      background: #18181b;
+      border: 1px solid #27272a;
+      transition: border-color 0.2s ease;
+    }
+
+    .dir-card:hover {
+      border-color: var(--accent);
+    }
+
+    .dir-path {
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .dir-desc {
+      font-size: 13px;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+
+    /* Section headers */
+    .section-header {
+      border-left: 3px solid var(--accent);
+      padding-left: 16px;
+    }
+
+    /* Navigation rail */
+    .section-nav {
+      transition: opacity 0.3s ease;
+    }
+
+    .nav-pip-bar {
+      transition: width 0.2s ease, background-color 0.2s ease;
+    }
+
+    .nav-pip.active .nav-pip-bar {
+      width: 2rem;
+      background-color: var(--accent);
+    }
+
+    .nav-pip.active .nav-pip-label {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    /* Mobile nav */
+    .mobile-nav-item.active {
+      color: var(--accent);
+      border-bottom: 1px solid var(--accent);
+    }
+
+    /* Scroll reveal */
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+
+    /* Hero scanline overlay */
+    .hero-section::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scrollbar styling for terminal blocks */
+    .terminal-body::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .terminal-body::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+    }
+
+    /* Ensure dark background for the entire page */
+    .linux-landing {
+      background: #09090b;
+    }
+
+    .content-body {
+      background: #09090b;
+    }
+  </style>
+
+  <!-- Script: scroll reveal + section tracking -->
+  <script>
+    function initLinuxLanding() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // Scroll reveal
+      if (prefersReduced) {
+        document.querySelectorAll(".reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+      } else {
+        const revealObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("revealed");
+                revealObserver.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+        );
+        document.querySelectorAll(".reveal-element").forEach((el) => {
+          revealObserver.observe(el);
+        });
+      }
+
+      // Section tracking for nav rail
+      const sections = document.querySelectorAll("section[id]");
+      const navPips = document.querySelectorAll(".nav-pip");
+      const mobileNavItems = document.querySelectorAll(".mobile-nav-item");
+
+      if (sections.length === 0) return;
+
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.getAttribute("id");
+              navPips.forEach((pip) => {
+                pip.classList.toggle("active", pip.getAttribute("data-section") === id);
+              });
+              mobileNavItems.forEach((item) => {
+                item.classList.toggle("active", item.getAttribute("data-section") === id);
+              });
+            }
+          });
+        },
+        { threshold: 0.2, rootMargin: "-20% 0px -60% 0px" }
+      );
+
+      sections.forEach((section) => {
+        sectionObserver.observe(section);
+      });
+    }
+
+    // Run on initial load
+    initLinuxLanding();
+
+    // Re-run after Astro view transitions
+    document.addEventListener("astro:after-swap", initLinuxLanding);
+    document.addEventListener("astro:page-load", initLinuxLanding);
+  </script>
+</BaseLayout>

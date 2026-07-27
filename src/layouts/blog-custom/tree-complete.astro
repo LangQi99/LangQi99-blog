@@ -1,0 +1,560 @@
+---
+/**
+ * Design Read: Educational algorithm article with rich interactive MDX components.
+ * Excalidraw-inspired whiteboard aesthetic: clean, hand-drawn feel, minimal chrome,
+ * paper-like surface with subtle sketch textures. Content-focused with generous breathing room.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 5 (left-aligned hero, prominent part dividers, asymmetric spacing)
+ *   MOTION_INTENSITY: 2 (gentle fade-in on scroll, no distracting transitions)
+ *   VISUAL_DENSITY: 4 (educational content needs breathing room, generous padding)
+ *
+ * Accent color: #14B8A6 (teal-500, graph/tree visualization color) locked.
+ * Corner radius system: 12px (soft, whiteboard feel).
+ *
+ * Hybrid approach: Custom hero + styled <Content /> wrapper preserving MDX interactive components.
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const { Content, headings } = await blog.render();
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const image = blog.data.image;
+---
+
+<BaseLayout title={title} image={image} headings={headings} showTOC={true}>
+  <article class="tree-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section relative min-h-[90dvh] flex items-end px-6 pb-16 md:px-16 lg:px-24 overflow-hidden">
+      <!-- Background: warm paper texture -->
+      <div class="absolute inset-0 bg-gradient-to-b from-stone-50 via-white to-stone-50/80 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 -z-20"></div>
+
+      <!-- Subtle grid dots (whiteboard feel) -->
+      <div class="absolute inset-0 -z-10 opacity-[0.035] dark:opacity-[0.025]" style="background-image: radial-gradient(circle, #14B8A6 0.8px, transparent 0.8px); background-size: 24px 24px;"></div>
+
+      <!-- Hero image: right-aligned on desktop -->
+      <div class="absolute top-1/2 right-6 md:right-12 lg:right-20 -translate-y-1/2 w-[200px] md:w-[320px] lg:w-[400px] opacity-80 dark:opacity-60 -z-10 pointer-events-none select-none">
+        <img
+          src={image}
+          alt=""
+          class="w-full h-auto rounded-[12px] shadow-lg shadow-teal-500/5 dark:shadow-teal-400/5"
+          loading="eager"
+        />
+      </div>
+
+      <!-- Decorative sketch lines -->
+      <div class="absolute top-16 left-8 md:left-16 w-16 h-px bg-[#14B8A6]/20 -z-10"></div>
+      <div class="absolute top-16 left-8 md:left-16 w-px h-16 bg-[#14B8A6]/20 -z-10"></div>
+
+      <div class="max-w-2xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#14B8A6] animate-breathe"></div>
+          <p class="text-xs tracking-widest uppercase text-stone-500 dark:text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+
+        <h1 class="text-3xl md:text-5xl lg:text-[3.25rem] font-bold leading-[1.15] tracking-tight text-stone-900 dark:text-zinc-50 mb-5">
+          {title}
+        </h1>
+
+        <p class="text-base md:text-lg text-stone-600 dark:text-zinc-400 max-w-xl leading-relaxed mb-10">
+          {description}
+        </p>
+
+        <!-- Part navigation pills -->
+        <nav class="flex flex-wrap gap-2" aria-label="Article parts">
+          <a href="#第一部分树基础" class="part-pill">
+            <span class="part-pill-num">1</span>
+            <span>Tree Basics</span>
+          </a>
+          <a href="#第二部分树的直径" class="part-pill">
+            <span class="part-pill-num">2</span>
+            <span>Diameter</span>
+          </a>
+          <a href="#第三部分树的重心" class="part-pill">
+            <span class="part-pill-num">3</span>
+            <span>Centroid</span>
+          </a>
+          <a href="#第四部分最小生成树" class="part-pill">
+            <span class="part-pill-num">4</span>
+            <span>MST</span>
+          </a>
+          <a href="#第五部分经典例题详解" class="part-pill">
+            <span class="part-pill-num">5</span>
+            <span>Examples</span>
+          </a>
+        </nav>
+
+        <div class="mt-14 flex items-center gap-2 text-xs text-stone-400 dark:text-zinc-600 font-mono">
+          <span class="inline-block w-6 h-px bg-[#14B8A6]/40"></span>
+          <span>scroll to explore</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Wrapper: styled prose container for <Content /> -->
+    <section class="content-wrapper px-6 md:px-16 lg:px-24 py-16 md:py-24 relative">
+      <!-- Left accent bar -->
+      <div class="hidden lg:block absolute top-24 left-8 w-px h-[calc(100%-6rem)] bg-gradient-to-b from-[#14B8A6]/20 via-[#14B8A6]/5 to-transparent"></div>
+
+      <div class="tree-prose max-w-3xl mx-auto lg:mx-0 lg:ml-16">
+        <Content />
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    /* Hero breathe animation */
+    @keyframes breathe {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .animate-breathe {
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    /* Part navigation pills */
+    .part-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 12px;
+      border: 1px solid #e7e5e4;
+      background: white;
+      font-size: 0.75rem;
+      font-family: ui-monospace, monospace;
+      color: #57534e;
+      text-decoration: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    :root[data-theme="dracula"] .part-pill,
+    [data-theme="dracula"] .part-pill {
+      border-color: #3f3f46;
+      background: #18181b;
+      color: #a1a1aa;
+    }
+
+    .part-pill:hover {
+      border-color: #14B8A6;
+      box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.08);
+    }
+
+    .part-pill-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.125rem;
+      height: 1.125rem;
+      border-radius: 50%;
+      background: #14B8A6;
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 700;
+    }
+
+    /* Reveal animation */
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ============================
+       PROSE OVERRIDES for tree-prose
+       ============================ */
+    .tree-prose {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #44403c;
+    }
+
+    :root[data-theme="dracula"] .tree-prose,
+    [data-theme="dracula"] .tree-prose {
+      color: #d4d4d8;
+    }
+
+    /* H1: Part headers - prominent visual breaks */
+    .tree-prose :global(h1) {
+      position: relative;
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #1c1917;
+      margin-top: 5rem;
+      margin-bottom: 2rem;
+      padding-top: 3rem;
+      padding-bottom: 1.5rem;
+      border-top: 2px solid #14B8A6;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(h1),
+    [data-theme="dracula"] .tree-prose :global(h1) {
+      color: #fafaf9;
+    }
+
+    .tree-prose :global(h1)::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 3rem;
+      height: 2px;
+      background: #14B8A6;
+    }
+
+    .tree-prose :global(h1)::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(20, 184, 166, 0.04), transparent);
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* First h1 no top margin */
+    .tree-prose :global(h1:first-child) {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .tree-prose :global(h1:first-child)::before,
+    .tree-prose :global(h1:first-child)::after {
+      display: none;
+    }
+
+    /* H2: Section headers */
+    .tree-prose :global(h2) {
+      font-size: 1.375rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #292524;
+      margin-top: 3rem;
+      margin-bottom: 1.25rem;
+      padding-left: 0.875rem;
+      border-left: 3px solid #14B8A6;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(h2),
+    [data-theme="dracula"] .tree-prose :global(h2) {
+      color: #f4f4f5;
+    }
+
+    /* H3: Subsection headers */
+    .tree-prose :global(h3) {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #44403c;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(h3),
+    [data-theme="dracula"] .tree-prose :global(h3) {
+      color: #e4e4e7;
+    }
+
+    /* Paragraphs */
+    .tree-prose :global(p) {
+      margin-bottom: 1.25rem;
+      max-width: 65ch;
+    }
+
+    /* Links */
+    .tree-prose :global(a) {
+      color: #14B8A6;
+      text-decoration-line: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+
+    .tree-prose :global(a:hover) {
+      color: #0d9488;
+    }
+
+    /* Lists */
+    .tree-prose :global(ul),
+    .tree-prose :global(ol) {
+      margin-bottom: 1.25rem;
+      padding-left: 1.5rem;
+    }
+
+    .tree-prose :global(li) {
+      margin-bottom: 0.5rem;
+    }
+
+    .tree-prose :global(li::marker) {
+      color: #14B8A6;
+    }
+
+    /* Strong text */
+    .tree-prose :global(strong) {
+      font-weight: 700;
+      color: #1c1917;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(strong),
+    [data-theme="dracula"] .tree-prose :global(strong) {
+      color: #fafaf9;
+    }
+
+    /* Code blocks */
+    .tree-prose :global(pre) {
+      border-radius: 12px;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e7e5e4;
+      font-size: 0.8125rem;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(pre),
+    [data-theme="dracula"] .tree-prose :global(pre) {
+      border-color: #3f3f46;
+    }
+
+    /* Inline code */
+    .tree-prose :global(:not(pre) > code) {
+      font-size: 0.85em;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      background: #f5f5f4;
+      color: #14B8A6;
+      border: 1px solid #e7e5e4;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(:not(pre) > code),
+    [data-theme="dracula"] .tree-prose :global(:not(pre) > code) {
+      background: #27272a;
+      border-color: #3f3f46;
+      color: #5eead4;
+    }
+
+    /* Blockquotes */
+    .tree-prose :global(blockquote) {
+      border-left: 3px solid #14B8A6;
+      padding: 0.75rem 1rem;
+      margin: 1.5rem 0;
+      background: rgba(20, 184, 166, 0.03);
+      border-radius: 0 12px 12px 0;
+      font-style: normal;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(blockquote),
+    [data-theme="dracula"] .tree-prose :global(blockquote) {
+      background: rgba(20, 184, 166, 0.05);
+    }
+
+    .tree-prose :global(blockquote p) {
+      margin-bottom: 0;
+    }
+
+    /* Tables */
+    .tree-prose :global(table) {
+      width: 100%;
+      font-size: 0.875rem;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e7e5e4;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(table),
+    [data-theme="dracula"] .tree-prose :global(table) {
+      border-color: #3f3f46;
+    }
+
+    .tree-prose :global(th) {
+      text-align: left;
+      padding: 0.625rem 0.875rem;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: #14B8A6;
+      background: #fafaf9;
+      border-bottom: 1px solid #e7e5e4;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(th),
+    [data-theme="dracula"] .tree-prose :global(th) {
+      background: #18181b;
+      border-color: #3f3f46;
+    }
+
+    .tree-prose :global(td) {
+      padding: 0.625rem 0.875rem;
+      border-bottom: 1px solid #f5f5f4;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(td),
+    [data-theme="dracula"] .tree-prose :global(td) {
+      border-color: #27272a;
+    }
+
+    /* Horizontal rules: section dividers */
+    .tree-prose :global(hr) {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, #14B8A6, transparent);
+      margin: 3rem 0;
+      opacity: 0.3;
+    }
+
+    /* Images */
+    .tree-prose :global(img) {
+      border-radius: 12px;
+      margin: 1.5rem 0;
+    }
+
+    /* Math (KaTeX) overrides */
+    .tree-prose :global(.katex-display) {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #fafaf9;
+      border-radius: 12px;
+      border: 1px solid #e7e5e4;
+      overflow-x: auto;
+    }
+
+    :root[data-theme="dracula"] .tree-prose :global(.katex-display),
+    [data-theme="dracula"] .tree-prose :global(.katex-display) {
+      background: #18181b;
+      border-color: #3f3f46;
+    }
+
+    /* Interactive components breathing room */
+    .tree-prose :global([class*="Tree"]),
+    .tree-prose :global([class*="MST"]),
+    .tree-prose :global([class*="tree-"]),
+    .tree-prose :global([class*="mst-"]) {
+      margin: 2rem 0;
+    }
+
+    /* Info/Warning admonition boxes */
+    .tree-prose :global(.info-box),
+    .tree-prose :global(.warning-box),
+    .tree-prose :global([class*="admonition"]) {
+      border-radius: 12px;
+      margin: 1.5rem 0;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-breathe {
+        animation: none;
+      }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 767px) {
+      .hero-section {
+        min-height: 80dvh;
+        padding-bottom: 3rem;
+      }
+
+      .tree-prose :global(h1) {
+        font-size: 1.5rem;
+        margin-top: 3.5rem;
+        padding-top: 2rem;
+      }
+
+      .tree-prose :global(h2) {
+        font-size: 1.25rem;
+      }
+
+      .tree-prose :global(pre) {
+        font-size: 0.75rem;
+        border-radius: 8px;
+      }
+
+      .tree-prose :global(table) {
+        font-size: 0.8125rem;
+        border-radius: 8px;
+      }
+
+      .tree-prose :global(.katex-display) {
+        padding: 0.75rem;
+        border-radius: 8px;
+      }
+    }
+
+    /* Scrollbar for code and math overflow */
+    .tree-prose :global(pre::-webkit-scrollbar),
+    .tree-prose :global(.katex-display::-webkit-scrollbar) {
+      height: 4px;
+    }
+
+    .tree-prose :global(pre::-webkit-scrollbar-track),
+    .tree-prose :global(.katex-display::-webkit-scrollbar-track) {
+      background: transparent;
+    }
+
+    .tree-prose :global(pre::-webkit-scrollbar-thumb),
+    .tree-prose :global(.katex-display::-webkit-scrollbar-thumb) {
+      background: #14B8A6;
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+  </style>
+
+  <script>
+    function initTreeScrollReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".tree-landing .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.15,
+          rootMargin: "0px 0px -30px 0px",
+        }
+      );
+
+      document.querySelectorAll(".tree-landing .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initTreeScrollReveal();
+    document.addEventListener("astro:after-swap", initTreeScrollReveal);
+    document.addEventListener("astro:page-load", initTreeScrollReveal);
+  </script>
+</BaseLayout>

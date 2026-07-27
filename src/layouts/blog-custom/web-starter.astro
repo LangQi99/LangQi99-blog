@@ -1,0 +1,503 @@
+---
+/**
+ * Design Read: CTF Web challenge catalog. Vercel-inspired dark developer aesthetic,
+ * emerald security-green accents, sharp edges, dense technique gallery.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned hero, varied grid rhythm, asymmetric case cards)
+ *   MOTION_INTENSITY: 2 (scroll reveal fade-ups, stagger on grid items)
+ *   VISUAL_DENSITY: 6 (compact case cards, tight grid, minimal whitespace between items)
+ *
+ * Accent color: #10B981 (emerald-500) locked for the entire page.
+ * Corner radius system: 0px (sharp edges throughout, security/hacker vibe).
+ * Layout: Gallery/catalog of technique cards with varied widths.
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="web-starter -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-20 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[#0a0a0a] -z-10"></div>
+      <div class="absolute inset-0 grid-overlay opacity-[0.025] pointer-events-none -z-[5]"></div>
+      <div class="absolute bottom-0 left-0 w-[60%] h-[1px] bg-gradient-to-r from-[#10B981]/60 to-transparent"></div>
+      <div class="absolute top-[15%] right-[8%] w-px h-[40%] bg-gradient-to-b from-transparent via-[#10B981]/10 to-transparent -z-[5]"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-block w-2 h-2 bg-[#10B981] animate-pulse-slow"></span>
+          <p class="text-xs tracking-[0.3em] uppercase text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-white mb-6">
+          CTF Web 入门
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-lg leading-relaxed">
+          Web 安全基础技巧速查。从 HTML 源码泄露到 SQL 注入，覆盖入门阶段常见攻击面。
+        </p>
+        <div class="mt-10 flex items-center gap-4 text-xs text-zinc-500 font-mono">
+          <span class="text-[#10B981]">10+ cases</span>
+          <span class="w-4 h-px bg-zinc-700"></span>
+          <span>techniques catalog</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technique Catalog -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-[#0a0a0a] relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#10B981]/20 via-transparent to-transparent"></div>
+
+      <div class="max-w-5xl reveal-element mb-16">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-xs font-mono text-[#10B981] tracking-widest uppercase">Challenges</span>
+          <span class="inline-block w-8 h-px bg-[#10B981]/40"></span>
+        </div>
+        <p class="text-sm text-zinc-500 max-w-md">
+          每个 Case 对应一个独立的攻击技巧。点击展开或直接浏览解题思路。
+        </p>
+      </div>
+
+      <!-- Row 1: Full-width featured case -->
+      <div class="max-w-5xl mb-4 reveal-element">
+        <div class="case-card p-6 md:p-8 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 01</span>
+                <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Recon</span>
+              </div>
+              <h3 class="text-lg md:text-xl font-semibold text-white mb-2 tracking-tight">HTML 注释泄露 Flag</h3>
+              <p class="text-sm text-zinc-400 leading-relaxed max-w-lg">
+                查看页面源代码，Flag 直接藏在 HTML 注释中。最基础的信息泄露场景。
+              </p>
+            </div>
+            <div class="shrink-0 md:text-right">
+              <span class="inline-block px-3 py-1 border border-[#10B981]/20 text-[#10B981] text-xs font-mono">View Source</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Two-column -->
+      <div class="max-w-5xl grid md:grid-cols-2 gap-4 mb-4">
+        <div class="case-card p-6 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 02</span>
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Bypass</span>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2 tracking-tight">绕过前端 JS 校验</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            前端 JavaScript 做权限检查时，通过 Ctrl+U 查看源码或禁用 JS 直接绕过。客户端验证永远不可信。
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-[10px] font-mono text-zinc-600">Ctrl+U</span>
+            <span class="text-[10px] font-mono text-zinc-600">disable JS</span>
+          </div>
+        </div>
+
+        <div class="case-card p-6 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 03</span>
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Traffic</span>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2 tracking-tight">HTTP 抓包</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            使用 Burp Suite 或浏览器 DevTools 捕获 HTTP 请求和响应，分析隐藏数据或敏感信息传输。
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-[10px] font-mono text-zinc-600">Burp Suite</span>
+            <span class="text-[10px] font-mono text-zinc-600">DevTools</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Full-width -->
+      <div class="max-w-5xl mb-4 reveal-element">
+        <div class="case-card p-6 md:p-8 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 04</span>
+                <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Recon</span>
+              </div>
+              <h3 class="text-lg md:text-xl font-semibold text-white mb-2 tracking-tight">robots.txt 信息发现</h3>
+              <p class="text-sm text-zinc-400 leading-relaxed max-w-lg">
+                通过访问 /robots.txt 发现被搜索引擎禁止抓取的隐藏路径。这些路径通常包含管理后台或敏感文件。
+              </p>
+            </div>
+            <div class="shrink-0 font-mono text-xs text-zinc-600 md:text-right leading-relaxed">
+              <div class="text-zinc-500">User-agent: *</div>
+              <div class="text-[#10B981]/70">Disallow: /flag.txt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Two-column -->
+      <div class="max-w-5xl grid md:grid-cols-2 gap-4 mb-4">
+        <div class="case-card p-6 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 05</span>
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Code Audit</span>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2 tracking-tight">PHP 源码审计</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            阅读 PHP 源码，理解程序逻辑后构造满足条件的输入。常见于弱类型比较、反序列化漏洞等场景。
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-[10px] font-mono text-zinc-600">==</span>
+            <span class="text-[10px] font-mono text-zinc-600">type juggling</span>
+          </div>
+        </div>
+
+        <div class="case-card p-6 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 06</span>
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Enum</span>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2 tracking-tight">HTTP Method 爆破</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            尝试不同的 HTTP 方法（PUT, DELETE, PATCH, OPTIONS）访问资源，发现隐藏的接口行为。
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-[10px] font-mono text-zinc-600">GET</span>
+            <span class="text-[10px] font-mono text-zinc-600">POST</span>
+            <span class="text-[10px] font-mono text-zinc-600">PUT</span>
+            <span class="text-[10px] font-mono text-zinc-600">PATCH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 5: Three-column compact (asymmetric: 1fr 1fr 1.2fr) -->
+      <div class="max-w-5xl grid md:grid-cols-[1fr_1fr_1.2fr] gap-4 mb-4">
+        <div class="case-card p-5 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 07</span>
+          </div>
+          <h3 class="text-sm font-semibold text-white mb-2 tracking-tight">Cookie 篡改</h3>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            修改浏览器 Cookie 中的身份标识字段，伪造管理员权限或绕过访问控制。
+          </p>
+          <div class="mt-3">
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono">Session</span>
+          </div>
+        </div>
+
+        <div class="case-card p-5 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 08</span>
+          </div>
+          <h3 class="text-sm font-semibold text-white mb-2 tracking-tight">SQL 注入</h3>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            通过拼接 SQL 语句绕过登录验证或提取数据库内容。
+          </p>
+          <div class="mt-3">
+            <span class="px-2 py-0.5 border border-[#10B981]/20 text-[#10B981]/80 text-[10px] font-mono">High Impact</span>
+          </div>
+        </div>
+
+        <div class="case-card p-5 border border-zinc-800/80 bg-zinc-900/30 hover:border-[#10B981]/30 transition-colors duration-300 reveal-element">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 09</span>
+          </div>
+          <h3 class="text-sm font-semibold text-white mb-2 tracking-tight">命令注入</h3>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            在用户输入中插入 shell 命令分隔符，使服务器执行任意系统命令。常用分隔符: ; | &amp;&amp; || `cmd`
+          </p>
+          <div class="mt-3">
+            <span class="px-2 py-0.5 border border-[#10B981]/20 text-[#10B981]/80 text-[10px] font-mono">RCE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 6: Full-width summary/more cases -->
+      <div class="max-w-5xl reveal-element">
+        <div class="case-card p-6 md:p-8 border border-zinc-800/80 bg-zinc-900/30 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-[#10B981]/[0.02] blur-2xl"></div>
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-xs font-mono text-[#10B981] tracking-wider">CASE 10+</span>
+            <span class="px-2 py-0.5 border border-zinc-700 text-zinc-500 text-[10px] font-mono uppercase">Extended</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white mb-3 tracking-tight">More Techniques</h3>
+          <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>文件包含</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>目录遍历</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>SSRF</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>文件上传绕过</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>XXE 注入</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span class="w-1 h-1 bg-[#10B981]/60"></span>
+              <span>反序列化</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Article Content Slot -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-[#0a0a0a] border-t border-zinc-800/50">
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-10">
+          <span class="text-xs font-mono text-[#10B981] tracking-widest uppercase">Writeups</span>
+          <span class="inline-block w-8 h-px bg-[#10B981]/40"></span>
+        </div>
+        <div class="prose-web-starter">
+          <slot />
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-14 border-t border-zinc-800/50 bg-[#0a0a0a]">
+      <div class="max-w-5xl flex flex-wrap items-center gap-3">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-[#10B981]/20 text-[#10B981]/70 uppercase tracking-wider text-[10px] font-mono">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-1 text-[10px] font-mono text-zinc-500">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .web-starter {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #0a0a0a;
+    }
+
+    .grid-overlay {
+      background-image:
+        linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .case-card {
+      border-radius: 0;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 2.5s ease-in-out infinite;
+    }
+
+    /* Prose styling for markdown content */
+    .prose-web-starter {
+      color: #d4d4d8;
+      line-height: 1.75;
+      font-size: 0.9375rem;
+    }
+
+    .prose-web-starter h1,
+    .prose-web-starter h2,
+    .prose-web-starter h3,
+    .prose-web-starter h4 {
+      color: #fafafa;
+      font-weight: 600;
+      margin-top: 2.5em;
+      margin-bottom: 0.75em;
+      letter-spacing: -0.01em;
+    }
+
+    .prose-web-starter h2 {
+      font-size: 1.5rem;
+      padding-bottom: 0.5em;
+      border-bottom: 1px solid rgba(63, 63, 70, 0.5);
+    }
+
+    .prose-web-starter h3 {
+      font-size: 1.125rem;
+      color: #10B981;
+    }
+
+    .prose-web-starter p {
+      margin-bottom: 1.25em;
+    }
+
+    .prose-web-starter a {
+      color: #10B981;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+      transition: border-color 0.2s;
+    }
+
+    .prose-web-starter a:hover {
+      border-color: #10B981;
+    }
+
+    .prose-web-starter code:not(pre code) {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 0;
+      padding: 0.15em 0.4em;
+      font-size: 0.85em;
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+      color: #a7f3d0;
+    }
+
+    .prose-web-starter pre {
+      background: #111111;
+      border: 1px solid rgba(63, 63, 70, 0.5);
+      border-radius: 0;
+      padding: 1.25em 1.5em;
+      overflow-x: auto;
+      margin: 1.5em 0;
+      font-size: 0.8125rem;
+    }
+
+    .prose-web-starter pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: #d4d4d8;
+    }
+
+    .prose-web-starter blockquote {
+      border-left: 2px solid #10B981;
+      padding-left: 1em;
+      margin: 1.5em 0;
+      color: #a1a1aa;
+      font-style: normal;
+    }
+
+    .prose-web-starter ul,
+    .prose-web-starter ol {
+      padding-left: 1.5em;
+      margin-bottom: 1.25em;
+    }
+
+    .prose-web-starter li {
+      margin-bottom: 0.5em;
+    }
+
+    .prose-web-starter li::marker {
+      color: #10B981;
+    }
+
+    .prose-web-starter img {
+      border: 1px solid rgba(63, 63, 70, 0.5);
+      border-radius: 0;
+      margin: 1.5em 0;
+    }
+
+    .prose-web-starter hr {
+      border-color: rgba(63, 63, 70, 0.5);
+      margin: 2.5em 0;
+    }
+
+    .prose-web-starter table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin: 1.5em 0;
+    }
+
+    .prose-web-starter th,
+    .prose-web-starter td {
+      padding: 0.625em 1em;
+      border: 1px solid rgba(63, 63, 70, 0.5);
+      text-align: left;
+    }
+
+    .prose-web-starter th {
+      background: rgba(16, 185, 129, 0.05);
+      color: #10B981;
+      font-weight: 500;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-pulse-slow {
+        animation: none;
+      }
+    }
+  </style>
+
+  <script>
+    function initWebStarterReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".web-starter .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.08,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".web-starter .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initWebStarterReveal();
+    document.addEventListener("astro:after-swap", initWebStarterReveal);
+    document.addEventListener("astro:page-load", initWebStarterReveal);
+  </script>
+</BaseLayout>

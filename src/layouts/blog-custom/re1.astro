@@ -1,0 +1,372 @@
+---
+/**
+ * Design Read: CTF reverse engineering writeup for technical readers, with a
+ * binary.ninja / disassembler dark-tech language, leaning toward native CSS +
+ * monospace + hex-grid overlay.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned hero, structured code/prose rhythm)
+ *   MOTION_INTENSITY: 3 (scroll reveal fade-ups, subtle hex-grid pulse)
+ *   VISUAL_DENSITY: 5 (code-heavy, tight related blocks, breathing between sections)
+ *
+ * Accent color: #EF4444 (red-500) locked for the entire page.
+ * Corner radius system: 0px (sharp edges throughout).
+ * Code blocks styled as disassembler output panels.
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="re-writeup -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-20 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[#0a0a0f] -z-10"></div>
+      <div class="absolute inset-0 hex-grid-overlay opacity-[0.04] pointer-events-none -z-[5]"></div>
+      <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#EF4444]/[0.02] to-transparent -z-[5]"></div>
+
+      <!-- Decorative hex address strip -->
+      <div class="absolute top-8 left-6 md:left-16 lg:left-24 font-mono text-[10px] text-zinc-700 tracking-widest select-none pointer-events-none">
+        0x00400000 .. 0x00401FFF
+      </div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="inline-block w-2 h-2 bg-[#EF4444] animate-pulse-slow"></span>
+          <p class="text-xs tracking-[0.3em] uppercase text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-zinc-50 mb-6 font-mono">
+          <span class="text-[#EF4444]">Reverse</span> 做题记录 (1)
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-xl leading-relaxed font-mono">
+          {description}
+        </p>
+        <div class="mt-10 flex flex-wrap gap-3">
+          {categories && categories.map((cat: string) => (
+            <span class="px-3 py-1 border border-[#EF4444]/30 text-[#EF4444] text-xs font-mono uppercase tracking-wider">{cat}</span>
+          ))}
+          {tags && tags.map((tag: string) => (
+            <span class="px-3 py-1 border border-zinc-700 text-zinc-400 text-xs font-mono uppercase tracking-wider">#{tag}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Body -->
+    <section class="content-body px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-[#0a0a0f] border-t border-zinc-800/50 relative">
+      <div class="absolute inset-0 hex-grid-overlay opacity-[0.02] pointer-events-none"></div>
+
+      <!-- Address gutter decoration -->
+      <div class="hidden lg:block absolute left-6 top-24 bottom-24 w-px bg-gradient-to-b from-[#EF4444]/20 via-zinc-800/30 to-transparent"></div>
+
+      <div class="max-w-3xl relative reveal-element">
+        <!-- Rendered markdown content -->
+        <div class="re-prose">
+          <slot />
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 border-t border-zinc-800/50 bg-[#0a0a0f]">
+      <div class="max-w-2xl flex items-center gap-4 text-sm text-zinc-600 font-mono">
+        <span class="text-[#EF4444]/60 text-xs">[EOF]</span>
+        <span class="text-xs tracking-wider">
+          {new Date(pubDate).toISOString().split("T")[0]}
+        </span>
+        <span class="text-zinc-700">|</span>
+        <span class="text-xs tracking-wider">ctf.show</span>
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .re-writeup {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0a0a0f;
+    }
+
+    /* Hex grid overlay pattern */
+    .hex-grid-overlay {
+      background-image:
+        linear-gradient(rgba(239, 68, 68, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(239, 68, 68, 0.1) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Scroll reveal */
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Pulse animation */
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 2s ease-in-out infinite;
+    }
+
+    /* Prose styling for rendered markdown */
+    .re-prose {
+      color: #d4d4d8;
+      line-height: 1.75;
+      font-size: 0.9375rem;
+    }
+
+    .re-prose :global(h1),
+    .re-prose :global(h2),
+    .re-prose :global(h3),
+    .re-prose :global(h4) {
+      color: #fafafa;
+      font-weight: 700;
+      margin-top: 3rem;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+
+    .re-prose :global(h2) {
+      font-size: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+    }
+
+    .re-prose :global(h3) {
+      font-size: 1.125rem;
+      color: #EF4444;
+    }
+
+    .re-prose :global(p) {
+      margin-bottom: 1.25rem;
+      max-width: 65ch;
+    }
+
+    .re-prose :global(a) {
+      color: #EF4444;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(239, 68, 68, 0.3);
+      transition: text-decoration-color 0.2s;
+    }
+
+    .re-prose :global(a:hover) {
+      text-decoration-color: #EF4444;
+    }
+
+    .re-prose :global(strong) {
+      color: #fafafa;
+      font-weight: 600;
+    }
+
+    .re-prose :global(code:not(pre code)) {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      padding: 0.15em 0.4em;
+      font-size: 0.85em;
+      color: #f87171;
+    }
+
+    .re-prose :global(pre) {
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-left: 3px solid #EF4444;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    .re-prose :global(pre::before) {
+      content: "// disasm";
+      position: absolute;
+      top: 0.5rem;
+      right: 0.75rem;
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #52525b;
+    }
+
+    .re-prose :global(pre code) {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      color: #d4d4d8;
+    }
+
+    .re-prose :global(blockquote) {
+      border-left: 3px solid #EF4444;
+      padding-left: 1.25rem;
+      margin: 2rem 0;
+      color: #a1a1aa;
+      font-style: normal;
+    }
+
+    .re-prose :global(blockquote p) {
+      margin-bottom: 0;
+    }
+
+    .re-prose :global(ul),
+    .re-prose :global(ol) {
+      margin: 1.25rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .re-prose :global(li) {
+      margin-bottom: 0.5rem;
+      padding-left: 0.25rem;
+    }
+
+    .re-prose :global(li::marker) {
+      color: #EF4444;
+    }
+
+    .re-prose :global(hr) {
+      border: none;
+      border-top: 1px solid #27272a;
+      margin: 3rem 0;
+    }
+
+    .re-prose :global(img) {
+      border: 1px solid #27272a;
+      margin: 2rem 0;
+    }
+
+    .re-prose :global(table) {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .re-prose :global(th) {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #EF4444;
+      color: #EF4444;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.6875rem;
+    }
+
+    .re-prose :global(td) {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #1f1f23;
+      color: #d4d4d8;
+    }
+
+    .re-prose :global(tr:hover td) {
+      background: rgba(239, 68, 68, 0.03);
+    }
+
+    /* Frosti code block overrides */
+    .re-prose :global(.frosti-code) {
+      background: #09090b !important;
+      border: 1px solid #27272a !important;
+      border-left: 3px solid #EF4444 !important;
+      border-radius: 0 !important;
+    }
+
+    .re-prose :global(.frosti-code pre) {
+      background: transparent !important;
+      border: none !important;
+      border-left: none !important;
+      margin: 0 !important;
+      padding: 1rem 1.25rem !important;
+    }
+
+    .re-prose :global(.frosti-code pre::before) {
+      display: none;
+    }
+
+    .re-prose :global(.frosti-code-toolbar) {
+      background: #09090b !important;
+      border-bottom: 1px solid #1f1f23 !important;
+    }
+
+    .re-prose :global(.frosti-code-toolbar span) {
+      color: #52525b !important;
+      font-size: 0.6875rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.08em !important;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-pulse-slow {
+        animation: none;
+      }
+
+      .hex-grid-overlay {
+        display: none;
+      }
+    }
+  </style>
+
+  <script>
+    function initREReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".re-writeup .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".re-writeup .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initREReveal();
+    document.addEventListener("astro:after-swap", initREReveal);
+    document.addEventListener("astro:page-load", initREReveal);
+  </script>
+</BaseLayout>

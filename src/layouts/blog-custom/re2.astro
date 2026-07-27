@@ -1,0 +1,597 @@
+---
+/**
+ * Design Read: CTF reverse engineering writeup for TEA encryption challenges.
+ * Dark tech / disassembly aesthetic inspired by hex-rays.com (IDA Pro).
+ * Monospace-dominant, orange accent, sharp edges, left-aligned hero.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 6 (left-aligned, alternating challenge sections, code-forward)
+ *   MOTION_INTENSITY: 3 (scroll reveal fade-ups only, no flashy transitions)
+ *   VISUAL_DENSITY: 5 (code-heavy content, tight code blocks, breathing room between sections)
+ *
+ * Accent color: #F97316 (orange-500, Hex-Rays brand color) locked for the entire page.
+ * Corner radius system: 2px (near-sharp, subtle softness).
+ * Two challenges presented sequentially with clear visual separation.
+ * Code blocks styled as disassembly/decryption output.
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="re2-writeup -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-20 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-[#0a0a0f] -z-10"></div>
+      <div class="absolute inset-0 hex-grid-bg opacity-[0.03] pointer-events-none -z-[5]"></div>
+      <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#F97316]/[0.04] to-transparent -z-[5]"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-8">
+          <span class="inline-block w-2 h-2 bg-[#F97316] animate-pulse-slow"></span>
+          <p class="text-xs tracking-[0.3em] uppercase text-zinc-500 font-mono">
+            {new Date(pubDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-zinc-50 mb-6 font-mono">
+          Reverse 做题记录 <span class="text-[#F97316]">(2)</span>
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-xl leading-relaxed font-mono">
+          两道主站题目 / TEA 加密 / 逆向运行 + 爆破密钥
+        </p>
+        <div class="mt-10 flex flex-wrap gap-3">
+          <span class="px-3 py-1 border border-[#F97316]/40 text-[#F97316] text-xs font-mono uppercase tracking-wider">SSSCTF</span>
+          <span class="px-3 py-1 border border-zinc-700 text-zinc-400 text-xs font-mono uppercase tracking-wider">TEA</span>
+          <span class="px-3 py-1 border border-zinc-700 text-zinc-400 text-xs font-mono uppercase tracking-wider">Reverse</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Challenge 1: ezMath -->
+    <!-- ═══════════════════════════════════════════════════ -->
+
+    <!-- Challenge Header -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-[#0a0a0f] border-t border-[#F97316]/20 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#F97316]/60 via-[#F97316]/20 to-transparent"></div>
+      <div class="max-w-3xl reveal-element">
+        <p class="text-xs tracking-[0.3em] uppercase text-[#F97316]/80 font-mono mb-6">Challenge 01</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 font-mono mb-4">
+          ezMath <span class="text-zinc-500 text-lg font-normal">/ SSSCTF</span>
+        </h2>
+        <p class="text-sm text-zinc-500 font-mono">
+          <a href="http://210.30.97.133:8000/challenges#ezMath-222" class="hover:text-[#F97316] transition-colors underline underline-offset-4 decoration-zinc-700">题目链接</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ezMath: Finding the Entry -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">01 / 定位入口</p>
+        <div class="space-y-6 text-base text-zinc-300 leading-relaxed">
+          <p>
+            开局 <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">Shift</kbd> + <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">F12</kbd>，找到 flag 检验函数。
+          </p>
+        </div>
+        <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="border border-zinc-800 rounded-sm overflow-hidden">
+            <img src="/blog/image/re2/1745324409179.png" alt="IDA Shift+F12 string search" class="w-full h-auto" loading="lazy" />
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden">
+            <img src="/blog/image/re2/1745324460523.png" alt="IDA decompilation error - node too big" class="w-full h-auto" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ezMath: Node Too Big -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-[#0a0a0f] border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">02 / IDA 配置</p>
+        <div class="warning-block border-l-2 border-[#F97316] pl-5 py-3 mb-8">
+          <p class="text-sm text-[#F97316] font-mono font-semibold mb-1">Warning</p>
+          <p class="text-sm text-zinc-400">Sorry, this node is too big to display</p>
+        </div>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          节点太大显示不了。修改 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">IDA/cfg/hexrays.cfg</code> 的 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">MAX_FUNCSIZE</code>，默认 64，改成 1024 即可。
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+          <div class="border border-zinc-800 rounded-sm overflow-hidden">
+            <img src="/blog/image/re2/1745324813328.png" alt="IDA decompiled view after config change" class="w-full h-auto" loading="lazy" />
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden">
+            <img src="/blog/image/re2/1745324819137.png" alt="Decompiled function - addition and subtraction pattern" class="w-full h-auto" loading="lazy" />
+          </div>
+        </div>
+        <p class="text-base text-zinc-300 leading-relaxed mt-8">
+          发现就是一堆加加减减然后和一组常量比较。
+        </p>
+      </div>
+    </section>
+
+    <!-- ezMath: Data Extraction -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">03 / 数据提取</p>
+        <div class="border border-zinc-800 rounded-sm overflow-hidden mb-8">
+          <img src="/blog/image/re2/1745325260154.png" alt="Target comparison values in IDA" class="w-full h-auto" loading="lazy" />
+        </div>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          提取比较目标值。后来才发现 <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">Shift</kbd> + <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">E</kbd> 要选中数据才能提取。
+        </p>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">extract.py</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code><span class="text-[#F97316]">res</span> = []
+<span class="text-zinc-500"># 从导出的db数据中提取比较值</span>
+<span class="text-[#F97316]">with</span> open(<span class="text-emerald-400">"t.log"</span>, <span class="text-emerald-400">"r"</span>) <span class="text-[#F97316]">as</span> f:
+    s = f.read()
+    count = <span class="text-purple-300">0</span>
+    rcount = <span class="text-purple-300">0</span>
+    tmp = <span class="text-emerald-400">""</span>
+    <span class="text-[#F97316]">for</span> line <span class="text-[#F97316]">in</span> s.split(<span class="text-emerald-400">"\n"</span>):
+        line = line.split(<span class="text-emerald-400">"db "</span>)
+        line = line[<span class="text-purple-300">1</span>][<span class="text-purple-300">1</span>:<span class="text-purple-300">4</span>].replace(<span class="text-emerald-400">"h"</span>, <span class="text-emerald-400">""</span>).replace(<span class="text-emerald-400">" "</span>, <span class="text-emerald-400">""</span>)
+        count += <span class="text-purple-300">1</span>
+        tmp = line + tmp
+        <span class="text-[#F97316]">if</span> count % <span class="text-purple-300">4</span> == <span class="text-purple-300">0</span>:
+            rcount += <span class="text-purple-300">1</span>
+            res.append(tmp)
+            tmp = <span class="text-emerald-400">""</span>
+        <span class="text-[#F97316]">if</span> rcount == <span class="text-purple-300">40</span>:
+            <span class="text-[#F97316]">break</span>
+
+<span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">40</span>):
+    print(<span class="text-emerald-400">f"v&#123;i&#125; = 0x&#123;res[i]&#125;"</span>)</code></pre>
+        </div>
+        <div class="border border-zinc-800 rounded-sm overflow-hidden mt-8">
+          <img src="/blog/image/re2/1745325788780.png" alt="IDA Shift+E data extraction" class="w-full h-auto" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ezMath: Decryption -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-[#0a0a0f] border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">04 / 逆向解密</p>
+        <div class="space-y-5 text-base text-zinc-300 leading-relaxed mb-8">
+          <p>
+            发现这些数经过加减运算后再比较。逆向思路：倒着运行代码，加换减，减换加。
+          </p>
+        </div>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">solve_ezmath.py</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code><span class="text-[#F97316]">import</span> logging
+
+ans0 = <span class="text-purple-300">0xFFFFFF9A</span>
+ans1 = <span class="text-purple-300">0x0006D</span>
+ans2 = <span class="text-purple-300">0x0007E</span>
+<span class="text-zinc-500">...
+ans38 = 0xFFFFFFED
+ans39 = 0x00035</span>
+
+<span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">2</span>, <span class="text-purple-300">42</span>):
+    exec(<span class="text-emerald-400">f"v&#123;i&#125; = ans&#123;i-2&#125;"</span>)
+
+<span class="text-[#F97316]">with</span> open(<span class="text-emerald-400">"ori"</span>, <span class="text-emerald-400">"r"</span>) <span class="text-[#F97316]">as</span> f:
+    s = f.read()
+    lines = s.split(<span class="text-emerald-400">"\n"</span>)
+    lines.reverse()  <span class="text-zinc-500"># 倒着运行</span>
+    <span class="text-[#F97316]">for</span> line <span class="text-[#F97316]">in</span> lines:
+        <span class="text-[#F97316]">if</span> <span class="text-emerald-400">"+="</span> <span class="text-[#F97316]">in</span> line:
+            line = line.replace(<span class="text-emerald-400">"+="</span>, <span class="text-emerald-400">"-="</span>)
+        <span class="text-[#F97316]">elif</span> <span class="text-emerald-400">"-="</span> <span class="text-[#F97316]">in</span> line:
+            line = line.replace(<span class="text-emerald-400">"-="</span>, <span class="text-emerald-400">"+="</span>)
+        <span class="text-[#F97316]">elif</span> <span class="text-emerald-400">"++"</span> <span class="text-[#F97316]">in</span> line:
+            line = line.split(<span class="text-emerald-400">"++"</span>)
+            line = line[<span class="text-purple-300">1</span>] + <span class="text-emerald-400">"-=1"</span>
+        <span class="text-[#F97316]">elif</span> <span class="text-emerald-400">"--"</span> <span class="text-[#F97316]">in</span> line:
+            line = line.split(<span class="text-emerald-400">"--"</span>)
+            line = line[<span class="text-purple-300">1</span>] + <span class="text-emerald-400">"+=1"</span>
+        exec(line)
+
+<span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">2</span>, <span class="text-purple-300">42</span>):
+    exec(<span class="text-emerald-400">f"print(chr(v&#123;i&#125;%256),end='')"</span>)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ezMath: Pitfalls -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 md:py-20 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">05 / 踩坑</p>
+        <ul class="space-y-4">
+          <li class="flex items-start gap-3 text-base text-zinc-300">
+            <span class="text-[#F97316] mt-1 shrink-0 font-mono text-sm">&gt;</span>
+            <span>代码中有少量 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">++v</code> 和 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">--v</code>（非 <code class="text-zinc-400 bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">v+=14</code>），5000 行里只有 10+ 个</span>
+          </li>
+          <li class="flex items-start gap-3 text-base text-zinc-300">
+            <span class="text-[#F97316] mt-1 shrink-0 font-mono text-sm">&gt;</span>
+            <span>不要 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">line.replace("+=", "-=").replace("-=", "+=")</code>，链式调用会导致刚换的 -= 又被换回去</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Challenge 2: TEA -->
+    <!-- ═══════════════════════════════════════════════════ -->
+
+    <!-- Challenge 2 Header -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-[#0a0a0f] border-t-2 border-[#F97316]/30 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#F97316]/80 via-[#F97316]/30 to-transparent"></div>
+      <div class="max-w-3xl reveal-element">
+        <p class="text-xs tracking-[0.3em] uppercase text-[#F97316]/80 font-mono mb-6">Challenge 02</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 font-mono mb-4">
+          ezTea <span class="text-zinc-500 text-lg font-normal">/ SSSCTF</span>
+        </h2>
+        <p class="text-sm text-zinc-400 font-mono mb-2">
+          flag 用 <code class="text-[#F97316]">sssctf{"{}"}</code> 包裹
+        </p>
+        <p class="text-sm text-zinc-500 font-mono">
+          <a href="http://210.30.97.133:8000/challenges#TEA-264" class="hover:text-[#F97316] transition-colors underline underline-offset-4 decoration-zinc-700">题目链接</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- TEA: Entry Point -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">06 / 定位入口</p>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          同样 <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">Shift</kbd> + <kbd class="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm font-mono rounded-sm">F12</kbd> 找到入口。
+        </p>
+        <div class="border border-zinc-800 rounded-sm overflow-hidden mb-8">
+          <img src="/blog/image/re2/1745326592615.png" alt="IDA entry point for TEA challenge" class="w-full h-auto" loading="lazy" />
+        </div>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">main.c (decompiled)</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code>printf(<span class="text-emerald-400">"Input:"</span>);
+scanf(<span class="text-emerald-400">"%s"</span>, Str);
+<span class="text-[#F97316]">if</span> ( strlen(Str) != <span class="text-purple-300">32</span> )
+  <span class="text-[#F97316]">return</span> -<span class="text-purple-300">1</span>;</code></pre>
+        </div>
+        <p class="text-base text-zinc-300 leading-relaxed mt-6">
+          输入长度必须为 32。
+        </p>
+      </div>
+    </section>
+
+    <!-- TEA: merge4 Analysis -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-[#0a0a0f] border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">07 / merge4 分析</p>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">merge4</code> 把 <code class="text-zinc-400 bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">char[32]</code> 转换成 <code class="text-zinc-400 bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">int[8]</code>：
+        </p>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">merge4 (decompiled + annotated)</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code><span class="text-zinc-500">/*
+  char Str[100];
+  Memory layout:
+  0 1 2 3 4 5 6 7 8 9 a b c d e f
+  grouped as int[8]:
+  (0 1 2 3) (4 5 6 7) (8 9 a b) (c d e f) ...
+*/</span>
+<span class="text-[#F97316]">for</span> ( i = <span class="text-purple-300">0</span>; i &lt;= <span class="text-purple-300">7</span>; ++i )
+&#123;
+  result = (<span class="text-zinc-400">int *</span>)(<span class="text-purple-300">4</span> * i + a2);
+  *result = *(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">4</span>*i + <span class="text-purple-300">3</span> + a1)
+          | (((*(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">4</span>*i + a1) &lt;&lt; <span class="text-purple-300">8</span>)
+            | *(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">4</span>*i + <span class="text-purple-300">1</span> + a1)) &lt;&lt; <span class="text-purple-300">8</span>)
+            | *(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">4</span>*i + <span class="text-purple-300">2</span> + a1)) &lt;&lt; <span class="text-purple-300">8</span>);
+&#125;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEA: merge2 + Key Analysis -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">08 / merge2 与密钥</p>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">merge2</code> 处理密钥，但只用到了前 8 个字节：
+        </p>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">merge2 (decompiled)</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code><span class="text-[#F97316]">for</span> ( i = <span class="text-purple-300">0</span>; i &lt;= <span class="text-purple-300">3</span>; ++i )
+&#123;
+  result = (<span class="text-zinc-400">int *</span>)(<span class="text-purple-300">4</span> * i + a2);
+  *result = *(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">2</span>*i + <span class="text-purple-300">1</span> + a1)
+          | (*(<span class="text-zinc-400">char *</span>)(<span class="text-purple-300">2</span>*i + a1) &lt;&lt; <span class="text-purple-300">8</span>);
+&#125;
+<span class="text-zinc-500">// key[4] derived from first 8 chars of input</span></code></pre>
+        </div>
+
+        <div class="mt-10 p-5 border border-[#F97316]/20 bg-[#F97316]/[0.03] rounded-sm">
+          <p class="text-sm font-mono text-[#F97316] font-semibold mb-3">Summary</p>
+          <ul class="space-y-2 text-sm text-zinc-300 font-mono">
+            <li><span class="text-zinc-500">plaintext:</span> 输入的 32 字节</li>
+            <li><span class="text-zinc-500">key:</span> 明文的前 8 个字节</li>
+            <li><span class="text-zinc-500">cipher:</span> TEA 加密</li>
+            <li><span class="text-zinc-500">ciphertext:</span> encrypt_data (硬编码比较值)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEA: Comparison Values -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-[#0a0a0f] border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">09 / 比较函数</p>
+        <div class="border border-zinc-800 rounded-sm overflow-hidden mb-8">
+          <img src="/blog/image/re2/1745327408375.png" alt="Comparison function in IDA" class="w-full h-auto" loading="lazy" />
+        </div>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">recover_ciphertext.py</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code>v2 = [<span class="text-purple-300">0</span>]*<span class="text-purple-300">32</span>
+v2[<span class="text-purple-300">0</span>] = <span class="text-purple-300">176</span>
+v2[<span class="text-purple-300">1</span>] = <span class="text-purple-300">71</span>
+<span class="text-zinc-500">...
+v2[30] = 28
+v2[31] = 205</span>
+
+encrypt_data = [<span class="text-purple-300">0</span>]*<span class="text-purple-300">8</span>
+<span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">8</span>):
+    encrypt_data[i] = v2[i*<span class="text-purple-300">4</span>] &lt;&lt; <span class="text-purple-300">24</span> | v2[i*<span class="text-purple-300">4</span>+<span class="text-purple-300">1</span>] &lt;&lt; <span class="text-purple-300">16</span> \
+                    | v2[i*<span class="text-purple-300">4</span>+<span class="text-purple-300">2</span>] &lt;&lt; <span class="text-purple-300">8</span>  | v2[i*<span class="text-purple-300">4</span>+<span class="text-purple-300">3</span>]</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEA: Encryption Function -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-zinc-950/80 border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">10 / TEA 加密函数</p>
+        <p class="text-base text-zinc-300 leading-relaxed mb-6">
+          原始的加密函数经过化简后：
+        </p>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">tea_simplified.c</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code>index = <span class="text-purple-300">12</span>;
+sum = <span class="text-purple-300">0</span>;
+o7 = ori[<span class="text-purple-300">7</span>];
+<span class="text-[#F97316]">do</span>
+&#123;
+    sum -= <span class="text-purple-300">0x61C88647</span>;
+    sum2 = (sum &gt;&gt; <span class="text-purple-300">2</span>) & <span class="text-purple-300">3</span>;
+    <span class="text-[#F97316]">for</span> (i=<span class="text-purple-300">0</span>; i &lt; <span class="text-purple-300">7</span>; ++i)
+    &#123;
+        ori[i] += ((ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] ^ sum)
+                + (ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] ^ key[sum2 ^ i & <span class="text-purple-300">3</span>]))
+              ^ (((<span class="text-purple-300">4</span> * ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>])
+                ^ (ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] &gt;&gt; <span class="text-purple-300">5</span>))
+              + ((ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] &gt;&gt; <span class="text-purple-300">3</span>)
+                ^ (<span class="text-purple-300">16</span> * ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>])));
+    &#125;
+    --index;
+&#125;
+<span class="text-[#F97316]">while</span> (index);</code></pre>
+        </div>
+        <p class="text-base text-zinc-400 leading-relaxed mt-6 italic">
+          化简过程耗了大半天。没想到这么复杂的混淆最后能如此简洁。
+        </p>
+      </div>
+    </section>
+
+    <!-- TEA: Key Brute Force -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-24 bg-[#0a0a0f] border-t border-zinc-800/40">
+      <div class="max-w-3xl reveal-element">
+        <p class="section-label text-xs tracking-[0.2em] uppercase text-zinc-500 font-mono mb-8">11 / 密钥爆破</p>
+        <div class="space-y-5 text-base text-zinc-300 leading-relaxed mb-8">
+          <p>
+            flag 是 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">sssctf{"{}"}</code> 包裹，所以密钥的前 7 个字节已知为 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">sssctf{"{"}</code>，只需爆破最后 1 个字节。
+          </p>
+          <p>
+            TEA 解密和 ezMath 类似：倒着运行，加换减，减换加。异或的逆运算就是异或本身。<code class="text-zinc-400 bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">sum</code> 的初始值是 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">0x61C88647 * -index</code>。Python 注意手动溢出 <code class="text-[#F97316] bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">& 0xFFFFFFFF</code>。
+          </p>
+        </div>
+        <div class="code-block bg-[#0d1117] border border-zinc-800 p-5 overflow-x-auto rounded-sm">
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800/60">
+            <span class="w-2 h-2 rounded-full bg-[#F97316]/60"></span>
+            <span class="text-xs font-mono text-zinc-500">solve_tea.py</span>
+          </div>
+          <pre class="text-sm font-mono text-zinc-300 leading-relaxed"><code><span class="text-[#F97316]">for</span> ch <span class="text-[#F97316]">in</span> guess:
+    key_str = <span class="text-emerald-400">"sssctf&#123;"</span> + ch  <span class="text-zinc-500"># 8 char</span>
+    key = [<span class="text-purple-300">0</span>]*<span class="text-purple-300">4</span>
+    <span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">0</span>, <span class="text-purple-300">4</span>):
+        key[i] = ord(key_str[i*<span class="text-purple-300">2</span>+<span class="text-purple-300">1</span>]) | (ord(key_str[i*<span class="text-purple-300">2</span>]) &lt;&lt; <span class="text-purple-300">8</span>)
+
+    <span class="text-zinc-500"># TEA Decryption</span>
+    ori = encrypt_data.copy()
+    index = <span class="text-purple-300">12</span>
+    sum = (<span class="text-purple-300">0x61C88647</span> * -index) & <span class="text-purple-300">0xFFFFFFFF</span>
+    <span class="text-[#F97316]">while</span> index &gt; <span class="text-purple-300">0</span>:
+        sum2 = (sum &gt;&gt; <span class="text-purple-300">2</span>) & <span class="text-purple-300">3</span>
+        <span class="text-[#F97316]">for</span> i <span class="text-[#F97316]">in</span> range(<span class="text-purple-300">7</span>, -<span class="text-purple-300">1</span>, -<span class="text-purple-300">1</span>):
+            ori[i] -= ((ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] ^ sum)
+                     + (ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] ^ key[sum2 ^ (i & <span class="text-purple-300">3</span>)])) \
+                    ^ (((<span class="text-purple-300">4</span> * ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>])
+                     ^ (ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] &gt;&gt; <span class="text-purple-300">5</span>))
+                     + ((ori[(i+<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>] &gt;&gt; <span class="text-purple-300">3</span>)
+                     ^ (<span class="text-purple-300">16</span> * ori[(i-<span class="text-purple-300">1</span>) % <span class="text-purple-300">8</span>])))
+            ori[i] &= <span class="text-purple-300">0xFFFFFFFF</span>
+        sum += <span class="text-purple-300">0x61C88647</span>
+        sum &= <span class="text-purple-300">0xFFFFFFFF</span>
+        index -= <span class="text-purple-300">1</span>
+
+    <span class="text-zinc-500"># Reconstruct plaintext</span>
+    decrypted = <span class="text-emerald-400">""</span>
+    <span class="text-[#F97316]">for</span> value <span class="text-[#F97316]">in</span> ori:
+        decrypted += chr((value &gt;&gt; <span class="text-purple-300">24</span>) & <span class="text-purple-300">0xFF</span>)
+        decrypted += chr((value &gt;&gt; <span class="text-purple-300">16</span>) & <span class="text-purple-300">0xFF</span>)
+        decrypted += chr((value &gt;&gt; <span class="text-purple-300">8</span>) & <span class="text-purple-300">0xFF</span>)
+        decrypted += chr(value & <span class="text-purple-300">0xFF</span>)
+    <span class="text-[#F97316]">if</span> decrypted.startswith(<span class="text-emerald-400">"sssctf&#123;"</span>):
+        print(<span class="text-emerald-400">f"Key: &#123;key_str&#125; Flag: &#123;decrypted&#125;"</span>)
+        <span class="text-[#F97316]">break</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Conclusion -->
+    <!-- ═══════════════════════════════════════════════════ -->
+
+    <section class="px-6 md:px-16 lg:px-24 py-24 md:py-32 bg-[#0a0a0f] border-t-2 border-[#F97316]/20 relative">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#F97316]/50 via-transparent to-transparent"></div>
+      <div class="max-w-3xl reveal-element">
+        <p class="text-xs tracking-[0.3em] uppercase text-[#F97316]/80 font-mono mb-8">Conclusion</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-zinc-100 font-mono mb-10">
+          总结
+        </h2>
+        <ul class="space-y-6">
+          <li class="flex items-start gap-4 text-base text-zinc-300 leading-relaxed">
+            <span class="text-[#F97316] font-mono text-sm font-bold mt-0.5 shrink-0">01</span>
+            <span>两道题难度差距不小，但核心思想相似：逆向（字面意思）逆着运行</span>
+          </li>
+          <li class="flex items-start gap-4 text-base text-zinc-300 leading-relaxed">
+            <span class="text-[#F97316] font-mono text-sm font-bold mt-0.5 shrink-0">02</span>
+            <span>写等价代码还是很有必要的</span>
+          </li>
+          <li class="flex items-start gap-4 text-base text-zinc-300 leading-relaxed">
+            <span class="text-[#F97316] font-mono text-sm font-bold mt-0.5 shrink-0">03</span>
+            <span>运算中要考虑数据类型。这道题直接决定了 8 字节密钥只需要爆破 1 个字节。如果只看 <code class="text-zinc-400 bg-zinc-900 px-1.5 py-0.5 text-sm rounded-sm">char[16]</code> 可能真的觉得要爆破 9 个字节</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 border-t border-zinc-800/40 bg-[#0a0a0f]">
+      <div class="max-w-3xl flex flex-wrap gap-3 text-sm text-zinc-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-[#F97316]/20 text-[#F97316]/70 uppercase tracking-wider text-xs font-mono">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-1 text-xs font-mono text-zinc-500">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .re2-writeup {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0a0a0f;
+    }
+
+    .hex-grid-bg {
+      background-image:
+        linear-gradient(rgba(249, 115, 22, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249, 115, 22, 0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .code-block {
+      border-radius: 2px;
+    }
+
+    .warning-block {
+      border-radius: 2px;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 2.5s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-pulse-slow {
+        animation: none;
+      }
+
+      .hex-grid-bg {
+        display: none;
+      }
+    }
+  </style>
+
+  <script>
+    function initRe2Reveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".re2-writeup .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".re2-writeup .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initRe2Reveal();
+    document.addEventListener("astro:after-swap", initRe2Reveal);
+    document.addEventListener("astro:page-load", initRe2Reveal);
+  </script>
+</BaseLayout>

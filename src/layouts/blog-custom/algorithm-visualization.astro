@@ -1,0 +1,563 @@
+---
+/**
+ * Design Read: Observable-inspired data visualization gallery. Clean, interactive feel,
+ * purple accent echoing Observable's brand. Card-heavy layout with asymmetric grids.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 7 (asymmetric grids per category, varied section treatments)
+ *   MOTION_INTENSITY: 3 (stagger-in cards, subtle hover lifts, no flashy transitions)
+ *   VISUAL_DENSITY: 4 (left-aligned hero, dense card gallery, breathing room between categories)
+ *
+ * Accent color: #8B5CF6 (violet-500) locked for the entire page.
+ * Corner radius system: 12px (cards), 8px (badges), 20px (hero container).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+
+// Algorithm data
+const classicAlgorithms = [
+  {
+    title: "接雨水",
+    titleEn: "Trapping Rain Water",
+    desc: "双指针从两侧向中心逼近，实时维护左右最大高度计算积水量",
+    url: "/demo/trapping-rain-water.html",
+    difficulty: "Hard",
+    number: 42,
+  },
+];
+
+const linkedListAlgorithms = [
+  {
+    title: "K 个一组翻转链表",
+    titleEn: "Reverse Nodes in k-Group",
+    desc: "分组翻转链表节点，观察指针重连过程",
+    url: "/demo/reverse-nodes-in-k-group.html",
+    difficulty: "Hard",
+    number: 25,
+  },
+  {
+    title: "合并 K 个升序链表",
+    titleEn: "Merge k Sorted Lists",
+    desc: "优先队列驱动的多路归并，逐步构建有序结果",
+    url: "/demo/merge-k-sorted-lists.html",
+    difficulty: "Hard",
+    number: 23,
+  },
+];
+
+const arrayAlgorithms = [
+  {
+    title: "轮转数组",
+    titleEn: "Rotate Array",
+    desc: "三次翻转法实现 O(1) 空间原地旋转",
+    url: "/demo/rotate-array.html",
+    difficulty: "Medium",
+    number: 189,
+  },
+  {
+    title: "合并两个有序数组",
+    titleEn: "Merge Sorted Array",
+    desc: "从后向前填充，避免额外空间开销",
+    url: "/demo/merge-sorted-array.html",
+    difficulty: "Easy",
+    number: 88,
+  },
+  {
+    title: "删除有序数组中的重复项",
+    titleEn: "Remove Duplicates",
+    desc: "快慢指针扫描，原地去重保持相对顺序",
+    url: "/demo/remove-duplicates.html",
+    difficulty: "Easy",
+    number: 26,
+  },
+];
+
+const binarySearchAlgorithms = [
+  {
+    title: "二分查找",
+    titleEn: "Binary Search",
+    desc: "标准二分模板，观察搜索区间收缩过程",
+    url: "/demo/binary-search.html",
+    difficulty: "Easy",
+    number: 704,
+  },
+  {
+    title: "搜索旋转排序数组",
+    titleEn: "Search in Rotated Sorted Array",
+    desc: "旋转数组上的二分策略，判断有序半区定位目标",
+    url: "/demo/search-rotated-array.html",
+    difficulty: "Medium",
+    number: 33,
+  },
+  {
+    title: "寻找两个正序数组的中位数",
+    titleEn: "Median of Two Sorted Arrays",
+    desc: "对较短数组二分，划分两组使左半最大值不超过右半最小值",
+    url: "/demo/median-two-sorted-arrays.html",
+    difficulty: "Hard",
+    number: 4,
+  },
+];
+
+const treeAlgorithms = [
+  {
+    title: "二叉树的中序遍历",
+    titleEn: "Inorder Traversal",
+    desc: "递归与栈模拟两种方式遍历，高亮当前访问节点",
+    url: "/demo/inorder-traversal.html",
+    difficulty: "Easy",
+    number: 94,
+  },
+  {
+    title: "二叉树的层序遍历",
+    titleEn: "Level Order Traversal",
+    desc: "BFS 逐层扫描，队列驱动的广度优先搜索",
+    url: "/demo/level-order-traversal.html",
+    difficulty: "Medium",
+    number: 102,
+  },
+  {
+    title: "二叉树的最大深度",
+    titleEn: "Maximum Depth of Binary Tree",
+    desc: "DFS 递归求解，可视化递归调用栈回溯过程",
+    url: "/demo/max-depth-binary-tree.html",
+    difficulty: "Easy",
+    number: 104,
+  },
+  {
+    title: "翻转二叉树",
+    titleEn: "Invert Binary Tree",
+    desc: "递归交换左右子树，观察结构对称翻转",
+    url: "/demo/invert-binary-tree.html",
+    difficulty: "Easy",
+    number: 226,
+  },
+  {
+    title: "对称二叉树",
+    titleEn: "Symmetric Tree",
+    desc: "双指针镜像比较，同步递归验证对称性",
+    url: "/demo/symmetric-tree.html",
+    difficulty: "Easy",
+    number: 101,
+  },
+];
+---
+
+<BaseLayout title={title}>
+  <article class="algo-viz-landing -mx-4 -my-8">
+
+    <!-- Hero Section -->
+    <section class="hero-section relative min-h-[80dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 overflow-hidden">
+      <div class="absolute inset-0 hero-bg -z-10"></div>
+      <div class="absolute inset-0 -z-10 overflow-hidden">
+        <div class="grid-pattern absolute inset-0 opacity-[0.04] dark:opacity-[0.06]"></div>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#8B5CF6]/30 to-transparent"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="h-2 w-2 rounded-full bg-[#8B5CF6] animate-pulse-slow"></div>
+          <time class="text-sm tracking-wide text-zinc-500 dark:text-zinc-500 font-mono" datetime={pubDate?.toISOString()}>
+            {pubDate?.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </time>
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-zinc-900 dark:text-white mb-5">
+          LeetCode<br class="hidden md:block" /> 算法可视化
+        </h1>
+        <p class="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-xl leading-relaxed mb-10">
+          通过动画演示算法的执行过程，直观理解链表操作、数组算法、树遍历背后的逻辑
+        </p>
+        <div class="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-600">
+          <span class="inline-block w-8 h-px bg-[#8B5CF6]/60"></span>
+          <span class="tracking-wide">{classicAlgorithms.length + linkedListAlgorithms.length + arrayAlgorithms.length + binarySearchAlgorithms.length + treeAlgorithms.length} 个算法演示</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 1: Classic - Full width single card -->
+    <section class="reveal-section px-6 md:px-16 lg:px-24 py-20 md:py-28">
+      <div class="flex items-center gap-4 mb-10">
+        <span class="text-xs font-medium tracking-widest uppercase text-[#8B5CF6]">Classic</span>
+        <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1">
+        {classicAlgorithms.map((algo) => (
+          <a href={algo.url} class="algo-card algo-card-featured group block p-8 md:p-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1/3 h-full opacity-[0.03] dark:opacity-[0.05] bg-[radial-gradient(circle_at_80%_20%,#8B5CF6,transparent_60%)]"></div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+                  <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+                </div>
+                <h3 class="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+                <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-lg">{algo.desc}</p>
+              </div>
+              <div class="shrink-0 w-10 h-10 rounded-xl bg-[#8B5CF6]/10 flex items-center justify-center group-hover:bg-[#8B5CF6]/20 transition-colors duration-200">
+                <svg class="w-5 h-5 text-[#8B5CF6] group-hover:translate-x-0.5 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Category 2: Linked Lists - 1+1 side by side -->
+    <section class="reveal-section px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-50/50 dark:bg-zinc-950/50">
+      <div class="flex items-center gap-4 mb-10">
+        <span class="text-xs font-medium tracking-widest uppercase text-[#8B5CF6]">Linked List</span>
+        <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {linkedListAlgorithms.map((algo, i) => (
+          <a href={algo.url} class={`algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 ${i === 1 ? 'md:translate-y-6' : ''}`} style={`--stagger: ${i}`}>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+              <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+            <div class="mt-5 flex items-center gap-2 text-xs text-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <span>查看演示</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Category 3: Arrays - 2+1 asymmetric grid -->
+    <section class="reveal-section px-6 md:px-16 lg:px-24 py-20 md:py-28">
+      <div class="flex items-center gap-4 mb-10">
+        <span class="text-xs font-medium tracking-widest uppercase text-[#8B5CF6]">Array</span>
+        <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+        <!-- First row: 2 cards -->
+        {arrayAlgorithms.slice(0, 2).map((algo, i) => (
+          <a href={algo.url} class={`algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 ${i === 0 ? 'md:col-span-7' : 'md:col-span-5'}`} style={`--stagger: ${i}`}>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+              <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+            <div class="mt-5 flex items-center gap-2 text-xs text-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <span>查看演示</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </a>
+        ))}
+        <!-- Second row: 1 card spanning full -->
+        {arrayAlgorithms.slice(2).map((algo, i) => (
+          <a href={algo.url} class="algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 md:col-span-12" style={`--stagger: ${i + 2}`}>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+                  <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+                <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-2">{algo.titleEn}</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+              </div>
+              <div class="shrink-0 flex items-center gap-2 text-xs text-[#8B5CF6] md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span>查看演示</span>
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Category 4: Binary Search - 1+2 reversed asymmetric -->
+    <section class="reveal-section px-6 md:px-16 lg:px-24 py-20 md:py-28 bg-zinc-50/50 dark:bg-zinc-950/50">
+      <div class="flex items-center gap-4 mb-10">
+        <span class="text-xs font-medium tracking-widest uppercase text-[#8B5CF6]">Binary Search</span>
+        <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+        <!-- First card: spans 12 on top -->
+        {binarySearchAlgorithms.slice(0, 1).map((algo) => (
+          <a href={algo.url} class="algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 md:col-span-12" style="--stagger: 0">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+                  <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+                <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-2">{algo.titleEn}</p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+              </div>
+              <div class="shrink-0 flex items-center gap-2 text-xs text-[#8B5CF6] md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span>查看演示</span>
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        ))}
+        <!-- Bottom row: 5+7 split -->
+        {binarySearchAlgorithms.slice(1).map((algo, i) => (
+          <a href={algo.url} class={`algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 ${i === 0 ? 'md:col-span-5' : 'md:col-span-7'}`} style={`--stagger: ${i + 1}`}>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+              <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+            <div class="mt-5 flex items-center gap-2 text-xs text-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <span>查看演示</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Category 5: Trees - 2+3 staggered grid -->
+    <section class="reveal-section px-6 md:px-16 lg:px-24 py-20 md:py-28">
+      <div class="flex items-center gap-4 mb-10">
+        <span class="text-xs font-medium tracking-widest uppercase text-[#8B5CF6]">Tree</span>
+        <div class="h-px flex-1 bg-zinc-200 dark:bg-zinc-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+        <!-- Top row: 2 cards (7+5) -->
+        {treeAlgorithms.slice(0, 2).map((algo, i) => (
+          <a href={algo.url} class={`algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 ${i === 0 ? 'md:col-span-7' : 'md:col-span-5'}`} style={`--stagger: ${i}`}>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+              <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+            <div class="mt-5 flex items-center gap-2 text-xs text-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <span>查看演示</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </a>
+        ))}
+        <!-- Bottom row: 3 cards (4+4+4) -->
+        {treeAlgorithms.slice(2).map((algo, i) => (
+          <a href={algo.url} class="algo-card group block p-6 md:p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#8B5CF6]/40 transition-all duration-300 md:col-span-4" style={`--stagger: ${i + 2}`}>
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xs font-mono text-zinc-400 dark:text-zinc-600">#{algo.number}</span>
+              <span class={`difficulty-badge difficulty-${algo.difficulty.toLowerCase()} px-2.5 py-0.5 text-xs font-medium rounded-lg`}>{algo.difficulty}</span>
+            </div>
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-1.5 group-hover:text-[#8B5CF6] transition-colors duration-200">{algo.title}</h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-500 font-mono mb-3">{algo.titleEn}</p>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{algo.desc}</p>
+            <div class="mt-4 flex items-center gap-2 text-xs text-[#8B5CF6] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <span>查看演示</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Footer note -->
+    <section class="px-6 md:px-16 lg:px-24 py-16 border-t border-zinc-200 dark:border-zinc-800">
+      <p class="text-sm text-zinc-500 dark:text-zinc-600 max-w-lg">
+        所有演示均在浏览器端运行，无需安装任何依赖。建议使用桌面端浏览以获得最佳动画体验。
+      </p>
+    </section>
+
+  </article>
+
+  <style>
+    .algo-viz-landing {
+      --accent: #8B5CF6;
+      --radius: 12px;
+    }
+
+    /* Hero background */
+    .hero-bg {
+      background: linear-gradient(to bottom, #fafafa, #f5f3ff);
+    }
+    :root[data-theme="dracula"] .hero-bg,
+    .dark .hero-bg {
+      background: linear-gradient(to bottom, #09090b, #0c0a1a);
+    }
+
+    /* Dot grid pattern */
+    .grid-pattern {
+      background-image: radial-gradient(circle, #8B5CF6 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Difficulty badges */
+    .difficulty-hard {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .difficulty-medium {
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .difficulty-easy {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    /* Card hover lift */
+    .algo-card {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .algo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08);
+    }
+    :root[data-theme="dracula"] .algo-card:hover,
+    .dark .algo-card:hover {
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.12);
+    }
+
+    /* Featured card */
+    .algo-card-featured:hover {
+      box-shadow: 0 12px 32px rgba(139, 92, 246, 0.1);
+    }
+    :root[data-theme="dracula"] .algo-card-featured:hover,
+    .dark .algo-card-featured:hover {
+      box-shadow: 0 12px 32px rgba(139, 92, 246, 0.15);
+    }
+
+    /* Reveal animation */
+    .reveal-element,
+    .reveal-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-element.revealed,
+    .reveal-section.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Card stagger animation */
+    .algo-card {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.3s ease,
+                  border-color 0.3s ease;
+    }
+    .reveal-section.revealed .algo-card {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-section.revealed .algo-card:nth-child(1) { transition-delay: 0.05s; }
+    .reveal-section.revealed .algo-card:nth-child(2) { transition-delay: 0.12s; }
+    .reveal-section.revealed .algo-card:nth-child(3) { transition-delay: 0.19s; }
+    .reveal-section.revealed .algo-card:nth-child(4) { transition-delay: 0.26s; }
+    .reveal-section.revealed .algo-card:nth-child(5) { transition-delay: 0.33s; }
+
+    /* Offset for linked list second card */
+    @media (min-width: 768px) {
+      .reveal-section.revealed .algo-card.md\:translate-y-6 {
+        transform: translateY(1.5rem);
+      }
+    }
+
+    /* Pulse animation */
+    .animate-pulse-slow {
+      animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element,
+      .reveal-section,
+      .algo-card {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+      .animate-pulse-slow {
+        animation: none;
+      }
+      .algo-card:hover {
+        transform: none;
+      }
+    }
+  </style>
+
+  <script>
+    function initAlgoViz() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReduced) {
+        document.querySelectorAll(".reveal-element, .reveal-section").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -60px 0px" }
+      );
+
+      document.querySelectorAll(".reveal-element, .reveal-section").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    // Run on initial load
+    initAlgoViz();
+
+    // Re-run after Astro view transitions
+    document.addEventListener("astro:after-swap", initAlgoViz);
+  </script>
+</BaseLayout>

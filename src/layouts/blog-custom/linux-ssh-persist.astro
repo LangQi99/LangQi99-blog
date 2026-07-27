@@ -1,0 +1,521 @@
+---
+/**
+ * Design Read: Developer tutorial landing page for terminal/SSH tooling,
+ * with a ghostty.org-inspired dark-tech aesthetic, focused monospace typography,
+ * left-aligned hero, clean section rhythm.
+ *
+ * Three Dials:
+ *   DESIGN_VARIANCE: 5 (left-aligned hero, alternating section structures)
+ *   MOTION_INTENSITY: 3 (subtle fade-ups on scroll, one pulse accent)
+ *   VISUAL_DENSITY: 4 (medium-dense tutorial, code blocks with breathing room)
+ *
+ * Accent color: #A78BFA (violet-400) locked for the entire page.
+ * Corner radius system: 4px throughout.
+ * Three solutions use alternating layouts (not equal cards).
+ */
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const { blog, remarkPluginFrontmatter } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories;
+const tags = blog.data.tags;
+---
+
+<BaseLayout title={title}>
+  <article class="ssh-landing -mx-4 -my-8">
+
+    <!-- Hero Section: left-aligned, bottom-weighted -->
+    <section class="hero-section min-h-[100dvh] flex flex-col justify-end px-6 pb-16 md:px-16 lg:px-24 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#0d0d14] via-[#111119] to-[#0d0d14] -z-10"></div>
+      <!-- Subtle grid pattern -->
+      <div class="absolute inset-0 -z-10 opacity-[0.03]" style="background-image: linear-gradient(#A78BFA 1px, transparent 1px), linear-gradient(90deg, #A78BFA 1px, transparent 1px); background-size: 60px 60px;"></div>
+      <!-- Bottom accent line -->
+      <div class="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-[#A78BFA]/40 via-[#A78BFA]/10 to-transparent"></div>
+
+      <div class="max-w-3xl reveal-element">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-2 h-2 rounded-full bg-[#A78BFA] animate-pulse-accent"></div>
+          <time class="text-sm tracking-widest uppercase text-zinc-500 font-mono" datetime={new Date(pubDate).toISOString()}>
+            {new Date(pubDate).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+          </time>
+        </div>
+        <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white mb-6">
+          SSH 断开后<br class="hidden md:block" />保持程序运行
+        </h1>
+        <p class="text-base md:text-lg text-zinc-400 max-w-xl leading-relaxed">
+          nohup, Screen, Tmux 三种方案对比。解决 Linux 服务器上耗时任务因 SSH 中断而终止的问题。
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 1: Background / The Problem -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative" style="background: #0d0d14;">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#A78BFA]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-8 tracking-tight">
+          为什么 SSH 断开会杀死进程
+        </h2>
+        <div class="grid md:grid-cols-[1fr_1.2fr] gap-10 items-start">
+          <div>
+            <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+              当 SSH 连接断开时，系统会向该会话下的所有子进程发送 <code class="text-[#A78BFA]">SIGHUP</code> 信号。大多数程序收到此信号后的默认行为是退出。
+            </p>
+            <p class="text-sm text-zinc-400 leading-relaxed">
+              这意味着你在 SSH 中启动的训练任务、编译任务、数据迁移等耗时操作，一旦网络波动或终端关闭，就会前功尽弃。
+            </p>
+          </div>
+          <div class="code-block">
+            <pre><code class="text-xs text-zinc-300"><span class="text-zinc-600"># 信号传递链</span>
+SSH 断开
+  <span class="text-[#A78BFA]">-></span> sshd 检测到连接关闭
+  <span class="text-[#A78BFA]">-></span> 向 login shell 发送 SIGHUP
+  <span class="text-[#A78BFA]">-></span> shell 向所有子进程转发 SIGHUP
+  <span class="text-[#A78BFA]">-></span> 子进程收到信号后退出
+
+<span class="text-zinc-600"># 验证：查看信号处理</span>
+$ kill -l | grep HUP
+ 1) SIGHUP</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Solution 1 - nohup (left-heavy layout) -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative" style="background: #101018;">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#A78BFA]/15 to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-flex items-center justify-center w-7 h-7 border border-[#A78BFA]/40 rounded-[4px] text-xs font-mono text-[#A78BFA]">1</span>
+          <span class="inline-block w-8 h-px bg-[#A78BFA]/30"></span>
+          <span class="text-xs font-mono text-zinc-500 tracking-wider uppercase">Simple</span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+          nohup
+        </h2>
+        <p class="text-sm text-zinc-400 leading-relaxed mb-8 max-w-xl">
+          最简单直接的方案。让进程忽略 SIGHUP 信号，适合一次性的非交互式后台任务。
+        </p>
+
+        <div class="space-y-5">
+          <div class="code-block">
+            <div class="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800/60">
+              <span class="text-xs font-mono text-zinc-600">基本用法</span>
+            </div>
+            <pre><code class="text-xs text-zinc-300"><span class="text-zinc-600"># 将输出重定向到 nohup.out，进程放到后台</span>
+$ nohup python train.py &
+
+<span class="text-zinc-600"># 指定输出文件</span>
+$ nohup ./build.sh > build.log 2>&1 &
+
+<span class="text-zinc-600"># 查看后台任务</span>
+$ jobs -l
+
+<span class="text-zinc-600"># 查看 nohup 输出</span>
+$ tail -f nohup.out</code></pre>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="p-4 border border-zinc-800 rounded-[4px]" style="background: rgba(167, 139, 250, 0.03);">
+              <p class="text-xs font-mono text-[#A78BFA] mb-2">适用场景</p>
+              <ul class="text-xs text-zinc-400 leading-relaxed space-y-1">
+                <li>单次运行的脚本或命令</li>
+                <li>不需要回到进程交互的任务</li>
+                <li>临时跑的编译或下载</li>
+              </ul>
+            </div>
+            <div class="p-4 border border-zinc-800 rounded-[4px]">
+              <p class="text-xs font-mono text-zinc-500 mb-2">局限</p>
+              <ul class="text-xs text-zinc-500 leading-relaxed space-y-1">
+                <li>无法重新连接到进程的终端</li>
+                <li>不支持多窗口或分屏</li>
+                <li>进程崩溃后无法自动恢复</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Solution 2 - Screen (right-offset code block) -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative" style="background: #0d0d14;">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#A78BFA]/15 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-flex items-center justify-center w-7 h-7 border border-[#A78BFA]/40 rounded-[4px] text-xs font-mono text-[#A78BFA]">2</span>
+          <span class="inline-block w-8 h-px bg-[#A78BFA]/30"></span>
+          <span class="text-xs font-mono text-zinc-500 tracking-wider uppercase">Classic</span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+          GNU Screen
+        </h2>
+        <p class="text-sm text-zinc-400 leading-relaxed mb-8 max-w-xl">
+          终端复用器的经典方案。创建持久化会话，断开后可随时重新连接，回到完整的终端交互环境。
+        </p>
+
+        <div class="space-y-5">
+          <div class="code-block">
+            <div class="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800/60">
+              <span class="text-xs font-mono text-zinc-600">核心操作流程</span>
+            </div>
+            <pre><code class="text-xs text-zinc-300"><span class="text-zinc-600"># 安装</span>
+$ sudo apt install screen     <span class="text-zinc-600"># Debian/Ubuntu</span>
+$ sudo yum install screen     <span class="text-zinc-600"># CentOS/RHEL</span>
+
+<span class="text-zinc-600"># 创建命名会话</span>
+$ screen -S training
+
+<span class="text-zinc-600"># 在 screen 会话中运行任务</span>
+$ python train_model.py --epochs 100
+
+<span class="text-zinc-600"># 分离会话 (回到原终端，任务继续运行)</span>
+<span class="text-[#A78BFA]">Ctrl+A, D</span>
+
+<span class="text-zinc-600"># 查看所有会话</span>
+$ screen -ls
+
+<span class="text-zinc-600"># 重新连接</span>
+$ screen -r training
+
+<span class="text-zinc-600"># 结束会话</span>
+$ exit   <span class="text-zinc-600"># 或 Ctrl+D</span></code></pre>
+          </div>
+
+          <!-- Quick-ref key bindings as horizontal list -->
+          <div class="overflow-x-auto">
+            <div class="flex gap-3 min-w-max py-1">
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a d</span> <span class="text-zinc-500 ml-2">分离</span>
+              </div>
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a c</span> <span class="text-zinc-500 ml-2">新窗口</span>
+              </div>
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a n</span> <span class="text-zinc-500 ml-2">下一窗口</span>
+              </div>
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a p</span> <span class="text-zinc-500 ml-2">上一窗口</span>
+              </div>
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a k</span> <span class="text-zinc-500 ml-2">关闭窗口</span>
+              </div>
+              <div class="px-3 py-2 border border-zinc-800 rounded-[4px] text-xs font-mono">
+                <span class="text-[#A78BFA]">C-a [</span> <span class="text-zinc-500 ml-2">滚动模式</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Solution 3 - Tmux (full-width emphasis, larger presence) -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative" style="background: #101018;">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#A78BFA]/20 to-transparent"></div>
+      <!-- Left accent bar for visual weight -->
+      <div class="absolute top-0 left-0 w-[3px] h-full bg-gradient-to-b from-[#A78BFA]/40 via-[#A78BFA]/10 to-transparent hidden md:block"></div>
+      <div class="max-w-4xl reveal-element">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="inline-flex items-center justify-center w-7 h-7 bg-[#A78BFA]/10 border border-[#A78BFA]/50 rounded-[4px] text-xs font-mono text-[#A78BFA]">3</span>
+          <span class="inline-block w-8 h-px bg-[#A78BFA]/30"></span>
+          <span class="text-xs font-mono text-[#A78BFA] tracking-wider uppercase">Recommended</span>
+        </div>
+        <h2 class="text-2xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+          Tmux
+        </h2>
+        <p class="text-sm text-zinc-400 leading-relaxed mb-8 max-w-xl">
+          现代终端复用器。更直观的分屏操作、更清晰的状态栏、活跃的社区维护，是当前生产环境的推荐选择。
+        </p>
+
+        <div class="space-y-5">
+          <div class="code-block">
+            <div class="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800/60">
+              <span class="text-xs font-mono text-zinc-600">安装与基础使用</span>
+            </div>
+            <pre><code class="text-xs text-zinc-300"><span class="text-zinc-600"># 安装</span>
+$ sudo apt install tmux       <span class="text-zinc-600"># Debian/Ubuntu</span>
+$ sudo yum install tmux       <span class="text-zinc-600"># CentOS/RHEL</span>
+$ brew install tmux           <span class="text-zinc-600"># macOS</span>
+
+<span class="text-zinc-600"># 创建命名会话</span>
+$ tmux new -s work
+
+<span class="text-zinc-600"># 分离 (detach)</span>
+<span class="text-[#A78BFA]">Ctrl+B, D</span>
+
+<span class="text-zinc-600"># 列出所有会话</span>
+$ tmux ls
+
+<span class="text-zinc-600"># 重新连接</span>
+$ tmux attach -t work
+
+<span class="text-zinc-600"># 在会话中创建新窗口</span>
+<span class="text-[#A78BFA]">Ctrl+B, C</span>
+
+<span class="text-zinc-600"># 水平分屏 / 垂直分屏</span>
+<span class="text-[#A78BFA]">Ctrl+B, %</span>    <span class="text-zinc-600"># 垂直分割</span>
+<span class="text-[#A78BFA]">Ctrl+B, "</span>    <span class="text-zinc-600"># 水平分割</span>
+
+<span class="text-zinc-600"># 在面板间切换</span>
+<span class="text-[#A78BFA]">Ctrl+B, 方向键</span></code></pre>
+          </div>
+
+          <div class="code-block">
+            <div class="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800/60">
+              <span class="text-xs font-mono text-zinc-600">~/.tmux.conf 推荐配置</span>
+            </div>
+            <pre><code class="text-xs text-zinc-300"><span class="text-zinc-600"># 修改前缀键为 Ctrl+A (更顺手)</span>
+set -g prefix C-a
+unbind C-b
+bind C-a send-prefix
+
+<span class="text-zinc-600"># 开启鼠标支持</span>
+set -g mouse on
+
+<span class="text-zinc-600"># 分屏快捷键优化</span>
+bind | split-window -h -c "#&#123;pane_current_path&#125;"
+bind - split-window -v -c "#&#123;pane_current_path&#125;"
+
+<span class="text-zinc-600"># 256色支持</span>
+set -g default-terminal "screen-256color"
+
+<span class="text-zinc-600"># 状态栏样式</span>
+set -g status-style 'bg=#1a1b26 fg=#a9b1d6'
+
+<span class="text-zinc-600"># 窗口编号从 1 开始</span>
+set -g base-index 1
+setw -g pane-base-index 1
+
+<span class="text-zinc-600"># 自动重命名窗口</span>
+setw -g automatic-rename on</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Comparison -->
+    <section class="px-6 md:px-16 lg:px-24 py-20 md:py-28 relative" style="background: #0d0d14;">
+      <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-[#A78BFA]/20 via-transparent to-transparent"></div>
+      <div class="max-w-4xl reveal-element">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-10 tracking-tight">
+          如何选择
+        </h2>
+
+        <!-- Comparison table -->
+        <div class="overflow-x-auto mb-10">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-zinc-800">
+                <th class="text-left py-3 pr-6 text-zinc-500 font-mono font-normal text-xs">特性</th>
+                <th class="text-left py-3 pr-6 text-zinc-400 font-mono font-normal text-xs">nohup</th>
+                <th class="text-left py-3 pr-6 text-zinc-400 font-mono font-normal text-xs">Screen</th>
+                <th class="text-left py-3 text-[#A78BFA] font-mono font-normal text-xs">Tmux</th>
+              </tr>
+            </thead>
+            <tbody class="text-zinc-300 text-xs">
+              <tr class="border-b border-zinc-800/50">
+                <td class="py-3 pr-6 text-zinc-500">会话恢复</td>
+                <td class="py-3 pr-6 text-zinc-500">不支持</td>
+                <td class="py-3 pr-6">支持</td>
+                <td class="py-3 text-[#A78BFA]">支持</td>
+              </tr>
+              <tr class="border-b border-zinc-800/50">
+                <td class="py-3 pr-6 text-zinc-500">分屏</td>
+                <td class="py-3 pr-6 text-zinc-500">不支持</td>
+                <td class="py-3 pr-6">有限支持</td>
+                <td class="py-3 text-[#A78BFA]">原生支持</td>
+              </tr>
+              <tr class="border-b border-zinc-800/50">
+                <td class="py-3 pr-6 text-zinc-500">脚本化</td>
+                <td class="py-3 pr-6">简单</td>
+                <td class="py-3 pr-6">一般</td>
+                <td class="py-3 text-[#A78BFA]">强大</td>
+              </tr>
+              <tr class="border-b border-zinc-800/50">
+                <td class="py-3 pr-6 text-zinc-500">学习成本</td>
+                <td class="py-3 pr-6 text-[#A78BFA]">极低</td>
+                <td class="py-3 pr-6">中等</td>
+                <td class="py-3">中等</td>
+              </tr>
+              <tr class="border-b border-zinc-800/50">
+                <td class="py-3 pr-6 text-zinc-500">社区维护</td>
+                <td class="py-3 pr-6">系统内置</td>
+                <td class="py-3 pr-6 text-zinc-500">维护模式</td>
+                <td class="py-3 text-[#A78BFA]">活跃开发</td>
+              </tr>
+              <tr>
+                <td class="py-3 pr-6 text-zinc-500">配置灵活度</td>
+                <td class="py-3 pr-6 text-zinc-500">无</td>
+                <td class="py-3 pr-6">.screenrc</td>
+                <td class="py-3 text-[#A78BFA]">.tmux.conf</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Decision guide -->
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 p-4 border border-zinc-800 rounded-[4px]">
+            <span class="text-[#A78BFA] font-mono text-sm shrink-0 mt-px">nohup</span>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              跑个一次性脚本、下载大文件、编译构建。不关心输出、不需要回来交互。最快的 "fire and forget" 方案。
+            </p>
+          </div>
+          <div class="flex items-start gap-4 p-4 border border-zinc-800 rounded-[4px]">
+            <span class="text-zinc-400 font-mono text-sm shrink-0 mt-px">Screen</span>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              服务器已有 screen、习惯了快捷键、或者在不便安装新软件的受限环境中。功能够用，但不再是最佳选择。
+            </p>
+          </div>
+          <div class="flex items-start gap-4 p-4 border border-[#A78BFA]/30 rounded-[4px]" style="background: rgba(167, 139, 250, 0.03);">
+            <span class="text-[#A78BFA] font-mono text-sm shrink-0 mt-px">Tmux</span>
+            <p class="text-xs text-zinc-300 leading-relaxed">
+              新项目首选。分屏高效、配置清晰、插件生态丰富、与现代开发工具链集成良好。值得投入学习时间。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer meta -->
+    <section class="px-6 md:px-16 lg:px-24 py-12 border-t border-zinc-800/60" style="background: #0d0d14;">
+      <div class="max-w-4xl flex flex-wrap gap-3 text-sm text-zinc-500">
+        {categories && categories.map((cat: string) => (
+          <span class="px-2 py-1 border border-zinc-800 rounded-[4px] uppercase tracking-wider text-xs font-mono">{cat}</span>
+        ))}
+        {tags && tags.map((tag: string) => (
+          <span class="px-2 py-1 text-xs font-mono text-zinc-600">#{tag}</span>
+        ))}
+      </div>
+    </section>
+
+  </article>
+
+  <style>
+    .ssh-landing {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0d0d14;
+      color: #e4e4e7;
+    }
+
+    .code-block {
+      background: #09090f;
+      border: 1px solid #27272a;
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      margin: 0;
+      white-space: pre;
+      line-height: 1.75;
+    }
+
+    .code-block code {
+      font-family: inherit;
+    }
+
+    .reveal-element {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal-element.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes pulse-accent {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .animate-pulse-accent {
+      animation: pulse-accent 3s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-element {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .animate-pulse-accent {
+        animation: none;
+      }
+    }
+
+    /* Scrollbar for code blocks */
+    .code-block::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .code-block::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .code-block::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 2px;
+    }
+
+    /* Table base */
+    table {
+      font-size: 0.8125rem;
+    }
+
+    /* Mobile */
+    @media (max-width: 767px) {
+      .hero-section {
+        padding-bottom: 3rem;
+      }
+
+      .code-block {
+        font-size: 0.6875rem;
+        padding: 0.75rem;
+      }
+    }
+  </style>
+
+  <script>
+    function initSSHScrollReveal() {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (prefersReduced) {
+        document.querySelectorAll(".ssh-landing .reveal-element").forEach((el) => {
+          el.classList.add("revealed");
+        });
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -40px 0px",
+        }
+      );
+
+      document.querySelectorAll(".ssh-landing .reveal-element").forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initSSHScrollReveal();
+
+    document.addEventListener("astro:after-swap", initSSHScrollReveal);
+    document.addEventListener("astro:page-load", initSSHScrollReveal);
+  </script>
+</BaseLayout>
