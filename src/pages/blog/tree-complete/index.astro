@@ -1,0 +1,13 @@
+---
+import { getCollection } from "astro:content";
+import Site from "../../../sites/tree-complete/index.astro";
+
+const posts = await getCollection("blog");
+const blog = posts.find((entry) => entry.slug === "tree-complete");
+
+if (!blog) {
+  return Astro.redirect("/404");
+}
+---
+
+<Site blog={blog} />

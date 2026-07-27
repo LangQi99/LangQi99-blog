@@ -1,0 +1,7 @@
+---
+import { getCollection } from "astro:content";
+import Site from "../../../sites/linux-pinyin/index.astro";
+const blog = (await getCollection("blog")).find((entry) => entry.slug === "linux-pinyin");
+if (!blog) throw new Error("Missing blog entry: linux-pinyin");
+---
+<Site blog={blog} />

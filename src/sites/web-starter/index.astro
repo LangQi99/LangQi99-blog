@@ -1,0 +1,1087 @@
+---
+import type { CollectionEntry } from "astro:content";
+import OriginalArticle from "../../components/article/OriginalArticle.astro";
+
+interface Props {
+  blog: CollectionEntry<"blog">;
+}
+
+const { blog } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const pubDate = blog.data.pubDate;
+const categories = blog.data.categories ?? [];
+const tags = blog.data.tags ?? [];
+
+const httpHeaders = `<span class="h-key">HTTP/1.1</span> <span class="h-val">200 OK</span>
+<span class="h-key">Server:</span> nginx/1.20.1
+<span class="h-key">Content-Type:</span> text/html; charset=UTF-8
+<span class="h-key">Flag:</span> <span class="h-flag">flag{xxx}</span>
+<span class="h-key">X-Powered-By:</span> PHP/7.3.11`;
+
+const robotsTxt = `<span class="h-key">User-agent:</span> *
+<span class="h-key">Disallow:</span> <span class="h-val">/flagishere.txt</span>`;
+
+const phpSource = `<span class="h-key">&lt;?php</span>
+
+<span class="h-comment">/*
+# @Author: xxx
+# @Date:   xxx
+# @email: xxx@xxx.com
+*/</span>
+
+<span class="h-comment">//flag{xxx}</span>
+<span class="h-fn">echo</span> <span class="h-str">"where is flag ?"</span>`;
+
+const robotsFormat = `<span class="h-key">User-agent:</span> [crawler name]
+<span class="h-key">Disallow:</span> [blocked path]
+<span class="h-key">Allow:</span> [allowed path]`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta name="author" content="LangQi" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style is:inline>
+    :root {
+      --c-bg: #09090b;
+      --c-surface: #111113;
+      --c-surface-raised: #18181b;
+      --c-border: #27272a;
+      --c-border-accent: #10B98133;
+      --c-text: #e4e4e7;
+      --c-text-muted: #71717a;
+      --c-text-dim: #3f3f46;
+      --c-accent: #10B981;
+      --c-accent-dim: #059669;
+      --c-accent-glow: #10B98118;
+      --c-danger: #ef4444;
+      --c-warn: #f59e0b;
+      --font-body: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+      --font-mono: 'Space Grotesk', monospace;
+      --radius: 0px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--c-bg);
+      color: var(--c-text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--c-accent);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    a:hover { opacity: 0.8; }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--c-bg);
+      border-bottom: 1px solid var(--c-border);
+      backdrop-filter: blur(12px);
+      background: rgba(9, 9, 11, 0.9);
+    }
+    .nav-back {
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-meta {
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .nav-tag {
+      padding: 0.125rem 0.5rem;
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--c-text-muted);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 8rem 2rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--c-accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--c-accent);
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-title {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, var(--c-accent), #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: 1.125rem;
+      color: var(--c-text-muted);
+      max-width: 600px;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-stats {
+      margin-top: 3rem;
+      display: flex;
+      gap: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .hero-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--c-text);
+    }
+    .hero-stat-label {
+      font-size: 0.75rem;
+      color: var(--c-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Catalog Grid */
+    .catalog {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .catalog-section {
+      margin-bottom: 1.5rem;
+    }
+    .catalog-section-header {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--c-text-dim);
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .grid-wide {
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .grid-asymmetric {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .grid-asymmetric-reverse {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Card */
+    .card {
+      background: var(--c-surface);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-compact {
+      padding: 1.5rem;
+    }
+    .card-number {
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: var(--c-accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-number::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--c-border);
+    }
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    .card-body {
+      font-size: 0.875rem;
+      color: var(--c-text-muted);
+      line-height: 1.7;
+    }
+    .card-body p + p {
+      margin-top: 0.75rem;
+    }
+    .card-technique {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--c-bg);
+      border-left: 2px solid var(--c-accent);
+      font-size: 0.8125rem;
+      color: var(--c-text);
+      font-weight: 500;
+    }
+    .card-tag {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.25rem 0.625rem;
+      border: 1px solid var(--c-border);
+      font-size: 0.6875rem;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .card-tag-accent {
+      border-color: var(--c-accent-dim);
+      color: var(--c-accent);
+    }
+
+    /* Code blocks */
+    .code-block {
+      margin-top: 1rem;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .code-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--c-border);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .code-header-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-accent);
+    }
+    .code-content {
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+      color: var(--c-text-muted);
+    }
+    .code-content .h-key { color: #a78bfa; }
+    .code-content .h-val { color: var(--c-accent); }
+    .code-content .h-flag { color: #fbbf24; font-weight: 600; }
+    .code-content .h-comment { color: var(--c-text-dim); font-style: italic; }
+    .code-content .h-fn { color: #60a5fa; }
+    .code-content .h-str { color: var(--c-accent); }
+
+    /* Full-width detail card */
+    .detail-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .detail-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+    .detail-card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .detail-card-badge {
+      padding: 0.25rem 0.75rem;
+      background: var(--c-accent-glow);
+      border: 1px solid var(--c-accent-dim);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--c-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .detail-card-body {
+      font-size: 0.9375rem;
+      color: var(--c-text-muted);
+      line-height: 1.8;
+      max-width: 700px;
+    }
+    .detail-card-body strong {
+      color: var(--c-text);
+      font-weight: 600;
+    }
+
+    /* Comparison list */
+    .compare-list {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .compare-item {
+      padding: 1rem;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+    }
+    .compare-item-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--c-text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .compare-item-value {
+      font-size: 0.875rem;
+      color: var(--c-text);
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .footer {
+      max-width: 1200px;
+      margin: 4rem auto 0;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--c-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8125rem;
+      color: var(--c-text-dim);
+    }
+    .footer-tags {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav { padding: 0.75rem 1rem; }
+      .nav-meta { display: none; }
+      .hero { padding: 6rem 1.5rem 3rem; }
+      .hero-stats { gap: 2rem; flex-wrap: wrap; }
+      .catalog { padding: 1.5rem; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-asymmetric { grid-template-columns: 1fr; }
+      .grid-asymmetric-reverse { grid-template-columns: 1fr; }
+      .card { padding: 1.5rem; }
+      .detail-card { padding: 1.5rem; }
+      .detail-card-header { flex-direction: column; gap: 0.75rem; }
+      .compare-list { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; gap: 1rem; text-align: center; }
+    }
+    @media (max-width: 480px) {
+      .hero-title { font-size: 2rem; }
+      .hero-stats { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <style is:inline>
+    body > :not(.web-lab-site):not(script):not(style) { display: none !important; }
+    .web-lab-site {
+      --ink: #142234;
+      --paper: #eaf2f7;
+      --chrome: #d7e2e9;
+      --acid: #f0ff4a;
+      --red: #ff554f;
+      --blue: #3464ff;
+      min-height: 100dvh; background: var(--paper); color: var(--ink);
+      font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
+      line-height: 1.5;
+    }
+    .web-lab-site * { box-sizing: border-box; }
+    .web-lab-nav {
+      height: 68px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(18px, 4vw, 64px); border-bottom: 1px solid var(--ink);
+      background: rgba(234,242,247,.94);
+    }
+    .web-lab-nav a { color: inherit; text-decoration: none; font-weight: 800; }
+    .lab-mark { display: flex; align-items: center; gap: 10px; }
+    .lab-mark i {
+      width: 22px; height: 16px; display: block;
+      background: linear-gradient(90deg, var(--red) 0 32%, transparent 32% 37%, var(--blue) 37% 69%, transparent 69% 74%, var(--acid) 74%);
+      border: 1px solid var(--ink);
+    }
+    .web-lab-nav span:last-child { font: 750 11px/1 monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .web-lab-hero {
+      min-height: calc(100dvh - 68px);
+      display: grid; grid-template-columns: minmax(330px,.68fr) minmax(650px,1.32fr);
+      align-items: center; gap: clamp(36px,5vw,80px); padding: clamp(42px,6vh,68px) clamp(18px,4vw,64px);
+    }
+    .web-lab-copy h1 {
+      margin: 0 0 24px; max-width: 680px;
+      font-size: clamp(3.4rem,6.3vw,7.5rem); line-height: .87; letter-spacing: -.075em;
+    }
+    .web-lab-copy h1 span { color: var(--blue); display: block; }
+    .web-lab-copy p { max-width: 500px; font-size: clamp(1rem,1.35vw,1.3rem); color: rgba(20,34,52,.72); margin: 0 0 28px; }
+    .web-lab-copy a {
+      display: inline-flex; background: var(--ink); color: white; text-decoration: none; padding: 13px 18px;
+      font-weight: 800; box-shadow: 7px 7px 0 var(--acid);
+    }
+    .browser-lab {
+      min-height: 620px; border: 2px solid var(--ink); background: white;
+      box-shadow: 20px 20px 0 var(--ink); display: grid; grid-template-rows: auto auto 1fr;
+      overflow: hidden;
+    }
+    .browser-top {
+      height: 46px; background: var(--chrome); border-bottom: 1px solid var(--ink);
+      display: flex; align-items: center; gap: 8px; padding: 0 14px;
+    }
+    .browser-top i { width: 11px; height: 11px; border: 1px solid var(--ink); border-radius: 50%; background: var(--red); }
+    .browser-top i:nth-child(2) { background: var(--acid); }
+    .browser-top i:nth-child(3) { background: #65dc91; }
+    .address-bar { margin-left: 10px; border: 1px solid var(--ink); background: white; padding: 7px 12px; flex: 1; font: 650 11px/1 monospace; }
+    .attack-tabs {
+      display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--ink);
+      background: #f3f6f8;
+    }
+    .attack-tabs button {
+      min-width: 0; border: 0; border-right: 1px solid var(--ink); background: transparent; color: inherit;
+      padding: 12px 7px; font: 750 10px/1.2 monospace; cursor: pointer; text-transform: uppercase;
+    }
+    .attack-tabs button:last-child { border-right: 0; }
+    .attack-tabs button[aria-pressed="true"] { background: var(--acid); }
+    .desktop {
+      display: grid; grid-template-columns: 1.18fr .82fr; min-height: 520px; overflow: hidden;
+    }
+    .target-view { padding: 20px; border-right: 1px solid var(--ink); background: #fbfcfd; position: relative; overflow: hidden; }
+    .target-site {
+      height: 100%; border: 1px solid var(--ink); background: white; padding: 24px;
+      position: relative; overflow: hidden;
+    }
+    .target-site h2 { font-size: clamp(2rem,3vw,3.8rem); line-height: .95; margin: 0 0 16px; letter-spacing: -.055em; }
+    .fake-line { height: 8px; background: #dfe5e9; margin: 10px 0; }
+    .fake-line.short { width: 60%; }
+    .surface-hotspot {
+      position: absolute; border: 2px solid var(--red); background: rgba(255,85,79,.08);
+      display: grid; place-items: center; padding: 10px; font: 800 11px/1.2 monospace; text-transform: uppercase;
+      transition: inset .35s cubic-bezier(.16,1,.3,1), width .35s ease, height .35s ease;
+    }
+    .surface-hotspot::before {
+      content: ""; position: absolute; inset: -8px; border: 1px dashed var(--red); opacity: .5;
+    }
+    .surface-hotspot[data-position="source"] { right: 18px; bottom: 18px; width: 200px; height: 86px; }
+    .surface-hotspot[data-position="header"] { left: 18px; top: 18px; right: 18px; width: auto; height: 56px; }
+    .surface-hotspot[data-position="path"] { left: 24%; top: 38%; width: 52%; height: 90px; }
+    .surface-hotspot[data-position="archive"] { left: 18px; bottom: 18px; width: 180px; height: 110px; }
+    .surface-hotspot[data-position="state"] { right: 18px; top: 28%; width: 180px; height: 120px; }
+    .surface-hotspot[data-position="editor"] { inset: 16% 12% 14%; width: auto; height: auto; }
+    .forensics {
+      background: #142234; color: #d8e4ef; display: grid; grid-template-rows: auto 1fr auto;
+      min-width: 0;
+    }
+    .forensics-head {
+      padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,.2);
+      display: flex; justify-content: space-between; font: 700 10px/1 monospace; text-transform: uppercase; letter-spacing: .1em;
+    }
+    .evidence {
+      padding: 22px; overflow: auto; font: 500 12px/1.7 monospace;
+      white-space: pre-wrap; color: #d7e7f5;
+    }
+    .evidence strong { color: var(--acid); }
+    .finding {
+      padding: 16px 18px; border-top: 1px solid rgba(255,255,255,.2); background: var(--blue);
+      font-size: 13px; color: white;
+    }
+    .finding b { display: block; font: 800 10px/1 monospace; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 7px; color: var(--acid); }
+    .case-atlas { padding: 120px clamp(18px,7vw,110px); background: #fff; }
+    .case-atlas h2 { max-width: 860px; margin: 0 0 70px; font-size: clamp(2.8rem,5vw,6rem); line-height: .95; letter-spacing: -.065em; }
+    .surface-map {
+      display: grid; grid-template-columns: repeat(12,1fr); grid-auto-rows: 112px;
+      border: 1px solid var(--ink); background: var(--ink); gap: 1px;
+    }
+    .surface-group { background: var(--paper); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+    .surface-group h3 { font-size: clamp(1.6rem,2.8vw,3.2rem); line-height: 1; margin: 0; letter-spacing: -.045em; }
+    .surface-group p { margin: 0; max-width: 48ch; color: rgba(20,34,52,.7); }
+    .surface-group code { font: 700 11px/1.4 monospace; color: var(--blue); }
+    .surface-group.a { grid-column: span 7; grid-row: span 3; background: var(--acid); }
+    .surface-group.b { grid-column: span 5; grid-row: span 2; }
+    .surface-group.c { grid-column: span 5; grid-row: span 3; background: #dce6ff; }
+    .surface-group.d { grid-column: span 7; grid-row: span 2; background: #ffd9d5; }
+    .web-lab-footer { margin-top: 70px; display: flex; justify-content: space-between; border-top: 1px solid var(--ink); padding-top: 24px; }
+    @media (max-width: 1080px) {
+      .web-lab-hero { grid-template-columns: 1fr; }
+      .browser-lab { box-shadow: 10px 10px 0 var(--ink); }
+    }
+    @media (max-width: 760px) {
+      .web-lab-nav span:last-child { display: none; }
+      .web-lab-hero { min-height: auto; padding-top: 44px; padding-bottom: 80px; }
+      .web-lab-copy h1 { font-size: clamp(3.4rem,18vw,5.5rem); }
+      .browser-lab { min-height: 760px; }
+      .attack-tabs { grid-template-columns: repeat(3,1fr); }
+      .attack-tabs button:nth-child(3) { border-right: 0; }
+      .attack-tabs button:nth-child(-n+3) { border-bottom: 1px solid var(--ink); }
+      .desktop { grid-template-columns: 1fr; }
+      .target-view { border-right: 0; border-bottom: 1px solid var(--ink); min-height: 360px; }
+      .forensics { min-height: 320px; }
+      .surface-map { grid-template-columns: 1fr; grid-auto-rows: auto; }
+      .surface-group, .surface-group.a, .surface-group.b, .surface-group.c, .surface-group.d { grid-column: auto; grid-row: auto; min-height: 260px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .web-lab-site *, .web-lab-site *::before, .web-lab-site *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+  <main class="web-lab-site">
+    <nav class="web-lab-nav">
+      <a class="lab-mark" href="/blog/"><i></i><span>SURFACE LAB</span></a>
+      <span>CTF web reconnaissance workstation</span>
+    </nav>
+    <section class="web-lab-hero">
+      <div class="web-lab-copy">
+        <h1>网页之外，<span>才是入口。</span></h1>
+        <p>切换攻击面，在源码、响应头、路径、备份、状态与编辑器里寻找被公开的秘密。</p>
+        <a href="#attack-atlas">浏览攻击面图谱</a>
+      </div>
+      <div class="browser-lab">
+        <div class="browser-top"><i></i><i></i><i></i><div class="address-bar" id="webAddress">https://target.local/</div></div>
+        <div class="attack-tabs" role="tablist" aria-label="攻击面">
+          <button data-surface="source" aria-pressed="true">Source</button>
+          <button data-surface="header" aria-pressed="false">Headers</button>
+          <button data-surface="path" aria-pressed="false">Paths</button>
+          <button data-surface="archive" aria-pressed="false">Archives</button>
+          <button data-surface="state" aria-pressed="false">State</button>
+          <button data-surface="editor" aria-pressed="false">Editor</button>
+        </div>
+        <div class="desktop">
+          <div class="target-view">
+            <div class="target-site">
+              <h2>where is flag?</h2>
+              <div class="fake-line"></div><div class="fake-line short"></div><div class="fake-line"></div>
+              <div class="surface-hotspot" id="surfaceHotspot" data-position="source">HTML COMMENT</div>
+            </div>
+          </div>
+          <div class="forensics">
+            <div class="forensics-head"><span>Evidence console</span><span id="surfaceKind">VIEW-SOURCE</span></div>
+            <div class="evidence" id="surfaceEvidence"></div>
+            <div class="finding"><b>Finding</b><span id="surfaceFinding"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="case-atlas" id="attack-atlas">
+      <h2>入门题的共同点：部署留下了比页面更多的东西。</h2>
+      <div class="surface-map">
+        <article class="surface-group a">
+          <h3>浏览器已经收到</h3>
+          <p>源码注释、前端 JavaScript、响应头与 Cookie 都在客户端边界内。Ctrl+U、禁用 JS 或抓包就能看到。</p>
+          <code>view-source: · Flag: flag&#123;xxx&#125; · Cookie: flag</code>
+        </article>
+        <article class="surface-group b">
+          <h3>路径会说话</h3>
+          <p>robots.txt 指向被禁止抓取的地址，index.phps 可能直接展示 PHP 源码。</p>
+          <code>/robots.txt → /flagishere.txt · /index.phps</code>
+        </article>
+        <article class="surface-group c">
+          <h3>备份和版本库</h3>
+          <p>www.zip、.git、.svn 与 index.php.swp 是部署过程留下的副本，可能包含源码、历史和凭据。</p>
+          <code>/www.zip · /.git/ · /.svn/ · /index.php.swp</code>
+        </article>
+        <article class="surface-group d">
+          <h3>信息搜集会连起来</h3>
+          <p>TXT 记录、下载文档、页面底部凭据、QQ 邮箱与忘记密码流程，可以组合成完整的后台访问路径。暴露的 /editor 甚至能读取服务器文件。</p>
+          <code>OSINT → password reset → admin · /editor → file browser</code>
+        </article>
+      </div>
+      <footer class="web-lab-footer"><span>{title}</span><span>{pubDate.toISOString().slice(0,10)}</span></footer>
+    </section>
+  </main>
+  <OriginalArticle blog={blog} />
+  <script is:inline>
+    (() => {
+      const buttons = [...document.querySelectorAll('[data-surface]')];
+      const evidence = document.querySelector('#surfaceEvidence');
+      const finding = document.querySelector('#surfaceFinding');
+      const kind = document.querySelector('#surfaceKind');
+      const address = document.querySelector('#webAddress');
+      const hotspot = document.querySelector('#surfaceHotspot');
+      if (!evidence || !finding || !kind || !address || !hotspot) return;
+      const surfaces = {
+        source: { kind: 'VIEW-SOURCE', address: 'view-source:https://target.local/', label: 'HTML COMMENT', evidence: '&lt;!-- release note\\n<strong>flag{comment_is_content}</strong>\\n--&gt;\\n&lt;script src=\"guard.js\"&gt;', finding: '注释仍会发送到浏览器。前端拦截也可以通过查看源码或禁用 JavaScript 绕过。' },
+        header: { kind: 'HTTP RESPONSE', address: 'https://target.local/', label: 'FLAG HEADER', evidence: 'HTTP/1.1 200 OK\\nServer: nginx/1.20.1\\n<strong>Flag: flag{inspect_the_wire}</strong>\\nX-Powered-By: PHP/7.3.11', finding: '页面正文不是完整响应。抓包后，Flag 可以直接出现在响应头。' },
+        path: { kind: 'PATH DISCOVERY', address: 'https://target.local/robots.txt', label: 'DISALLOWED PATH', evidence: 'User-agent: *\\n<strong>Disallow: /flagishere.txt</strong>\\n\\nGET /flagishere.txt', finding: 'robots.txt 不是访问控制，它只是给爬虫的提示，敏感路径反而因此暴露。' },
+        archive: { kind: 'DEPLOYMENT DEBRIS', address: 'https://target.local/www.zip', label: 'BACKUP FOUND', evidence: '200 /www.zip\\n200 /.git/HEAD\\n200 /.svn/entries\\n<strong>200 /index.php.swp</strong>', finding: '备份包、版本库元数据与 Vim 交换文件都可能泄露源码或历史版本。' },
+        state: { kind: 'CLIENT STATE', address: 'https://target.local/admin', label: 'COOKIE / TXT', evidence: 'Cookie: session=guest; <strong>flag=flag{state_leak}</strong>\\nTXT target.local \"staging-admin\"\\nDocument: onboarding.pdf', finding: 'Cookie、DNS TXT、文档与页面底部信息可组合为后台地址和凭据。' },
+        editor: { kind: 'EXPOSED TOOL', address: 'https://target.local/editor', label: 'FILE BROWSER', evidence: '/editor\\n├── /etc/passwd\\n├── /var/www/html/index.php\\n└── <strong>/flag</strong>', finding: '公开的在线编辑器可能拥有服务器文件读取能力，风险远高于普通信息泄露。' }
+      };
+      const render = (name) => {
+        const item = surfaces[name];
+        buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.surface === name)));
+        evidence.innerHTML = item.evidence;
+        finding.textContent = item.finding;
+        kind.textContent = item.kind;
+        address.textContent = item.address;
+        hotspot.dataset.position = name;
+        hotspot.textContent = item.label;
+      };
+      buttons.forEach((button) => button.addEventListener('click', () => render(button.dataset.surface)));
+      render('source');
+    })();
+  </script>
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="/blog/" class="nav-back">&larr; Back</a>
+    <div class="nav-meta">
+      <span>{pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+      {categories.map((cat: string) => <span class="nav-tag">{cat}</span>)}
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero-label">Security Technique Catalog</p>
+    <h1 class="hero-title">{title}<br/><span>Web Exploitation</span></h1>
+    <p class="hero-desc">{description} - CTF Web 方向入门级漏洞利用技术集合。从信息泄露到注入攻击,覆盖实战中最常见的攻击面。</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value">14</span>
+        <span class="hero-stat-label">Techniques</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">5</span>
+        <span class="hero-stat-label">Categories</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">Beginner</span>
+        <span class="hero-stat-label">Difficulty</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catalog -->
+  <main class="catalog">
+
+    <!-- Section 1: Information Disclosure -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">01 / Information Disclosure</div>
+
+      <div class="grid-3">
+        <!-- Case 1 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 01</div>
+          <div class="card-title">HTML Comments</div>
+          <div class="card-body">
+            <p>Flag 直接隐藏在网页源代码注释中。</p>
+          </div>
+          <div class="card-technique">View Source &rarr; &lt;!-- flag --&gt;</div>
+          <span class="card-tag">trivial</span>
+        </div>
+
+        <!-- Case 2 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 02</div>
+          <div class="card-title">JS Bypass</div>
+          <div class="card-body">
+            <p>JavaScript 前台拦截,阻止正常查看。</p>
+          </div>
+          <div class="card-technique">Ctrl+U 查看源码 / 禁用 JS</div>
+          <span class="card-tag">client-side</span>
+        </div>
+
+        <!-- Case 10 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 10</div>
+          <div class="card-title">Cookie Leak</div>
+          <div class="card-body">
+            <p>Flag 存放在 HTTP 响应的 Cookie 字段中。</p>
+          </div>
+          <div class="card-technique">Inspect &rarr; Network &rarr; Response Headers</div>
+          <span class="card-tag">headers</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: HTTP Protocol -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">02 / HTTP Protocol Exploitation</div>
+
+      <div class="grid-asymmetric">
+        <!-- Case 3 - Large -->
+        <div class="card">
+          <div class="card-number">Case 03</div>
+          <div class="card-title">Packet Capture</div>
+          <div class="card-body">
+            <p>Flag 隐藏在 HTTP 响应头中。直接抓包分析响应即可获取。服务器在自定义头字段中暴露了敏感信息。</p>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-header-dot"></span>Response Headers</div>
+            <div class="code-content" set:html={httpHeaders}></div>
+          </div>
+        </div>
+
+        <!-- Case 11 -->
+        <div class="card">
+          <div class="card-number">Case 11</div>
+          <div class="card-title">DNS TXT Record</div>
+          <div class="card-body">
+            <p>通过查询域名的 TXT 记录获取信息。TXT 记录常用于域名验证和说明。</p>
+          </div>
+          <div class="card-technique">dig domain.com TXT</div>
+          <span class="card-tag card-tag-accent">dns</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Source Code & File Exposure -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">03 / Source Code & File Exposure</div>
+
+      <!-- Full width detail card -->
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div>
+            <div class="card-number">Case 05</div>
+            <div class="detail-card-title">PHP Source Disclosure (.phps)</div>
+          </div>
+          <span class="detail-card-badge">Source Leak</span>
+        </div>
+        <div class="detail-card-body">
+          <p>访问 <strong>index.phps</strong> 获取 PHP 源代码。.phps 扩展名使服务器返回语法高亮的源代码而非执行结果。</p>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-header-dot"></span>index.phps</div>
+          <div class="code-content" set:html={phpSource}></div>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item">
+            <div class="compare-item-label">index.php</div>
+            <div class="compare-item-value">Executed by server, outputs HTML</div>
+          </div>
+          <div class="compare-item">
+            <div class="compare-item-label">index.phps</div>
+            <div class="compare-item-value">Returned as plaintext source code</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Case 6 -->
+        <div class="card">
+          <div class="card-number">Case 06</div>
+          <div class="card-title">www.zip Backup</div>
+          <div class="card-body">
+            <p>直接访问 <strong>www.zip</strong> 下载整站备份。常见于开发者遗留的打包文件。</p>
+            <p>用途: 网站备份、服务器迁移、文件共享。</p>
+          </div>
+          <div class="card-technique">/www.zip</div>
+          <span class="card-tag">backup</span>
+        </div>
+
+        <!-- Case 9 -->
+        <div class="card">
+          <div class="card-number">Case 09</div>
+          <div class="card-title">VIM .swp File</div>
+          <div class="card-body">
+            <p>"发现网页有个错别字? 赶紧在生产环境 vim 改下, 不好, 死机了"</p>
+            <p>Vim 异常退出后生成 .swp 恢复文件。</p>
+          </div>
+          <div class="card-technique">/index.php.swp</div>
+          <span class="card-tag card-tag-accent">recovery</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Version Control Leaks -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">04 / Version Control Exposure</div>
+
+      <div class="grid-asymmetric-reverse">
+        <!-- Case 7 -->
+        <div class="card">
+          <div class="card-number">Case 07</div>
+          <div class="card-title">.git Directory</div>
+          <div class="card-body">
+            <p>Git 版本控制目录暴露。包含完整的仓库历史、配置文件和对象数据。</p>
+          </div>
+          <div class="card-technique">/.git/ &rarr; dump &rarr; git log</div>
+          <span class="card-tag card-tag-accent">critical</span>
+        </div>
+
+        <!-- Case 8 -->
+        <div class="card">
+          <div class="card-number">Case 08</div>
+          <div class="card-title">.svn Directory</div>
+          <div class="card-body">
+            <p>Subversion 版本控制目录暴露。与 Git 不同, SVN 在每个子目录都创建 .svn 目录,包含完整的版本历史和文件元数据。</p>
+          </div>
+          <div class="card-technique">/.svn/entries</div>
+          <span class="card-tag">svn</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: robots.txt -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">05 / Access Control Misconfiguration</div>
+
+      <div class="grid-wide">
+        <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <div class="card-number">Case 04</div>
+            <div class="card-title">robots.txt Disclosure</div>
+            <div class="card-body">
+              <p>robots.txt 旨在告诉爬虫哪些路径不可抓取,但攻击者反而利用它来发现隐藏路径。</p>
+              <p style="margin-top: 0.75rem;">本题: Disallow 指向 /flagishere.txt,直接访问即得 flag。</p>
+            </div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-header-dot"></span>robots.txt</div>
+              <div class="code-content" set:html={robotsTxt}></div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom: 1rem;">
+              <div class="card-number">Format Reference</div>
+              <div class="card-title" style="font-size: 0.9375rem;">Standard Directives</div>
+            </div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-header-dot"></span>syntax</div>
+              <div class="code-content" set:html={robotsFormat}></div>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.8125rem; color: var(--c-text-muted); line-height: 1.7;">
+              <p><strong style="color: var(--c-text);">User-agent</strong> - Target crawler (* = all)</p>
+              <p><strong style="color: var(--c-text);">Disallow</strong> - Blocked path</p>
+              <p><strong style="color: var(--c-text);">Allow</strong> - Explicitly permitted</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Recon & Social Engineering -->
+    <section class="catalog-section reveal">
+      <div class="catalog-section-header">06 / Reconnaissance & Social Engineering</div>
+
+      <div class="grid-3">
+        <!-- Case 12 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 12</div>
+          <div class="card-title">robots.txt + Weak Creds</div>
+          <div class="card-body">
+            <p>robots.txt 泄露后台地址。用户名 admin, 密码藏在页面最底部。</p>
+          </div>
+          <div class="card-technique">robots.txt &rarr; /admin &rarr; page footer</div>
+          <span class="card-tag">combo</span>
+        </div>
+
+        <!-- Case 13 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 13</div>
+          <div class="card-title">Document Leak</div>
+          <div class="card-body">
+            <p>页面提供 document 下载,其中包含后台地址和完整凭据。</p>
+          </div>
+          <div class="card-technique">Download doc &rarr; extract creds</div>
+          <span class="card-tag">osint</span>
+        </div>
+
+        <!-- Case 14 -->
+        <div class="card card-compact">
+          <div class="card-number">Case 14</div>
+          <div class="card-title">Editor Exposure</div>
+          <div class="card-body">
+            <p>访问 /editor 发现在线编辑器,可直接读取服务器任意文件。</p>
+          </div>
+          <div class="card-technique">/editor &rarr; file browser &rarr; read flag</div>
+          <span class="card-tag card-tag-accent">rce-adjacent</span>
+        </div>
+      </div>
+
+      <!-- Case 15 -->
+      <div class="detail-card" style="margin-top: 1.5rem;">
+        <div class="detail-card-header">
+          <div>
+            <div class="card-number">Case 15</div>
+            <div class="detail-card-title">Password Recovery via OSINT</div>
+          </div>
+          <span class="detail-card-badge">Social Engineering</span>
+        </div>
+        <div class="detail-card-body">
+          <p>访问 /admin 发现"忘记密码"功能,需要输入地址。主页底部暴露 QQ 邮箱,通过 QQ 号反查得到地址为西安,成功重置密码。用户名 admin 登录获取 flag。</p>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item">
+            <div class="compare-item-label">Step 1</div>
+            <div class="compare-item-value">Find QQ email in page footer</div>
+          </div>
+          <div class="compare-item">
+            <div class="compare-item-label">Step 2</div>
+            <div class="compare-item-value">QQ number &rarr; location lookup</div>
+          </div>
+          <div class="compare-item">
+            <div class="compare-item-label">Step 3</div>
+            <div class="compare-item-value">Reset password with address</div>
+          </div>
+          <div class="compare-item">
+            <div class="compare-item-label">Step 4</div>
+            <div class="compare-item-value">Login as admin, get flag</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>&copy; LangQi {pubDate.getFullYear()}</span>
+    <div class="footer-tags">
+      {tags.map((tag: string) => <span class="card-tag">{tag}</span>)}
+    </div>
+  </footer>
+
+  <script is:inline>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => {
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

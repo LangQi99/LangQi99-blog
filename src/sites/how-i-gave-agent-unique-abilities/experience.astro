@@ -1,0 +1,796 @@
+---
+import OriginalArticle from "../../components/article/OriginalArticle.astro";
+
+interface Props {
+  blog: any;
+}
+
+const { blog } = Astro.props;
+const title = blog.data.title;
+const description = blog.data.description;
+const image = blog.data.image || "/image/how-i-gave-agent-unique-abilities-cover.png";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:type" content="article" />
+    <meta name="theme-color" content="#09110d" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style is:inline>
+      :root {
+        color-scheme: dark;
+        --ink: #f2f6f2;
+        --muted: #91a095;
+        --line: rgba(196, 255, 214, .14);
+        --green: #82f6a5;
+        --green-deep: #1ecb68;
+        --gold: #f6c865;
+        --felt: #0c2a1b;
+        --black: #07100b;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; background: var(--black); }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 74% 16%, rgba(30, 203, 104, .13), transparent 24rem),
+          linear-gradient(180deg, #07100b 0%, #0b1510 50%, #07100b 100%);
+        font-family: "Manrope", system-ui, sans-serif;
+        overflow-x: hidden;
+      }
+      button, input { font: inherit; }
+      a { color: inherit; }
+      ::selection { color: #07100b; background: var(--green); }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        opacity: .12;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+        mix-blend-mode: soft-light;
+      }
+
+      .topbar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+        padding: 0 clamp(18px, 4vw, 64px);
+        border-bottom: 1px solid var(--line);
+        background: rgba(7, 16, 11, .72);
+        backdrop-filter: blur(18px);
+      }
+      .brand, .back {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .brand-mark {
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--green);
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 5px rgba(130, 246, 165, .08);
+      }
+      .back { color: var(--muted); transition: color .2s ease; }
+      .back:hover { color: var(--ink); }
+
+      #agent-case .hero {
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        gap: clamp(30px, 5vw, 90px);
+        max-width: 1540px;
+        margin: 0 auto;
+        padding: 104px clamp(18px, 4vw, 64px) 40px;
+      }
+      #agent-case .hero-copy { flex: 0 1 42%; min-width: 0; position: relative; z-index: 2; }
+      .kicker {
+        margin: 0 0 20px;
+        color: var(--green);
+        font: 600 12px/1 "Roboto Mono", monospace;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(42px, 5.2vw, 84px);
+        line-height: .98;
+        letter-spacing: -.06em;
+      }
+      h1 span { color: var(--green); }
+      .hero-copy > p:not(.kicker) {
+        max-width: 590px;
+        margin: 26px 0 0;
+        color: var(--muted);
+        font-size: clamp(16px, 1.4vw, 20px);
+        line-height: 1.7;
+      }
+      .hero-facts {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        max-width: 580px;
+        margin-top: 38px;
+        border-top: 1px solid var(--line);
+      }
+      .hero-fact { padding: 18px 12px 0 0; }
+      .hero-fact strong {
+        display: block;
+        color: var(--ink);
+        font-size: clamp(20px, 2.3vw, 34px);
+        letter-spacing: -.04em;
+      }
+      .hero-fact span {
+        color: var(--muted);
+        font: 500 11px/1.4 "Roboto Mono", monospace;
+        text-transform: uppercase;
+      }
+
+      #agent-case .simulator {
+        flex: 1 1 58%;
+        min-width: 0;
+        position: relative;
+        min-height: 690px;
+        border: 1px solid var(--line);
+        border-radius: 32px;
+        overflow: hidden;
+        background: rgba(11, 25, 17, .74);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, .34);
+      }
+      .simulator-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 66px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--line);
+      }
+      .simulator-head p {
+        margin: 0;
+        font: 600 11px/1 "Roboto Mono", monospace;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+      }
+      .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--green);
+      }
+      .live::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 14px currentColor;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      .opponents { display: flex; gap: 6px; }
+      .opponent {
+        padding: 8px 11px;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 999px;
+        background: transparent;
+        cursor: pointer;
+      }
+      .opponent[aria-pressed="true"] {
+        color: var(--ink);
+        border-color: var(--line);
+        background: rgba(130, 246, 165, .08);
+      }
+      .table-stage {
+        position: relative;
+        height: 450px;
+        overflow: hidden;
+      }
+      #poker-table { width: 100%; height: 100%; display: block; }
+      .persona {
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        width: 190px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(7, 16, 11, .72);
+        backdrop-filter: blur(12px);
+      }
+      .persona small, .metric small {
+        color: var(--muted);
+        font: 500 10px/1.4 "Roboto Mono", monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .persona strong { display: block; margin-top: 5px; font-size: 15px; }
+      .persona p { margin: 8px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+      .decision {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
+        width: min(260px, calc(100% - 48px));
+        padding: 16px;
+        border: 1px solid rgba(246, 200, 101, .28);
+        border-radius: 16px;
+        background: rgba(24, 18, 7, .8);
+      }
+      .decision small { color: var(--gold); font: 600 10px/1 "Roboto Mono", monospace; }
+      .decision strong { display: block; margin-top: 8px; font-size: 22px; }
+      .decision p { margin: 7px 0 0; color: #c2b697; font-size: 12px; line-height: 1.5; }
+
+      .simulator-bottom {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 22px;
+        padding: 20px 22px 22px;
+        border-top: 1px solid var(--line);
+      }
+      .timeline label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        color: var(--muted);
+        font: 500 10px/1 "Roboto Mono", monospace;
+        text-transform: uppercase;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--green);
+        cursor: ew-resize;
+      }
+      .next-hand {
+        min-width: 126px;
+        padding: 13px 17px;
+        color: var(--black);
+        border: 0;
+        border-radius: 999px;
+        background: var(--green);
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease;
+      }
+      .next-hand:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(30, 203, 104, .22); }
+      .next-hand:active { transform: scale(.98); }
+
+      .manifesto, .system, .result {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: clamp(100px, 12vw, 190px) clamp(18px, 4vw, 64px);
+      }
+      .manifesto {
+        display: grid;
+        grid-template-columns: .48fr 1fr;
+        gap: clamp(40px, 8vw, 140px);
+        border-top: 1px solid var(--line);
+      }
+      .section-index {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        color: var(--green);
+        font: 600 11px/1 "Roboto Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+      }
+      .manifesto h2, .system h2, .result h2 {
+        max-width: 1000px;
+        margin: 0;
+        font-size: clamp(36px, 5vw, 76px);
+        line-height: 1.03;
+        letter-spacing: -.055em;
+      }
+      .manifesto blockquote {
+        margin: 54px 0 0;
+        padding-left: clamp(24px, 5vw, 80px);
+        border-left: 1px solid var(--green);
+        color: #dce8df;
+        font-size: clamp(20px, 2.4vw, 34px);
+        line-height: 1.45;
+      }
+      .manifesto-copy {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 30px;
+        margin-top: 64px;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+      .manifesto-copy p { margin: 0; }
+
+      .system { border-top: 1px solid var(--line); }
+      .system-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 40px;
+      }
+      .system-head p {
+        max-width: 410px;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .loop {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1px;
+        margin-top: 70px;
+        border: 1px solid var(--line);
+        background: var(--line);
+      }
+      .loop-step {
+        min-height: 230px;
+        padding: 24px;
+        background: #0a1510;
+        transition: background .3s ease, color .3s ease;
+      }
+      .loop-step.active { color: var(--black); background: var(--green); }
+      .loop-step span {
+        font: 600 11px/1 "Roboto Mono", monospace;
+        text-transform: uppercase;
+      }
+      .loop-step strong { display: block; margin-top: 70px; font-size: 21px; }
+      .loop-step p { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .loop-step.active p { color: #20462e; }
+
+      .result {
+        display: grid;
+        grid-template-columns: 1.1fr .9fr;
+        align-items: center;
+        gap: clamp(44px, 8vw, 130px);
+        border-top: 1px solid var(--line);
+      }
+      .result-visual {
+        position: relative;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(255,255,255,.03);
+        transform: rotate(-1.5deg);
+      }
+      .result-visual img {
+        display: block;
+        width: 100%;
+        border-radius: 18px;
+      }
+      .rank-stamp {
+        position: absolute;
+        right: -22px;
+        top: -34px;
+        display: grid;
+        place-items: center;
+        width: 130px;
+        aspect-ratio: 1;
+        color: var(--black);
+        border-radius: 50%;
+        background: var(--gold);
+        font-size: 38px;
+        font-weight: 800;
+        transform: rotate(8deg);
+        box-shadow: 0 20px 50px rgba(246, 200, 101, .18);
+      }
+      .rank-stamp small { display: block; font-size: 10px; text-align: center; text-transform: uppercase; }
+      .result-copy p {
+        max-width: 520px;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.75;
+      }
+      .final-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        margin-top: 38px;
+        background: var(--line);
+        border: 1px solid var(--line);
+      }
+      .metric { padding: 20px; background: var(--black); }
+      .metric strong { display: block; margin-top: 5px; font-size: 31px; }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 30px;
+        padding: 34px clamp(18px, 4vw, 64px);
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        font: 500 11px/1.5 "Roboto Mono", monospace;
+      }
+      footer a { text-decoration: none; }
+
+      @keyframes pulse { 50% { opacity: .35; transform: scale(.72); } }
+      @media (max-width: 1100px) {
+        #agent-case .hero { flex-direction: column; align-items: stretch; padding-top: 124px; }
+        #agent-case .hero-copy, #agent-case .simulator { flex-basis: auto; }
+        .simulator { min-height: 640px; }
+        .manifesto, .result { grid-template-columns: 1fr; }
+        .section-index { position: static; }
+        .loop { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 700px) {
+        .topbar { height: 56px; }
+        .brand span { display: none; }
+        .hero { padding-top: 92px; }
+        .hero-facts { grid-template-columns: 1fr 1fr 1fr; }
+        .simulator { min-height: 600px; border-radius: 20px; }
+        .simulator-head { align-items: flex-start; flex-direction: column; padding: 16px; }
+        .opponents { width: 100%; overflow-x: auto; }
+        .table-stage { height: 390px; }
+        .persona { top: 12px; left: 12px; width: 150px; }
+        .decision { right: 12px; bottom: 12px; }
+        .simulator-bottom { grid-template-columns: 1fr; }
+        .manifesto-copy, .final-stats { grid-template-columns: 1fr; }
+        .system-head { align-items: start; flex-direction: column; }
+        .loop { grid-template-columns: 1fr; }
+        .loop-step { min-height: 160px; }
+        .loop-step strong { margin-top: 42px; }
+        .result-visual { transform: none; }
+        .rank-stamp { width: 90px; right: -8px; top: -30px; font-size: 27px; }
+        footer { flex-direction: column; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: .01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <nav class="topbar" aria-label="页面导航">
+      <a class="brand" href="#top"><span class="brand-mark"></span><span>Agentexas / Case Study</span></a>
+      <a class="back" href="/blog/">返回博客</a>
+    </nav>
+
+    <main id="agent-case">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="kicker">A live agent strategy case study</p>
+          <h1>我没写一行扑克代码，<span>Agent 却打到全站第一。</span></h1>
+          <p>真正的差距不是模型，而是你是否让 Agent 拥有身份、目标升级与可验证的竞争闭环。</p>
+          <div class="hero-facts" aria-label="最终成绩">
+            <div class="hero-fact"><strong id="hero-elo">4644</strong><span>Elo rating</span></div>
+            <div class="hero-fact"><strong>61.9%</strong><span>Win rate</span></div>
+            <div class="hero-fact"><strong>2,283</strong><span>Matches</span></div>
+          </div>
+        </div>
+
+        <section class="simulator" aria-label="AI 扑克策略模拟器">
+          <header class="simulator-head">
+            <p class="live">Live strategy replay</p>
+            <div class="opponents" role="group" aria-label="选择对手">
+              <button class="opponent" data-opponent="baseline" aria-pressed="false">通用桌</button>
+              <button class="opponent" data-opponent="error" aria-pressed="false">403-error</button>
+              <button class="opponent" data-opponent="god" aria-pressed="true">神之一手</button>
+            </div>
+          </header>
+          <div class="table-stage">
+            <canvas id="poker-table" aria-label="实时扑克牌桌动画"></canvas>
+            <aside class="persona">
+              <small>Decision prior</small>
+              <strong>Doyle Brunson</strong>
+              <p id="persona-copy">进攻优先。强牌重注，用半诈唬持续施压。</p>
+            </aside>
+            <aside class="decision" aria-live="polite">
+              <small id="decision-label">Exploit detected</small>
+              <strong id="decision-action">BTN: ALL IN</strong>
+              <p id="decision-copy">对手面对按钮全压时弃牌率 95.4%，长期 EV 为正。</p>
+            </aside>
+          </div>
+          <footer class="simulator-bottom">
+            <div class="timeline">
+              <label for="replay"><span>Replay analysis</span><span id="replay-count">480 / 480 hands</span></label>
+              <input id="replay" type="range" min="0" max="480" value="480" />
+            </div>
+            <button class="next-hand" id="next-hand">下一手</button>
+          </footer>
+        </section>
+      </section>
+
+      <section class="manifesto">
+        <div class="section-index">The real harness</div>
+        <div>
+          <h2>一句「扮演 Doyle Brunson」，解压出一整套自洽策略。</h2>
+          <blockquote>Harness 的本质，是回答「在我没给明确指令的地方，Agent 该怎么办」。人格不是装饰，而是覆盖长尾决策的稳定先验。</blockquote>
+          <div class="manifesto-copy">
+            <p>传统做法试图把所有规则写进 System Prompt。它会越来越长、互相冲突，并在长对话里稀释。</p>
+            <p>Cosplay Harness 调用一个知识密度高、实践足够强的人格，让开牌范围、位置哲学、攻击节奏和诈唬频率天然保持一致。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="system">
+        <div class="system-head">
+          <h2>不是写一个文件，而是建立会赢的系统。</h2>
+          <p>目标从前 20、前 10 到第一持续升级。每次升级都重新读取当前状态、搜索策略、沙盘验证，再把结果送回下一轮。</p>
+        </div>
+        <div class="loop" id="loop">
+          <article class="loop-step active"><span>01 / Identity</span><strong>人格锚定</strong><p>建立统一判断哲学，而不是生成一次性代码。</p></article>
+          <article class="loop-step"><span>02 / Observe</span><strong>回放采集</strong><p>把真实对局变成可计算的对手证据。</p></article>
+          <article class="loop-step"><span>03 / Infer</span><strong>范围反推</strong><p>从动作与弃牌率推断隐藏策略。</p></article>
+          <article class="loop-step"><span>04 / Simulate</span><strong>候选沙盘</strong><p>比较不同策略的 EV 与风险。</p></article>
+          <article class="loop-step"><span>05 / Operate</span><strong>动态运营</strong><p>轮换目标、止损并持续迭代。</p></article>
+        </div>
+      </section>
+
+      <section class="result">
+        <div class="result-visual">
+          <img src="/image/agentexas-first-place.png" alt="Agentexas 榜单第一名截图" loading="lazy" />
+          <div class="rank-stamp"><div>#1<small>overall</small></div></div>
+        </div>
+        <div class="result-copy">
+          <p class="kicker">Result / From zero to 4644</p>
+          <h2>参数量决定上限，协作方式决定你能不能抵达它。</h2>
+          <p>Agent 分析 480 场真实回放，发现「神之一手」面对按钮全压时弃牌率达到 95.4%。这不是灵光一闪，而是回放分析、范围反推、候选搜索和沙盘验证的结果。</p>
+          <div class="final-stats">
+            <div class="metric"><small>天梯分</small><strong>4644</strong></div>
+            <div class="metric"><small>领先</small><strong>+11</strong></div>
+            <div class="metric"><small>胜率</small><strong>61.9%</strong></div>
+            <div class="metric"><small>迭代</small><strong>v22</strong></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>LangQi99 · Agent Harness Case Study</span>
+      <a href="/blog/">继续阅读其他网站型文章</a>
+    </footer>
+
+    <OriginalArticle blog={blog} />
+
+    <script is:inline>
+      (() => {
+        const canvas = document.querySelector('#poker-table');
+        const context = canvas.getContext('2d');
+        const replay = document.querySelector('#replay');
+        const replayCount = document.querySelector('#replay-count');
+        const nextButton = document.querySelector('#next-hand');
+        const heroElo = document.querySelector('#hero-elo');
+        const action = document.querySelector('#decision-action');
+        const decisionCopy = document.querySelector('#decision-copy');
+        const decisionLabel = document.querySelector('#decision-label');
+        const personaCopy = document.querySelector('#persona-copy');
+        const opponentButtons = [...document.querySelectorAll('.opponent')];
+        const loopSteps = [...document.querySelectorAll('.loop-step')];
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const opponents = {
+          baseline: {
+            name: '通用桌',
+            fold: 54.2,
+            action: 'POSITION RAISE',
+            copy: '信息不足时保持位置优势，用稳定攻击收集样本。',
+            persona: '进攻优先，但先观察对手如何响应压力。',
+            hue: 151,
+            elo: 1980
+          },
+          error: {
+            name: '403-error',
+            fold: 71.6,
+            action: 'BTN: SHOVE',
+            copy: 'Turbo 结构下持续扩大按钮位压力，快速累积可用样本。',
+            persona: '对分类后的弱点集中施压，不追求万能策略。',
+            hue: 43,
+            elo: 3152
+          },
+          god: {
+            name: '神之一手',
+            fold: 95.4,
+            action: 'BTN: ALL IN',
+            copy: '对手面对按钮全压时弃牌率 95.4%，长期 EV 为正。',
+            persona: '按钮位极致进攻，BB 位收紧到 TT+/AQ+。',
+            hue: 137,
+            elo: 4644
+          }
+        };
+
+        let currentOpponent = 'god';
+        let hand = 480;
+        let animation = 0;
+        let width = 0;
+        let height = 0;
+        const particles = Array.from({ length: 26 }, (_, index) => ({
+          angle: (Math.PI * 2 * index) / 26,
+          radius: 0.7 + Math.random() * 0.25,
+          speed: 0.15 + Math.random() * 0.3
+        }));
+
+        function resize() {
+          const rect = canvas.getBoundingClientRect();
+          const ratio = Math.min(window.devicePixelRatio || 1, 2);
+          width = rect.width;
+          height = rect.height;
+          canvas.width = width * ratio;
+          canvas.height = height * ratio;
+          context.setTransform(ratio, 0, 0, ratio, 0, 0);
+          draw();
+        }
+
+        function roundedRect(x, y, w, h, radius) {
+          context.beginPath();
+          context.roundRect(x, y, w, h, radius);
+        }
+
+        function card(x, y, label, suit, faceUp = true, rotation = 0) {
+          context.save();
+          context.translate(x, y);
+          context.rotate(rotation);
+          roundedRect(-29, -42, 58, 84, 9);
+          context.fillStyle = faceUp ? '#edf3ed' : '#14261a';
+          context.fill();
+          context.strokeStyle = faceUp ? 'rgba(4,12,7,.15)' : 'rgba(130,246,165,.35)';
+          context.stroke();
+          if (faceUp) {
+            context.fillStyle = suit === '♥' || suit === '♦' ? '#d64f55' : '#102016';
+            context.font = '700 16px Manrope';
+            context.textAlign = 'left';
+            context.fillText(label, -19, -15);
+            context.font = '18px serif';
+            context.fillText(suit, -19, 8);
+          } else {
+            context.strokeStyle = 'rgba(130,246,165,.22)';
+            for (let offset = -18; offset <= 18; offset += 9) {
+              context.beginPath();
+              context.moveTo(-20, offset);
+              context.lineTo(20, offset + 18);
+              context.stroke();
+            }
+          }
+          context.restore();
+        }
+
+        function draw() {
+          if (!width || !height) return;
+          const data = opponents[currentOpponent];
+          context.clearRect(0, 0, width, height);
+          const centerX = width / 2;
+          const centerY = height * .52;
+          const tableWidth = Math.min(width * .76, 570);
+          const tableHeight = Math.min(height * .58, 260);
+
+          const glow = context.createRadialGradient(centerX, centerY, 20, centerX, centerY, tableWidth * .64);
+          glow.addColorStop(0, `hsla(${data.hue}, 68%, 56%, .18)`);
+          glow.addColorStop(1, 'rgba(0,0,0,0)');
+          context.fillStyle = glow;
+          context.fillRect(0, 0, width, height);
+
+          particles.forEach((particle, index) => {
+            const drift = reduceMotion ? 0 : Math.sin(animation * particle.speed + index) * 8;
+            const x = centerX + Math.cos(particle.angle) * tableWidth * particle.radius + drift;
+            const y = centerY + Math.sin(particle.angle) * tableHeight * particle.radius * .72;
+            context.beginPath();
+            context.arc(x, y, 1.2, 0, Math.PI * 2);
+            context.fillStyle = 'rgba(130,246,165,.28)';
+            context.fill();
+          });
+
+          context.save();
+          context.translate(centerX, centerY);
+          context.scale(1, .72);
+          context.beginPath();
+          context.ellipse(0, 0, tableWidth / 2, tableHeight / 2, 0, 0, Math.PI * 2);
+          const felt = context.createRadialGradient(0, -20, 30, 0, 0, tableWidth / 2);
+          felt.addColorStop(0, '#174d31');
+          felt.addColorStop(1, '#0b2b1a');
+          context.fillStyle = felt;
+          context.fill();
+          context.lineWidth = 14;
+          context.strokeStyle = '#1f3729';
+          context.stroke();
+          context.lineWidth = 1;
+          context.strokeStyle = 'rgba(130,246,165,.24)';
+          context.stroke();
+          context.restore();
+
+          context.fillStyle = 'rgba(242,246,242,.76)';
+          context.textAlign = 'center';
+          context.font = '600 11px Roboto Mono';
+          context.fillText(data.name.toUpperCase(), centerX, centerY - 6);
+          context.fillStyle = 'rgba(145,160,149,.72)';
+          context.fillText(`FOLD TO BTN SHOVE ${data.fold.toFixed(1)}%`, centerX, centerY + 15);
+
+          const progress = hand / 480;
+          const spread = 40 + progress * 25;
+          card(centerX - spread, centerY + 74, 'A', '♠', true, -.08);
+          card(centerX + 4, centerY + 70, 'K', '♠', true, .05);
+          card(centerX - 66, centerY - 68, '', '', false, -.05);
+          card(centerX + 66, centerY - 68, '', '', false, .05);
+
+          const community = [
+            ['10', '♦'], ['7', '♣'], ['2', '♥'], ['Q', '♠'], ['4', '♣']
+          ];
+          community.forEach((item, index) => {
+            const revealAt = 90 + index * 72;
+            card(centerX - 112 + index * 56, centerY - 4, item[0], item[1], hand >= revealAt, (index - 2) * .012);
+          });
+
+          const startX = centerX - tableWidth * .36;
+          const endX = centerX + tableWidth * .36;
+          const chartY = centerY + tableHeight * .7;
+          context.beginPath();
+          for (let index = 0; index <= 60; index++) {
+            const ratio = index / 60;
+            const x = startX + (endX - startX) * ratio;
+            const curve = Math.pow(ratio, 1.65);
+            const noise = Math.sin(index * .7) * 4 * (1 - ratio);
+            const y = chartY - curve * 54 - noise;
+            if (index === 0) context.moveTo(x, y);
+            else context.lineTo(x, y);
+          }
+          context.strokeStyle = '#82f6a5';
+          context.lineWidth = 2;
+          context.stroke();
+
+          if (!reduceMotion) {
+            animation += .02;
+            requestAnimationFrame(draw);
+          }
+        }
+
+        function sync() {
+          const data = opponents[currentOpponent];
+          replay.value = String(hand);
+          replayCount.textContent = `${hand} / 480 hands`;
+          action.textContent = data.action;
+          decisionCopy.textContent = data.copy;
+          personaCopy.textContent = data.persona;
+          decisionLabel.textContent = hand < 120 ? 'Collecting evidence' : hand < 320 ? 'Range inference' : 'Exploit detected';
+          const elo = Math.round(1120 + (data.elo - 1120) * (hand / 480));
+          heroElo.textContent = String(elo);
+          const activeIndex = Math.min(4, Math.floor((hand / 481) * 5));
+          loopSteps.forEach((step, index) => step.classList.toggle('active', index === activeIndex));
+          draw();
+        }
+
+        opponentButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            currentOpponent = button.dataset.opponent;
+            opponentButtons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+            sync();
+          });
+        });
+        replay.addEventListener('input', () => {
+          hand = Number(replay.value);
+          sync();
+        });
+        nextButton.addEventListener('click', () => {
+          hand = hand >= 480 ? 0 : Math.min(480, hand + 24);
+          sync();
+        });
+        window.addEventListener('resize', resize, { passive: true });
+        document.fonts.ready.then(resize);
+        sync();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+---
+import type { CollectionEntry } from "astro:content";
+import OriginalArticle from "../../components/article/OriginalArticle.astro";
+
+interface Props { blog: CollectionEntry<"blog"> }
+const { blog } = Astro.props;
+const { title, description } = blog.data;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--ink:#171d1b;--muted:#66716d;--paper:#edf2ed;--line:#c7d2ca;--signal:#e0522d;--deep:#18382e;--sans:Manrope,"Noto Sans SC",sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);overflow-x:hidden}a{color:inherit}
+    .top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,4vw,64px);border-bottom:1px solid var(--line);font-size:13px;font-weight:700;letter-spacing:.04em}
+    .top a{text-decoration:none}.top span{color:var(--muted)}
+    .hero{min-height:calc(100dvh - 64px);display:grid;grid-template-columns:minmax(360px,.85fr) minmax(540px,1.25fr);align-items:center;gap:clamp(24px,4vw,72px);padding:clamp(34px,6vh,68px) clamp(20px,4vw,64px)}
+    .copy{grid-column:1/2;min-width:0;position:relative;z-index:2}.copy h1{font-size:clamp(48px,6.2vw,92px);line-height:.94;letter-spacing:-.065em;margin:0;max-width:740px}.copy h1 span{color:var(--signal)}
+    .copy>p{font-size:clamp(17px,1.5vw,22px);line-height:1.55;color:#47534f;max-width:560px;margin:28px 0 32px}
+    .prompt{display:flex;align-items:center;gap:12px;border-top:1px solid var(--ink);padding-top:17px;max-width:520px;font-size:13px;font-weight:700}.prompt i{width:9px;height:9px;background:var(--signal);border-radius:50%;box-shadow:0 0 0 6px rgba(224,82,45,.12)}
+    .atlas{grid-column:2/3;justify-self:stretch;width:100%;min-width:0;position:relative;min-height:min(72vh,680px);border:1px solid #aebbb2;background:#e4ebe5;overflow:hidden;isolation:isolate}
+    #sky{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.atlas-ui{position:absolute;inset:0;pointer-events:none;padding:22px;display:flex;flex-direction:column;justify-content:space-between}
+    .atlas-head{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.atlas-head span:last-child{color:var(--signal)}
+    .answer{align-self:flex-end;width:min(400px,72%);background:rgba(237,242,237,.93);border-left:4px solid var(--signal);padding:18px 20px;box-shadow:0 18px 50px rgba(24,56,46,.12)}
+    .answer small{display:block;font-weight:800;letter-spacing:.08em;color:var(--signal);margin-bottom:8px}.answer p{font-size:15px;line-height:1.55;margin:0;font-weight:600}
+    .memory-dock{position:absolute;left:20px;bottom:20px;display:flex;flex-wrap:wrap;gap:8px;max-width:55%;pointer-events:auto}
+    .memory{border:1px solid #95a69b;background:#edf2ed;color:#33413c;padding:9px 12px;font:700 11px var(--sans);cursor:pointer;transition:transform .2s,background .2s,color .2s}.memory:hover{transform:translateY(-2px)}.memory[aria-pressed=true]{background:var(--deep);color:#f4f7f4;border-color:var(--deep)}
+    .thesis{background:var(--deep);color:#ecf2ed;padding:clamp(90px,13vw,180px) clamp(20px,7vw,110px);display:grid;grid-template-columns:.7fr 1.3fr;gap:8vw}
+    .thesis .index{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a9bbb1}.thesis blockquote{font-size:clamp(34px,5.5vw,78px);line-height:1.05;letter-spacing:-.055em;margin:0}.thesis blockquote strong{color:#ff7856}
+    .evidence{padding:120px clamp(20px,7vw,110px);background:#f6f3ed}.evidence h2{font-size:clamp(38px,5vw,70px);line-height:1;letter-spacing:-.05em;max-width:900px;margin:0 0 70px}
+    .signals{display:grid;grid-template-columns:1.15fr .85fr;gap:1px;background:#cabfb1;border:1px solid #cabfb1}.signal{background:#f6f3ed;padding:clamp(28px,4vw,58px);min-height:260px}.signal:nth-child(3){grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:40px;min-height:0}
+    .signal b{display:block;color:var(--signal);font-size:12px;letter-spacing:.1em;margin-bottom:26px}.signal h3{font-size:clamp(25px,3vw,40px);line-height:1.05;margin:0 0 18px}.signal p{color:#5c625f;line-height:1.75;margin:0;max-width:620px}
+    .equation{padding:120px clamp(20px,7vw,110px);display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:8vw}.equation h2{font-size:clamp(36px,5vw,72px);letter-spacing:-.055em;line-height:1;margin:0}.formula{font-size:clamp(20px,2.4vw,34px);line-height:1.5;border-left:1px solid var(--ink);padding-left:34px}.formula span{color:var(--signal);font-weight:800}
+    footer{padding:28px clamp(20px,4vw,64px);border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;padding-top:48px}.copy,.atlas{grid-column:1}.atlas{min-height:570px}.copy h1{font-size:clamp(48px,14vw,74px)}.thesis,.equation{grid-template-columns:1fr}.signals{grid-template-columns:1fr}.signal:nth-child(3){grid-column:auto;grid-template-columns:1fr}.memory-dock{max-width:82%}.answer{width:76%}}
+    @media(max-width:560px){.top span{display:none}.hero{padding-left:16px;padding-right:16px}.atlas{min-height:520px}.answer{width:calc(100% - 40px);margin-bottom:100px}.memory-dock{max-width:calc(100% - 40px)}.memory{padding:8px;font-size:10px}.thesis,.evidence,.equation{padding-left:20px;padding-right:20px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.memory{transition:none}}
+  </style>
+</head>
+<body>
+  <nav class="top"><a href="/blog/">LANGQI / FIELD NOTE</a><span>CONTEXT ENGINE / INTERACTIVE ESSAY</span></nav>
+  <main>
+    <section class="hero">
+      <div class="copy">
+        <h1>智能不在模型里。<span>在你身边。</span></h1>
+        <p>参数量决定能力上限。一个 AI 知道多少关于你的生活，决定它是否真正有用。</p>
+        <div class="prompt"><i></i><span>选择下方记忆，让同一个问题产生不同答案</span></div>
+      </div>
+      <div class="atlas" id="atlas">
+        <canvas id="sky" aria-label="可交互上下文星图"></canvas>
+        <div class="atlas-ui">
+          <div class="atlas-head"><span>Personal context atlas</span><span id="context-count">0 memories active</span></div>
+          <div class="answer" aria-live="polite"><small>今晚吃什么？</small><p id="answer-text">汉堡、轻食、火锅或日料。你更喜欢哪一种？</p></div>
+        </div>
+        <div class="memory-dock" aria-label="个人记忆">
+          <button class="memory" data-key="lunch" aria-pressed="false">中午吃了炸鸡</button>
+          <button class="memory" data-key="taste" aria-pressed="false">讨厌香菜</button>
+          <button class="memory" data-key="route" aria-pressed="false">刚加班下班</button>
+          <button class="memory" data-key="choice" aria-pressed="false">选沙拉会犹豫</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="thesis">
+      <div class="index">The missing layer</div>
+      <blockquote>没有你的专属上下文，最强大的 AI 也<strong>没有灵魂。</strong></blockquote>
+    </section>
+
+    <section class="evidence">
+      <h2>世界知识不能替代生活轨迹。</h2>
+      <div class="signals">
+        <article class="signal"><b>行为比偏好诚实</b><h3>收藏沙拉，点单却总在犹豫。</h3><p>你声称喜欢健康餐，但每次选菜都要花五分钟。上下文能读出语言之外的真实倾向。</p></article>
+        <article class="signal"><b>状态会改变答案</b><h3>同一个人，不同的一天。</h3><p>中午的热量、下班时间、疲惫程度，都让“今晚吃什么”变成一个只属于此刻的问题。</p></article>
+        <article class="signal"><div><b>模式藏在时间里</b><h3>AI 看见你自己尚未察觉的关联。</h3></div><p>高热量午餐后的负罪感，选择纯草食时的迟疑，回家路线上的便利性，这些节点连接后，建议才从菜名列表变成真正的理解。</p></article>
+      </div>
+    </section>
+
+    <section class="equation">
+      <h2>Context is all you need.</h2>
+      <div class="formula">模型、算力与知识决定<span>上限</span>。<br />你的记忆、习惯与此刻决定<span>下限</span>。</div>
+    </section>
+  </main>
+  <footer><span>LangQi, 2026</span><a href="/blog/">返回全部文章</a></footer>
+
+  <OriginalArticle blog={blog} />
+  <script>
+    const canvas = document.querySelector('#sky');
+    const atlas = document.querySelector('#atlas');
+    const buttons = [...document.querySelectorAll('.memory')];
+    const answer = document.querySelector('#answer-text');
+    const count = document.querySelector('#context-count');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const context = new Set();
+    const labels = {
+      lunch: '午餐 / 1280 kcal', taste: '味觉 / 香菜厌恶',
+      route: '状态 / 21:40 下班', choice: '行为 / 选择迟疑'
+    };
+    const responses = [
+      '汉堡、轻食、火锅或日料。你更喜欢哪一种？',
+      '你中午已经吃得很油，今晚可以选一份清淡但有满足感的汤面。',
+      '不要香菜。可以选一份口味干净的日式鸡汤乌冬。',
+      '已经很晚了。选回家路上能顺手取餐、无需等待的店。',
+      '别再逼自己吃纯沙拉。选择有热汤和蛋白质的轻食更适合你。',
+      '今晚推荐回家路上的日式鸡汤乌冬。中午的油腻需要平衡，你不吃香菜，也不必再为一份沙拉犹豫。'
+    ];
+    let nodes = [];
+    let pointer = {x:0,y:0};
+    const setup = () => {
+      const rect = atlas.getBoundingClientRect();
+      const ratio = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = rect.width * ratio; canvas.height = rect.height * ratio;
+      canvas.style.width = `${rect.width}px`; canvas.style.height = `${rect.height}px`;
+      const center = {x:rect.width*.58,y:rect.height*.42};
+      nodes = [
+        {key:'core',x:center.x,y:center.y,r:14,label:'YOU'},
+        {key:'lunch',x:rect.width*.25,y:rect.height*.22,r:8},
+        {key:'taste',x:rect.width*.77,y:rect.height*.18,r:8},
+        {key:'route',x:rect.width*.83,y:rect.height*.62,r:8},
+        {key:'choice',x:rect.width*.30,y:rect.height*.67,r:8}
+      ];
+      draw();
+    };
+    const draw = () => {
+      const ctx = canvas.getContext('2d');
+      const ratio = canvas.width / canvas.clientWidth;
+      ctx.setTransform(ratio,0,0,ratio,0,0); ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+      const core = nodes[0];
+      nodes.slice(1).forEach((node,index) => {
+        const active = context.has(node.key);
+        ctx.beginPath(); ctx.moveTo(core.x,core.y); ctx.lineTo(node.x,node.y);
+        ctx.strokeStyle = active ? 'rgba(224,82,45,.75)' : 'rgba(24,56,46,.18)';
+        ctx.lineWidth = active ? 2 : 1; ctx.setLineDash(active ? [] : [4,7]); ctx.stroke();
+        ctx.setLineDash([]);
+        if(active && !reduced){
+          const phase = (Date.now()/1100 + index*.19)%1;
+          const px = core.x + (node.x-core.x)*phase; const py = core.y + (node.y-core.y)*phase;
+          ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle='#e0522d';ctx.fill();
+        }
+      });
+      nodes.forEach(node => {
+        const active = node.key === 'core' || context.has(node.key);
+        ctx.beginPath();ctx.arc(node.x,node.y,node.r + (active ? 4 : 0),0,Math.PI*2);
+        ctx.fillStyle = active ? 'rgba(224,82,45,.16)' : 'rgba(24,56,46,.08)';ctx.fill();
+        ctx.beginPath();ctx.arc(node.x,node.y,node.r,0,Math.PI*2);
+        ctx.fillStyle = node.key === 'core' ? '#18382e' : active ? '#e0522d' : '#829088';ctx.fill();
+        ctx.fillStyle='#263a33';ctx.font='700 10px Manrope';ctx.textAlign='center';
+        ctx.fillText(node.key === 'core' ? 'YOU' : labels[node.key],node.x,node.y+node.r+20);
+      });
+    };
+    const update = () => {
+      count.textContent = `${context.size} memories active`;
+      answer.textContent = context.size === 4 ? responses[5] : context.size === 0 ? responses[0] :
+        [...context].map(key => responses[{lunch:1,taste:2,route:3,choice:4}[key]])[context.size-1];
+      draw();
+    };
+    buttons.forEach(button => button.addEventListener('click', () => {
+      const key = button.dataset.key;
+      context.has(key) ? context.delete(key) : context.add(key);
+      button.setAttribute('aria-pressed', String(context.has(key))); update();
+    }));
+    new ResizeObserver(setup).observe(atlas);
+    if(!reduced){const loop=()=>{draw();requestAnimationFrame(loop)};requestAnimationFrame(loop)}
+  </script>
+</body>
+</html>

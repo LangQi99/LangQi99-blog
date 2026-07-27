@@ -1,0 +1,97 @@
+---
+import OriginalArticle from "../../components/article/OriginalArticle.astro";
+
+const { blog } = Astro.props;
+const { title, description } = blog.data;
+const directories = [
+  { id:"etc", name:"/etc", x:8, y:8, w:22, h:28, color:"#ff7b54", summary:"系统配置", detail:"服务与系统级软件的配置中心，例如 /etc/passwd 与 /etc/nginx。", commands:"cat /etc/passwd\nls -la /etc/nginx" },
+  { id:"usr", name:"/usr", x:32, y:8, w:38, h:48, color:"#50c5b7", summary:"用户级程序与库", detail:"包含 /usr/bin、/usr/lib、/usr/local 与共享资源。", commands:"which python3\nwhereis gcc\nls /usr/local/bin" },
+  { id:"var", name:"/var", x:72, y:8, w:20, h:48, color:"#f5c451", summary:"持续变化的数据", detail:"日志、缓存、邮件与服务运行时产生的数据。", commands:"du -sh /var/log\njournalctl --disk-usage" },
+  { id:"home", name:"/home", x:8, y:39, w:22, h:35, color:"#7897ff", summary:"普通用户空间", detail:"每个普通用户的主目录与个人文件。", commands:"cd ~\npwd\nls ~/Downloads" },
+  { id:"proc", name:"/proc", x:32, y:59, w:18, h:31, color:"#ee6c96", summary:"进程虚拟文件系统", detail:"直接暴露进程、CPU 与内存等运行状态。", commands:"cat /proc/cpuinfo\ncat /proc/meminfo\nps aux" },
+  { id:"dev", name:"/dev", x:52, y:59, w:18, h:31, color:"#b983ff", summary:"设备即文件", detail:"硬盘、终端、随机数与空设备都以文件接口出现。", commands:"ls -l /dev/sda\ncat /dev/null" },
+  { id:"tmp", name:"/tmp", x:72, y:59, w:20, h:31, color:"#8bd450", summary:"临时工作区", detail:"临时文件与跨进程交换区，重启后可能被清理。", commands:"touch /tmp/demo\nrm /tmp/demo" },
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="article" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f1efe5;color:#151712;font-family:Chivo,sans-serif;overflow-x:hidden}button,a{font:inherit}.top{height:64px;padding:0 clamp(18px,4vw,58px);display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #171a14}.top b{font-size:14px}.top a{color:inherit;text-decoration:none;font:12px "Roboto Mono";border-bottom:1px solid}
+    .hero{min-height:calc(100dvh - 64px);display:grid;grid-template-columns:minmax(260px,.62fr) minmax(580px,1.38fr);gap:4vw;padding:clamp(28px,4vw,58px);align-items:center}.intro h1{font-size:clamp(64px,9vw,148px);line-height:.78;letter-spacing:-.08em;margin:0 0 34px}.intro h1 span{display:block;font-size:.3em;line-height:1.1;letter-spacing:-.04em;margin-top:20px}.intro p{font-size:18px;line-height:1.65;max-width:480px}.hint{font:11px "Roboto Mono";margin-top:28px}
+    .viewport{height:min(72vh,700px);min-height:560px;border:2px solid #171a14;background:#d8d6c9;position:relative;overflow:hidden;cursor:grab}.viewport.dragging{cursor:grabbing}.toolbar{position:absolute;top:14px;left:14px;right:14px;z-index:5;display:flex;justify-content:space-between;pointer-events:none}.tools{display:flex;gap:6px;pointer-events:auto}.tools button{width:38px;height:38px;border:1px solid #171a14;background:#f1efe5;cursor:pointer}.path{background:#171a14;color:#f1efe5;padding:10px 13px;font:11px "Roboto Mono"}
+    .map{position:absolute;width:1200px;height:800px;transform-origin:0 0;left:0;top:0;background-image:linear-gradient(rgba(23,26,20,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(23,26,20,.13) 1px,transparent 1px);background-size:40px 40px}.root{position:absolute;left:30px;top:28px;font:900 110px/1 Chivo;letter-spacing:-.08em;color:rgba(23,26,20,.12)}.dir{position:absolute;border:2px solid #171a14;background:var(--color);text-align:left;padding:18px;cursor:pointer;overflow:hidden;transition:filter .18s}.dir:hover,.dir.active{filter:brightness(1.13)}.dir.active{outline:5px solid #171a14;outline-offset:3px}.dir strong{font:900 clamp(28px,4vw,58px)/1 Chivo;letter-spacing:-.07em}.dir span{display:block;font:11px/1.45 "Roboto Mono";margin-top:10px}.spotlight{position:absolute;right:18px;bottom:18px;z-index:7;width:min(330px,45%);background:#171a14;color:#f1efe5;padding:18px}.spotlight small{font:10px "Roboto Mono";color:#c0c5b8}.spotlight h2{font-size:28px;margin:8px 0}.spotlight p{font-size:13px;line-height:1.55;color:#d4d7ce}.spotlight pre{font:11px/1.6 "Roboto Mono";white-space:pre-wrap;color:#8bd450}
+    .command-field{padding:clamp(90px,11vw,170px) clamp(18px,8vw,130px);background:#171a14;color:#f1efe5}.command-field h2{font-size:clamp(46px,7vw,100px);line-height:.92;letter-spacing:-.07em;margin:0 0 60px}.terminal{display:grid;grid-template-columns:.75fr 1.25fr;border:1px solid #65705e}.command-list{border-right:1px solid #65705e}.command-list button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #424a3e;background:transparent;color:#b9c0b3;padding:16px 20px;font:12px "Roboto Mono";cursor:pointer}.command-list button.active{background:#8bd450;color:#10140d}.output{padding:28px;font:14px/1.8 "Roboto Mono";white-space:pre-wrap;min-height:360px;color:#dce5d7}.prompt{color:#8bd450}
+    .concepts{padding:clamp(90px,11vw,170px) clamp(18px,8vw,130px);background:#f1efe5}.concepts h2{font-size:clamp(44px,6vw,88px);letter-spacing:-.06em;margin:0 0 54px}.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:22px}.flow div{border:2px solid #171a14;padding:28px;min-height:180px}.flow strong{font-size:28px}.flow p{line-height:1.65}.arrow{font-size:40px}.permissions{margin-top:80px;display:grid;grid-template-columns:1fr 1fr;gap:6vw}.permissions h3{font-size:42px;letter-spacing:-.05em;margin:0}.permissions pre{background:#171a14;color:#dbe4d6;padding:24px;font:12px/1.8 "Roboto Mono";overflow:auto}
+    @media(max-width:980px){.hero{grid-template-columns:1fr}.intro h1{font-size:86px}.viewport{height:650px}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}.permissions{grid-template-columns:1fr}}@media(max-width:600px){.intro h1{font-size:64px}.viewport{min-height:700px}.spotlight{width:calc(100% - 36px);max-height:220px;overflow:auto}.terminal{grid-template-columns:1fr}.command-list{border-right:0;border-bottom:1px solid #65705e;display:flex;overflow:auto}.command-list button{min-width:130px;border-right:1px solid #424a3e}.output{min-height:300px}.dir strong{font-size:34px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <header class="top"><b>LINUX / SPACE MAP</b><a href="/blog/">返回博客</a></header>
+  <main>
+    <section class="hero">
+      <div class="intro"><h1>/<span>一切皆文件</span></h1><p>Linux 不是一张命令清单，而是一片有结构的空间。拖拽、缩放并进入目录，用命令聚光灯理解系统。</p><div class="hint">DRAG TO PAN / WHEEL TO ZOOM / CLICK TO INSPECT</div></div>
+      <div class="viewport" id="viewport" aria-label="可缩放 Linux 文件系统空间地图">
+        <div class="toolbar"><div class="tools"><button id="zoomIn" aria-label="放大">+</button><button id="zoomOut" aria-label="缩小">-</button><button id="reset" aria-label="重置">R</button></div><div class="path" id="path">root@linux:/#</div></div>
+        <div class="map" id="map"><div class="root">FHS</div>{directories.map(dir=><button class="dir" style={`--color:${dir.color};left:${dir.x}%;top:${dir.y}%;width:${dir.w}%;height:${dir.h}%`} data-name={dir.name} data-summary={dir.summary} data-detail={dir.detail} data-commands={dir.commands}><strong>{dir.name}</strong><span>{dir.summary}</span></button>)}</div>
+        <aside class="spotlight"><small>COMMAND SPOTLIGHT</small><h2 id="dirName">/</h2><p id="dirDetail">选择一个目录，查看它在文件系统中的职责。</p><pre id="dirCommands">pwd
+ls -la /</pre></aside>
+      </div>
+    </section>
+    <section class="command-field"><h2>把命令放进空间里理解</h2><div class="terminal"><div class="command-list"><button class="active" data-output="root@songhahaha:~# pwd
+/root
+root@songhahaha:~# ls -la
+drwx------ root root .">路径与提示符</button><button data-output="$ ls -l /etc | grep passwd
+-rw-r--r-- 1 root root passwd
+
+前一个命令的输出成为 grep 的输入。">管道</button><button data-output="$ command > output.txt
+$ command >> output.txt
+$ command 2> error.txt
+
+标准输出与错误可以被分别重定向。">重定向</button><button data-output="$ nohup command &
+[1] 28491
+
+退出终端后，进程仍可继续运行。">后台进程</button><button data-output="$ ps aux --sort=-%cpu
+$ kill PID
+$ systemctl status nginx
+
+进程、信号和服务构成运行时管理面。">进程管理</button></div><pre class="output"><span class="prompt">$</span> <span id="commandOutput">root@songhahaha:~# pwd
+/root
+root@songhahaha:~# ls -la
+drwx------ root root .</span></pre></div></section>
+    <section class="concepts"><h2>三个先建立的心智模型</h2><div class="flow"><div><strong>命令</strong><p><code>ps aux</code> 产生进程列表。</p></div><span class="arrow">→</span><div><strong>管道</strong><p><code>|</code> 把输出送入下一个程序。</p></div><span class="arrow">→</span><div><strong>过滤</strong><p><code>grep nginx</code> 只留下关心的行。</p></div></div><div class="permissions"><div><h3>权限不是魔法数字</h3><p>读为 4，写为 2，执行为 1。755 表示所有者拥有全部权限，组和其他用户可读、可执行。</p></div><pre>chmod 755 script.sh
+chown user:group file
+usermod -aG docker user
+sudo systemctl restart nginx</pre></div></section>
+  </main>
+  <OriginalArticle blog={blog} />
+  <script>
+    const viewport = document.querySelector('#viewport');
+    const map = document.querySelector('#map');
+    let scale = .72, x = 10, y = 50, dragging = false, startX = 0, startY = 0;
+    const render = () => map.style.transform = `translate(${x}px,${y}px) scale(${scale})`;
+    const zoom = amount => { scale = Math.min(1.6, Math.max(.42, scale + amount)); render(); };
+    render();
+    viewport.addEventListener('pointerdown', event => { if(event.target.closest('button')) return; dragging=true; startX=event.clientX-x; startY=event.clientY-y; viewport.classList.add('dragging'); viewport.setPointerCapture(event.pointerId); });
+    viewport.addEventListener('pointermove', event => { if(!dragging) return; x=event.clientX-startX; y=event.clientY-startY; render(); });
+    viewport.addEventListener('pointerup', () => { dragging=false; viewport.classList.remove('dragging'); });
+    viewport.addEventListener('wheel', event => { event.preventDefault(); zoom(event.deltaY > 0 ? -.08 : .08); }, {passive:false});
+    document.querySelector('#zoomIn').addEventListener('click',()=>zoom(.12));
+    document.querySelector('#zoomOut').addEventListener('click',()=>zoom(-.12));
+    document.querySelector('#reset').addEventListener('click',()=>{scale=.72;x=10;y=50;render();});
+    document.querySelectorAll('.dir').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); document.querySelectorAll('.dir').forEach(item=>item.classList.remove('active')); button.classList.add('active'); document.querySelector('#dirName').textContent=button.dataset.name; document.querySelector('#dirDetail').textContent=button.dataset.detail; document.querySelector('#dirCommands').textContent=button.dataset.commands; document.querySelector('#path').textContent=`root@linux:${button.dataset.name}#`; }));
+    const commandOutput=document.querySelector('#commandOutput'); document.querySelectorAll('[data-output]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-output]').forEach(item=>item.classList.remove('active'));button.classList.add('active');commandOutput.textContent=button.dataset.output;}));
+  </script>
+</body>
+</html>

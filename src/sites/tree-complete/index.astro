@@ -1,0 +1,2380 @@
+---
+interface Props {
+  blog: any;
+}
+
+const { blog } = Astro.props;
+const { Content } = await blog.render();
+
+const title = blog.data.title || "树基础（树的概念&直径&重心&最小生成树）";
+const description =
+  blog.data.description ||
+  "系统介绍树的基础概念、直径、重心以及最小生成树，配有交互式动画演示";
+const image = blog.data.image || "/image/tree-intro.png";
+const pubDate = blog.data.pubDate;
+const formattedDate = pubDate
+  ? new Date(pubDate).toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  : "";
+
+const modes = [
+  { id: "basics", label: "Basics", index: "01" },
+  { id: "diameter", label: "Diameter", index: "02" },
+  { id: "centroid", label: "Centroid", index: "03" },
+  { id: "mst", label: "MST", index: "04" },
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="LangQi" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --color-bg: #faf8f5;
+        --color-surface: #ffffff;
+        --color-surface-warm: #fdf9f3;
+        --color-text-primary: #2d2a26;
+        --color-text-secondary: #5c5650;
+        --color-text-muted: #9c9488;
+        --color-accent: #14b8a6;
+        --color-accent-light: #ccfbf1;
+        --color-accent-dim: #0d9488;
+        --color-border: #e8e2da;
+        --color-border-light: #f0ebe4;
+        --color-code-bg: #f5f0ea;
+        --color-dot: #e0dbd4;
+        --radius: 12px;
+        --font-display: "Nunito Sans", "Noto Sans SC", sans-serif;
+        --font-body: "Nunito Sans", "Noto Sans SC", sans-serif;
+        --font-mono: "JetBrains Mono", "SF Mono", monospace;
+        --max-width: 780px;
+        --header-height: 72px;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        font-size: 16px;
+      }
+
+      body {
+        font-family: var(--font-body);
+        color: var(--color-text-primary);
+        background: var(--color-bg);
+        line-height: 1.75;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+
+      /* Dot grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: radial-gradient(
+          circle,
+          var(--color-dot) 1px,
+          transparent 1px
+        );
+        background-size: 28px 28px;
+        opacity: 0.4;
+        pointer-events: none;
+      }
+
+      /* Back link */
+      .back-link {
+        position: fixed;
+        top: 1.25rem;
+        left: 1.5rem;
+        z-index: 200;
+        font-family: var(--font-display);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--color-border-light);
+        transition:
+          color 0.25s ease,
+          border-color 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+
+      .back-link:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent-light);
+        box-shadow: 0 2px 12px rgba(20, 184, 166, 0.1);
+      }
+
+      /* Hero */
+      .hero {
+        position: relative;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 6rem 2rem 4rem;
+        text-align: center;
+        overflow: hidden;
+      }
+
+      .hero-cover {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+
+      .hero-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.08;
+        filter: saturate(0.6);
+      }
+
+      .hero-cover::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          var(--color-bg) 0%,
+          transparent 30%,
+          transparent 70%,
+          var(--color-bg) 100%
+        );
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-accent-dim);
+        background: var(--color-accent-light);
+        border-radius: 100px;
+        margin-bottom: 2rem;
+        opacity: 0;
+        transform: translateY(16px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+      }
+
+      .hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: var(--color-text-primary);
+        margin-bottom: 1.25rem;
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 0.8s ease 0.1s,
+          transform 0.8s ease 0.1s;
+      }
+
+      .hero-desc {
+        font-size: 1.125rem;
+        font-weight: 400;
+        color: var(--color-text-secondary);
+        max-width: 540px;
+        margin: 0 auto 2rem;
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.7s ease 0.2s,
+          transform 0.7s ease 0.2s;
+      }
+
+      .hero-meta {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.7s ease 0.35s;
+      }
+
+      .hero.visible .hero-badge,
+      .hero.visible .hero-title,
+      .hero.visible .hero-desc,
+      .hero.visible .hero-meta {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Navigation pills */
+      .nav-pills {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem 1.5rem;
+        background: rgba(250, 248, 245, 0.88);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--color-border-light);
+        transition: box-shadow 0.3s ease;
+      }
+
+      .nav-pills.scrolled {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      }
+
+      .nav-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 1rem;
+        font-family: var(--font-display);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        border-radius: 100px;
+        border: 1px solid transparent;
+        background: transparent;
+        transition:
+          color 0.25s,
+          background 0.25s,
+          border-color 0.25s,
+          box-shadow 0.25s;
+        white-space: nowrap;
+      }
+
+      .nav-pill:hover {
+        color: var(--color-accent-dim);
+        background: var(--color-accent-light);
+        border-color: rgba(20, 184, 166, 0.2);
+      }
+
+      .nav-pill.active {
+        color: var(--color-accent-dim);
+        background: var(--color-accent-light);
+        border-color: rgba(20, 184, 166, 0.3);
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.1);
+      }
+
+      .nav-pill-icon {
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      /* Article wrapper */
+      .article-wrapper {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 4rem 2rem 6rem;
+      }
+
+      /* Prose styles for <Content /> */
+      .prose {
+        font-family: var(--font-body);
+        font-size: 1.0625rem;
+        line-height: 1.85;
+        color: var(--color-text-primary);
+      }
+
+      .prose h1 {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin-top: 4rem;
+        margin-bottom: 1.5rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--color-border-light);
+        color: var(--color-text-primary);
+        scroll-margin-top: calc(var(--header-height) + 2rem);
+      }
+
+      .prose h1:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+
+      .prose h2 {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        margin-top: 3rem;
+        margin-bottom: 1rem;
+        color: var(--color-text-primary);
+        scroll-margin-top: calc(var(--header-height) + 2rem);
+      }
+
+      .prose h3 {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1.4;
+        margin-top: 2.5rem;
+        margin-bottom: 0.75rem;
+        color: var(--color-text-primary);
+        scroll-margin-top: calc(var(--header-height) + 2rem);
+      }
+
+      .prose h4 {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--color-text-secondary);
+        scroll-margin-top: calc(var(--header-height) + 2rem);
+      }
+
+      .prose p {
+        margin-bottom: 1.25rem;
+      }
+
+      .prose a {
+        color: var(--color-accent-dim);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        text-decoration-color: rgba(20, 184, 166, 0.3);
+        transition: text-decoration-color 0.2s;
+      }
+
+      .prose a:hover {
+        text-decoration-color: var(--color-accent);
+      }
+
+      .prose strong {
+        font-weight: 700;
+        color: var(--color-text-primary);
+      }
+
+      .prose ul,
+      .prose ol {
+        margin-bottom: 1.25rem;
+        padding-left: 1.5rem;
+      }
+
+      .prose li {
+        margin-bottom: 0.4rem;
+      }
+
+      .prose li::marker {
+        color: var(--color-accent);
+      }
+
+      .prose blockquote {
+        margin: 1.5rem 0;
+        padding: 1rem 1.5rem;
+        border-left: 3px solid var(--color-accent);
+        background: var(--color-surface-warm);
+        border-radius: 0 var(--radius) var(--radius) 0;
+        color: var(--color-text-secondary);
+        font-style: italic;
+      }
+
+      .prose blockquote p:last-child {
+        margin-bottom: 0;
+      }
+
+      .prose hr {
+        border: none;
+        height: 2px;
+        background: var(--color-border-light);
+        margin: 3rem 0;
+        border-radius: 1px;
+      }
+
+      .prose code {
+        font-family: var(--font-mono);
+        font-size: 0.875em;
+        background: var(--color-code-bg);
+        padding: 0.2em 0.45em;
+        border-radius: 6px;
+        color: var(--color-accent-dim);
+        font-weight: 500;
+      }
+
+      .prose pre {
+        margin: 1.5rem 0;
+        padding: 1.25rem 1.5rem;
+        background: #1e1e2e;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      .prose pre code {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        line-height: 1.7;
+        background: none;
+        padding: 0;
+        border-radius: 0;
+        color: #cdd6f4;
+        font-weight: 400;
+      }
+
+      .prose table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+      }
+
+      .prose th {
+        background: var(--color-surface-warm);
+        font-weight: 700;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid var(--color-border);
+        font-size: 0.85rem;
+        letter-spacing: 0.02em;
+      }
+
+      .prose td {
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid var(--color-border-light);
+      }
+
+      .prose tr:last-child td {
+        border-bottom: none;
+      }
+
+      .prose img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius);
+        margin: 1.5rem auto;
+        display: block;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      }
+
+      /* Math (KaTeX) overrides */
+      .prose .katex-display {
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+      }
+
+      .prose .katex {
+        font-size: 1.05em;
+      }
+
+      /* Interactive component containers */
+      .prose :global([class*="tree-"]),
+      .prose :global([class*="mst-"]),
+      .prose :global(.interactive-container),
+      .prose :global(.visualization) {
+        margin: 2rem 0;
+        border-radius: var(--radius);
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+      }
+
+      /* Footer */
+      .site-footer {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 3rem 2rem;
+        border-top: 1px solid var(--color-border-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        text-align: center;
+      }
+
+      .footer-meta {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        font-weight: 500;
+      }
+
+      .footer-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        justify-content: center;
+      }
+
+      .footer-tag {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.25rem 0.6rem;
+        border-radius: 100px;
+        background: var(--color-code-bg);
+        color: var(--color-text-muted);
+      }
+
+      .footer-link {
+        font-size: 0.85rem;
+        color: var(--color-accent-dim);
+        text-decoration: none;
+        font-weight: 600;
+        transition: opacity 0.2s;
+      }
+
+      .footer-link:hover {
+        opacity: 0.75;
+      }
+
+      /* Scroll animations */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+
+      .fade-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .fade-up {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+
+        .hero-badge,
+        .hero-title,
+        .hero-desc,
+        .hero-meta {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+
+        body::before {
+          animation: none;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .back-link {
+          top: 0.75rem;
+          left: 0.75rem;
+          font-size: 0.8rem;
+          padding: 0.35rem 0.65rem;
+        }
+
+        .hero {
+          min-height: 80dvh;
+          padding: 5rem 1.5rem 3rem;
+        }
+
+        .nav-pills {
+          gap: 0.35rem;
+          padding: 0.75rem 1rem;
+          overflow-x: auto;
+          justify-content: flex-start;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        .nav-pills::-webkit-scrollbar {
+          display: none;
+        }
+
+        .nav-pill {
+          font-size: 0.75rem;
+          padding: 0.4rem 0.75rem;
+        }
+
+        .article-wrapper {
+          padding: 2.5rem 1.25rem 4rem;
+        }
+
+        .prose h1 {
+          font-size: 1.6rem;
+          margin-top: 3rem;
+        }
+
+        .prose h2 {
+          font-size: 1.3rem;
+        }
+
+        .prose h3 {
+          font-size: 1.1rem;
+        }
+
+        .prose pre {
+          padding: 1rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+        }
+
+        .prose table {
+          font-size: 0.85rem;
+        }
+
+        .prose th,
+        .prose td {
+          padding: 0.5rem 0.75rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-title {
+          font-size: 1.75rem;
+        }
+
+        .nav-pill-label {
+          display: none;
+        }
+
+        .nav-pill {
+          padding: 0.5rem 0.75rem;
+        }
+
+        .nav-pill-icon {
+          font-size: 1.15rem;
+        }
+      }
+
+      /* Spatial graph product shell */
+      :root {
+        --graph-bg: #070c12;
+        --graph-panel: #0b121a;
+        --graph-panel-strong: #101a24;
+        --graph-line: #263443;
+        --graph-line-soft: #17232f;
+        --graph-text: #f3f7fa;
+        --graph-muted: #91a1b2;
+        --graph-faint: #5f7183;
+        --graph-accent: #35f2a4;
+        --graph-accent-soft: rgba(53, 242, 164, 0.14);
+        --graph-ink: #07110d;
+        --graph-radius: 4px;
+        --font-display: "Avenir Next", "Noto Sans SC", "Segoe UI", sans-serif;
+        --font-body: "Avenir Next", "Noto Sans SC", "Segoe UI", sans-serif;
+        --font-mono:
+          "SFMono-Regular", "Cascadia Code", "Roboto Mono", monospace;
+        --max-width: 880px;
+        --header-height: 70px;
+      }
+
+      html {
+        background: var(--graph-bg);
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--graph-bg);
+        color: var(--graph-text);
+        line-height: 1.65;
+        overflow-x: clip;
+      }
+
+      body::before {
+        display: none;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--graph-accent);
+        outline-offset: 3px;
+      }
+
+      .back-link {
+        position: static;
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+        padding: 0 0.75rem;
+        border: 1px solid var(--graph-line);
+        border-radius: var(--graph-radius);
+        background: transparent;
+        color: var(--graph-muted);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        backdrop-filter: none;
+        box-shadow: none;
+      }
+
+      .back-link:hover {
+        color: var(--graph-text);
+        border-color: var(--graph-faint);
+        box-shadow: none;
+      }
+
+      .site-bar {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 20;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        border-bottom: 1px solid rgba(145, 161, 178, 0.16);
+        background: rgba(7, 12, 18, 0.72);
+        backdrop-filter: blur(18px);
+      }
+
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        color: var(--graph-text);
+        text-decoration: none;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .brand-mark {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--graph-accent);
+        border-radius: var(--graph-radius);
+      }
+
+      .brand-mark::before,
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--graph-accent);
+        box-shadow:
+          9px 5px 0 var(--graph-accent),
+          3px 13px 0 var(--graph-accent);
+      }
+
+      .brand-mark::before {
+        left: 4px;
+        top: 3px;
+      }
+
+      .brand-mark::after {
+        left: 5px;
+        top: 5px;
+        width: 12px;
+        height: 1px;
+        border-radius: 0;
+        background: rgba(53, 242, 164, 0.6);
+        box-shadow: -1px 8px 0 rgba(53, 242, 164, 0.6);
+        transform: rotate(29deg);
+        transform-origin: left center;
+      }
+
+      .hero {
+        min-height: 100dvh;
+        display: grid;
+        grid-template-columns: minmax(360px, 0.82fr) minmax(0, 1.18fr);
+        align-items: stretch;
+        padding: 70px 0 0;
+        text-align: left;
+        background: var(--graph-bg);
+        overflow: hidden;
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(2.5rem, 4.5vw, 5rem);
+        padding-right: clamp(2rem, 3vw, 3.5rem);
+        border-right: 1px solid var(--graph-line-soft);
+      }
+
+      .hero-copy::after {
+        content: "";
+        position: absolute;
+        right: -1px;
+        top: 22%;
+        width: 1px;
+        height: 24%;
+        background: var(--graph-accent);
+        box-shadow: 0 0 18px rgba(53, 242, 164, 0.45);
+      }
+
+      .hero-kicker {
+        margin-bottom: 1.4rem;
+        color: var(--graph-accent);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .hero-title {
+        max-width: 8.5ch;
+        margin: 0 0 1.4rem;
+        color: var(--graph-text);
+        font-family: var(--font-display);
+        font-size: clamp(3.2rem, 6vw, 6.8rem);
+        font-weight: 600;
+        line-height: 0.9;
+        letter-spacing: -0.065em;
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .hero-title .accent {
+        color: var(--graph-accent);
+      }
+
+      .hero-desc {
+        max-width: 31rem;
+        margin: 0 0 2rem;
+        color: var(--graph-muted);
+        font-size: clamp(0.98rem, 1.35vw, 1.15rem);
+        line-height: 1.65;
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .primary-link,
+      .secondary-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0.65rem 1rem;
+        border-radius: var(--graph-radius);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-decoration: none;
+        white-space: nowrap;
+        transition:
+          transform 160ms ease,
+          background 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .primary-link {
+        border: 1px solid var(--graph-accent);
+        background: var(--graph-accent);
+        color: var(--graph-ink);
+      }
+
+      .secondary-link {
+        border: 1px solid var(--graph-line);
+        background: transparent;
+        color: var(--graph-text);
+      }
+
+      .primary-link:hover,
+      .secondary-link:hover {
+        transform: translateY(-1px);
+      }
+
+      .secondary-link:hover {
+        border-color: var(--graph-faint);
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .primary-link:active,
+      .secondary-link:active,
+      .graph-control:active,
+      .mode-button:active {
+        transform: translateY(1px);
+      }
+
+      .hero-meta {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2.4rem;
+        color: var(--graph-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.04em;
+        opacity: 1;
+        transition: none;
+      }
+
+      .graph-lab {
+        position: relative;
+        min-width: 0;
+        min-height: calc(100dvh - 70px);
+        background: #080e15;
+        isolation: isolate;
+      }
+
+      .graph-lab::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-image:
+          linear-gradient(rgba(112, 136, 157, 0.055) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(112, 136, 157, 0.055) 1px,
+            transparent 1px
+          );
+        background-size: 34px 34px;
+        mask-image: linear-gradient(to left, black 75%, transparent);
+      }
+
+      .graph-toolbar {
+        position: absolute;
+        z-index: 5;
+        top: 1.25rem;
+        left: 1rem;
+        right: 1rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        pointer-events: none;
+      }
+
+      .mode-switcher,
+      .viewport-controls {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--graph-line);
+        border-radius: var(--graph-radius);
+        background: rgba(11, 18, 26, 0.92);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(14px);
+        pointer-events: auto;
+      }
+
+      .mode-button,
+      .graph-control {
+        border: 0;
+        border-right: 1px solid var(--graph-line);
+        border-radius: 0;
+        background: transparent;
+        color: var(--graph-muted);
+        cursor: pointer;
+        font-family: var(--font-mono);
+        transition:
+          color 160ms ease,
+          background 160ms ease,
+          transform 120ms ease;
+      }
+
+      .mode-button {
+        min-height: 40px;
+        padding: 0.55rem 0.65rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .mode-button:last-child,
+      .graph-control:last-child {
+        border-right: 0;
+      }
+
+      .mode-button:hover,
+      .graph-control:hover {
+        color: var(--graph-text);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .mode-button[aria-pressed="true"] {
+        color: var(--graph-ink);
+        background: var(--graph-accent);
+      }
+
+      .mode-index {
+        margin-right: 0.35rem;
+        opacity: 0.56;
+        font-size: 0.58rem;
+      }
+
+      .graph-control {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .graph-control[data-action="reset"] {
+        width: auto;
+        padding: 0 0.75rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .graph-stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .graph-stage.is-dragging {
+        cursor: grabbing;
+      }
+
+      .graph-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .graph-status {
+        position: absolute;
+        z-index: 5;
+        left: 1.25rem;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 1rem;
+        pointer-events: none;
+      }
+
+      .mode-explanation {
+        max-width: 470px;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--graph-line);
+        border-radius: var(--graph-radius);
+        background: rgba(11, 18, 26, 0.92);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(14px);
+        pointer-events: auto;
+      }
+
+      .explanation-label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: var(--graph-accent);
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .mode-explanation h2 {
+        margin: 0 0 0.35rem;
+        color: var(--graph-text);
+        font-size: 1.05rem;
+        line-height: 1.25;
+      }
+
+      .mode-explanation p {
+        margin: 0;
+        color: var(--graph-muted);
+        font-size: 0.78rem;
+        line-height: 1.55;
+      }
+
+      .graph-readout {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        border: 1px solid var(--graph-line);
+        border-radius: var(--graph-radius);
+        background: rgba(11, 18, 26, 0.92);
+        backdrop-filter: blur(14px);
+        pointer-events: auto;
+      }
+
+      .readout-item {
+        min-width: 92px;
+        padding: 0.7rem 0.85rem;
+        border-right: 1px solid var(--graph-line);
+      }
+
+      .readout-item:last-child {
+        border-right: 0;
+      }
+
+      .readout-item span {
+        display: block;
+        color: var(--graph-faint);
+        font-family: var(--font-mono);
+        font-size: 0.56rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .readout-item strong {
+        display: block;
+        margin-top: 0.2rem;
+        color: var(--graph-text);
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+
+      .kruskal-action {
+        position: absolute;
+        z-index: 6;
+        right: 1.25rem;
+        bottom: 6.85rem;
+        display: none;
+        align-items: center;
+        gap: 0.7rem;
+        min-height: 40px;
+        padding: 0.55rem 0.8rem;
+        border: 1px solid var(--graph-accent);
+        border-radius: var(--graph-radius);
+        background: var(--graph-accent);
+        color: var(--graph-ink);
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .graph-lab[data-mode="mst"] .kruskal-action {
+        display: inline-flex;
+      }
+
+      .article-shell {
+        position: relative;
+        background: #eef2f4;
+        color: #17212b;
+        border-top: 1px solid var(--graph-line);
+      }
+
+      .article-rail {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: var(--header-height);
+        padding: 0 2rem;
+        border-bottom: 1px solid #d3dce2;
+        background: rgba(238, 242, 244, 0.94);
+        backdrop-filter: blur(16px);
+      }
+
+      .article-rail-title {
+        color: #17212b;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .article-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+      }
+
+      .article-nav a {
+        padding: 0.45rem 0.65rem;
+        border-radius: var(--graph-radius);
+        color: #617180;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .article-nav a:hover {
+        color: #0d5e43;
+        background: #dde7e4;
+      }
+
+      .article-wrapper {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: 6rem 2rem 8rem;
+      }
+
+      .prose {
+        color: #25313c;
+        font-family: var(--font-body);
+        font-size: 1.04rem;
+        line-height: 1.85;
+      }
+
+      .prose :global(h1) {
+        margin: 7rem 0 2rem;
+        padding-top: 1.25rem;
+        border-top: 3px solid #17212b;
+        color: #111a22;
+        font-family: var(--font-display);
+        font-size: clamp(2.2rem, 6vw, 4.6rem);
+        font-weight: 600;
+        line-height: 1.03;
+        letter-spacing: -0.055em;
+        scroll-margin-top: calc(var(--header-height) + 1.5rem);
+      }
+
+      .prose :global(h1:first-of-type) {
+        margin-top: 0;
+      }
+
+      .prose :global(h2) {
+        margin: 4rem 0 1.25rem;
+        color: #111a22;
+        font-size: 1.7rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        scroll-margin-top: calc(var(--header-height) + 1.5rem);
+      }
+
+      .prose :global(h3) {
+        margin: 2.8rem 0 0.85rem;
+        color: #17212b;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+
+      .prose :global(h4) {
+        margin: 2.2rem 0 0.65rem;
+        color: #34424f;
+        font-size: 1.05rem;
+        font-weight: 800;
+      }
+
+      .prose :global(p) {
+        margin-bottom: 1.25rem;
+      }
+
+      .prose :global(a) {
+        color: #08764f;
+        text-decoration-color: rgba(8, 118, 79, 0.4);
+        text-underline-offset: 3px;
+      }
+
+      .prose :global(a:hover) {
+        text-decoration-color: #08764f;
+      }
+
+      .prose :global(strong) {
+        color: #111a22;
+        font-weight: 800;
+      }
+
+      .prose :global(ul),
+      .prose :global(ol) {
+        margin: 0 0 1.4rem;
+        padding-left: 1.5rem;
+      }
+
+      .prose :global(li) {
+        margin-bottom: 0.48rem;
+      }
+
+      .prose :global(li::marker) {
+        color: #0d9b68;
+      }
+
+      .prose :global(blockquote) {
+        margin: 2rem 0;
+        padding: 1.15rem 1.35rem;
+        border: 1px solid #cbd8d3;
+        border-left: 4px solid #0d9b68;
+        border-radius: var(--graph-radius);
+        background: #e5edea;
+        color: #35443e;
+        font-style: normal;
+      }
+
+      .prose :global(hr) {
+        height: 1px;
+        margin: 4rem 0;
+        border: 0;
+        background: #ccd6dc;
+      }
+
+      .prose :global(code) {
+        padding: 0.17em 0.38em;
+        border: 1px solid #cad5db;
+        border-radius: var(--graph-radius);
+        background: #e4e9ec;
+        color: #075e41;
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        font-weight: 600;
+      }
+
+      .prose :global(pre) {
+        margin: 1.8rem 0;
+        padding: 1.35rem 1.5rem;
+        overflow-x: auto;
+        border: 1px solid #263746;
+        border-radius: var(--graph-radius);
+        background: #0b121a;
+        box-shadow: none;
+      }
+
+      .prose :global(pre code) {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #d8e3ec;
+        font-size: 0.83rem;
+        line-height: 1.72;
+      }
+
+      .prose :global(table) {
+        display: block;
+        width: 100%;
+        margin: 1.8rem 0;
+        overflow-x: auto;
+        border: 1px solid #c7d2d8;
+        border-radius: var(--graph-radius);
+        border-collapse: collapse;
+        background: #f6f8f9;
+        font-size: 0.9rem;
+      }
+
+      .prose :global(th) {
+        padding: 0.8rem 1rem;
+        border-bottom: 2px solid #b9c6cd;
+        background: #dfe6ea;
+        color: #1e2a34;
+        font-size: 0.76rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .prose :global(td) {
+        padding: 0.72rem 1rem;
+        border-bottom: 1px solid #d9e0e4;
+      }
+
+      .prose :global(img) {
+        border: 1px solid #cbd5da;
+        border-radius: var(--graph-radius);
+        box-shadow: none;
+      }
+
+      .prose :global(.katex-display) {
+        overflow-x: auto;
+        padding: 0.6rem 0;
+      }
+
+      .site-footer {
+        max-width: none;
+        margin: 0;
+        padding: 3rem 2rem;
+        border-top: 1px solid var(--graph-line);
+        background: var(--graph-bg);
+        color: var(--graph-muted);
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+      }
+
+      .footer-meta {
+        color: var(--graph-faint);
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.04em;
+      }
+
+      .footer-tags {
+        display: none;
+      }
+
+      .footer-link {
+        color: var(--graph-text);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        text-decoration: none;
+      }
+
+      @media (max-width: 1100px) {
+        .hero {
+          grid-template-columns: minmax(300px, 0.8fr) minmax(480px, 1.2fr);
+        }
+
+        .hero-copy {
+          padding-left: 3rem;
+        }
+
+        .mode-index {
+          display: none;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .site-bar {
+          padding: 0 1rem;
+        }
+
+        .hero {
+          min-height: auto;
+          grid-template-columns: 1fr;
+          overflow: visible;
+        }
+
+        .hero-copy {
+          min-height: 560px;
+          padding: 6rem 1.5rem 3rem;
+          border-right: 0;
+          border-bottom: 1px solid var(--graph-line-soft);
+        }
+
+        .hero-copy::after {
+          top: auto;
+          right: auto;
+          bottom: -1px;
+          left: 1.5rem;
+          width: 28%;
+          height: 1px;
+        }
+
+        .hero-title {
+          max-width: 10ch;
+          font-size: clamp(3.3rem, 13vw, 6rem);
+        }
+
+        .graph-lab {
+          min-height: 680px;
+        }
+
+        .graph-toolbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .viewport-controls {
+          align-self: flex-end;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .brand-lockup span:last-child {
+          display: none;
+        }
+
+        .hero-copy {
+          min-height: 520px;
+          padding-top: 5rem;
+        }
+
+        .hero-desc {
+          max-width: 28rem;
+        }
+
+        .hero-meta {
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+
+        .graph-lab {
+          min-height: 620px;
+        }
+
+        .graph-toolbar {
+          top: 0.75rem;
+          left: 0.75rem;
+          right: 0.75rem;
+        }
+
+        .mode-switcher {
+          width: 100%;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+
+        .mode-button {
+          flex: 1 0 auto;
+          padding-inline: 0.7rem;
+        }
+
+        .graph-status {
+          left: 0.75rem;
+          right: 0.75rem;
+          bottom: 0.75rem;
+          grid-template-columns: 1fr;
+        }
+
+        .mode-explanation {
+          max-width: none;
+        }
+
+        .graph-readout {
+          justify-self: start;
+        }
+
+        .kruskal-action {
+          right: 0.75rem;
+          bottom: 10.6rem;
+        }
+
+        .article-rail {
+          padding: 0 1rem;
+          overflow-x: auto;
+        }
+
+        .article-rail-title {
+          display: none;
+        }
+
+        .article-nav {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .article-nav a {
+          padding-inline: 0.35rem;
+        }
+
+        .article-wrapper {
+          padding: 4rem 1.15rem 6rem;
+        }
+
+        .prose {
+          font-size: 0.98rem;
+        }
+
+        .prose :global(h1) {
+          margin-top: 5rem;
+          font-size: clamp(2.25rem, 12vw, 3.4rem);
+        }
+
+        .prose :global(h2) {
+          font-size: 1.45rem;
+        }
+
+        .prose :global(pre) {
+          margin-inline: -0.3rem;
+          padding: 1rem;
+        }
+
+        .site-footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* Final standalone layout lock: prevents legacy article styles from
+         collapsing the interactive graph column. */
+      #tree-atlas .atlas-hero {
+        display: grid;
+        width: 100%;
+        grid-template-columns: minmax(360px, 0.82fr) minmax(520px, 1.18fr);
+        align-items: stretch;
+        text-align: left;
+      }
+
+      #tree-atlas .hero-copy,
+      #tree-atlas .graph-lab {
+        min-width: 0;
+        width: auto;
+      }
+
+      #tree-atlas .hero-copy {
+        grid-column: 1 / 2;
+      }
+
+      #tree-atlas .graph-lab {
+        grid-column: 2 / 3;
+        position: relative;
+        display: block;
+        min-height: calc(100dvh - 70px);
+      }
+
+      #tree-atlas .graph-stage,
+      #tree-atlas .graph-canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      @media (max-width: 900px) {
+        #tree-atlas .atlas-hero {
+          grid-template-columns: 1fr;
+        }
+
+        #tree-atlas .hero-copy,
+        #tree-atlas .graph-lab {
+          grid-column: 1;
+        }
+      }
+    </style>
+  </head>
+  <body id="tree-atlas">
+    <header class="site-bar">
+      <a href="#hero" class="brand-lockup" aria-label="返回树图谱顶部">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Tree Atlas</span>
+      </a>
+      <a href="/blog" class="back-link">Back to journal</a>
+    </header>
+
+    <section class="atlas-hero" id="hero">
+      <div class="hero-copy">
+        <p class="hero-kicker">Interactive field guide</p>
+        <h1 class="hero-title">把树论<span class="accent">放进空间里</span></h1>
+        <p class="hero-desc">
+          缩放、平移并切换算法视角。最长路径、子树重量与 Kruskal
+          选边过程都在同一张图谱中发生。
+        </p>
+        <div class="hero-actions">
+          <a class="primary-link" href="#graph-lab">打开图谱实验台</a>
+          <a class="secondary-link" href="#article">阅读完整教程</a>
+        </div>
+        <div class="hero-meta">
+          <span>{formattedDate || "2026"}</span>
+          <span>4 modes / 10 nodes / weighted graph</span>
+        </div>
+      </div>
+
+      <div class="graph-lab" id="graph-lab" data-mode="basics">
+        <div class="graph-toolbar">
+          <div class="mode-switcher" role="group" aria-label="图谱模式">
+            {
+              modes.map((mode, index) => (
+                <button
+                  class="mode-button"
+                  type="button"
+                  data-mode={mode.id}
+                  aria-pressed={index === 0 ? "true" : "false"}
+                >
+                  <span class="mode-index">{mode.index}</span>
+                  {mode.label}
+                </button>
+              ))
+            }
+          </div>
+          <div class="viewport-controls" aria-label="图谱视图控制">
+            <button
+              class="graph-control"
+              type="button"
+              data-action="zoom-out"
+              aria-label="缩小">−</button
+            >
+            <button
+              class="graph-control"
+              type="button"
+              data-action="zoom-in"
+              aria-label="放大">+</button
+            >
+            <button
+              class="graph-control"
+              type="button"
+              data-action="reset"
+              aria-label="重置视图">Reset</button
+            >
+          </div>
+        </div>
+
+        <div
+          class="graph-stage"
+          id="graph-stage"
+          aria-label="可拖拽、缩放的树图谱"
+        >
+          <canvas class="graph-canvas" id="hero-graph-canvas"></canvas>
+        </div>
+
+        <button class="kruskal-action" id="kruskal-step" type="button">
+          <span>Next edge</span>
+          <span id="kruskal-progress">0 / 14</span>
+        </button>
+
+        <div class="graph-status">
+          <div class="mode-explanation" aria-live="polite">
+            <span class="explanation-label" id="mode-label">Basics</span>
+            <h2 id="mode-title">一棵树，只有一条简单路径</h2>
+            <p id="mode-copy">
+              10 个节点由 9
+              条边连通且无环。拖拽画布移动，滚轮或双指缩放，观察层级和叶节点。
+            </p>
+          </div>
+          <div class="graph-readout" aria-label="图谱数据">
+            <div class="readout-item">
+              <span id="metric-a-label">Nodes</span>
+              <strong id="metric-a-value">10</strong>
+            </div>
+            <div class="readout-item">
+              <span id="metric-b-label">Edges</span>
+              <strong id="metric-b-value">9</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="article-shell" id="article">
+      <nav class="article-rail" aria-label="文章章节">
+        <span class="article-rail-title">Tree field manual</span>
+        <div class="article-nav">
+          <a href="#part-1">Basics</a>
+          <a href="#part-2">Diameter</a>
+          <a href="#part-3">Centroid</a>
+          <a href="#part-4">MST</a>
+        </div>
+      </nav>
+      <article class="article-wrapper">
+        <div class="prose" id="article-content">
+          <div id="part-1"></div>
+          <Content />
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-meta">
+        {formattedDate} / LangQi's Blog
+      </div>
+      <a href="/blog" class="footer-link">Browse all posts</a>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const prefersReducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        const articleContent = document.getElementById("article-content");
+        articleContent?.querySelectorAll("h1").forEach((heading) => {
+          const text = heading.textContent || "";
+          if (text.includes("第一部分")) heading.id = "part-1";
+          if (text.includes("第二部分")) heading.id = "part-2";
+          if (text.includes("第三部分")) heading.id = "part-3";
+          if (text.includes("第四部分")) heading.id = "part-4";
+        });
+
+        const lab = document.getElementById("graph-lab");
+        const stage = document.getElementById("graph-stage");
+        const canvas = document.getElementById("hero-graph-canvas");
+        if (
+          !(lab instanceof HTMLElement) ||
+          !(stage instanceof HTMLElement) ||
+          !(canvas instanceof HTMLCanvasElement)
+        )
+          return;
+
+        const context = canvas.getContext("2d");
+        if (!context) return;
+
+        const nodes = [
+          { id: 0, label: "A", x: 0, y: -210 },
+          { id: 1, label: "B", x: -190, y: -95 },
+          { id: 2, label: "C", x: 185, y: -90 },
+          { id: 3, label: "D", x: -310, y: 50 },
+          { id: 4, label: "E", x: -105, y: 58 },
+          { id: 5, label: "F", x: 90, y: 55 },
+          { id: 6, label: "G", x: 300, y: 45 },
+          { id: 7, label: "H", x: -355, y: 210 },
+          { id: 8, label: "I", x: 10, y: 210 },
+          { id: 9, label: "J", x: 360, y: 205 },
+        ];
+
+        const treeEdges = [
+          { a: 0, b: 1, w: 4 },
+          { a: 0, b: 2, w: 6 },
+          { a: 1, b: 3, w: 3 },
+          { a: 1, b: 4, w: 5 },
+          { a: 2, b: 5, w: 2 },
+          { a: 2, b: 6, w: 7 },
+          { a: 3, b: 7, w: 4 },
+          { a: 5, b: 8, w: 3 },
+          { a: 6, b: 9, w: 5 },
+        ];
+
+        const graphEdges = [
+          ...treeEdges,
+          { a: 1, b: 5, w: 8 },
+          { a: 4, b: 5, w: 1 },
+          { a: 5, b: 6, w: 9 },
+          { a: 7, b: 4, w: 6 },
+          { a: 8, b: 9, w: 7 },
+        ].sort((left, right) => left.w - right.w);
+
+        const diameterEdgeKeys = new Set([
+          "7-3",
+          "3-1",
+          "1-0",
+          "0-2",
+          "2-6",
+          "6-9",
+        ]);
+        const subtreeWeights = [10, 4, 5, 2, 1, 2, 2, 1, 1, 1];
+        const centroidId = 0;
+        const palette = {
+          background: "#080e15",
+          text: "#f3f7fa",
+          muted: "#91a1b2",
+          faint: "#506274",
+          line: "#2a3947",
+          accent: "#35f2a4",
+          rejected: "#c85d65",
+          selected: "#35f2a4",
+        };
+
+        const modeContent = {
+          basics: {
+            label: "Basics",
+            title: "一棵树，只有一条简单路径",
+            copy: "10 个节点由 9 条边连通且无环。拖拽画布移动，滚轮或双指缩放，观察层级和叶节点。",
+            aLabel: "Nodes",
+            aValue: "10",
+            bLabel: "Edges",
+            bValue: "9",
+          },
+          diameter: {
+            label: "Diameter",
+            title: "从 H 到 J 的最长简单路径",
+            copy: "高亮路径跨越 6 条边。两次 DFS 可在线性时间内找到端点，树形 DP 则能处理更一般的边权。",
+            aLabel: "Length",
+            aValue: "6 edges",
+            bLabel: "Endpoints",
+            bValue: "H → J",
+          },
+          centroid: {
+            label: "Centroid",
+            title: "删去 A，最大分量不超过一半",
+            copy: "节点标签旁显示以 A 为根时的子树大小。A 的最大子树为 5，满足 max_part ≤ n / 2，因此它是重心。",
+            aLabel: "Centroid",
+            aValue: "A",
+            bLabel: "Max part",
+            bValue: "5 / 10",
+          },
+          mst: {
+            label: "MST / Kruskal",
+            title: "按权重排序，只接受不会成环的边",
+            copy: "点击 Next edge 推进 Kruskal。绿色边被加入生成树，红色边因连接同一连通分量而被拒绝。",
+            aLabel: "Selected",
+            aValue: "0 / 9",
+            bLabel: "Weight",
+            bValue: "0",
+          },
+        };
+
+        let mode = "basics";
+        let viewport = { x: 0, y: 18, scale: 0.82 };
+        let dragging = false;
+        let previousPointer = { x: 0, y: 0 };
+        let pinchDistance = 0;
+        let kruskalIndex = 0;
+        let selectedEdges = [];
+        let rejectedEdges = [];
+        let parent = nodes.map((node) => node.id);
+        let totalWeight = 0;
+        let animationFrame = 0;
+        let lastCanvasWidth = 0;
+        let lastCanvasHeight = 0;
+
+        const modeLabel = document.getElementById("mode-label");
+        const modeTitle = document.getElementById("mode-title");
+        const modeCopy = document.getElementById("mode-copy");
+        const metricALabel = document.getElementById("metric-a-label");
+        const metricAValue = document.getElementById("metric-a-value");
+        const metricBLabel = document.getElementById("metric-b-label");
+        const metricBValue = document.getElementById("metric-b-value");
+        const kruskalProgress = document.getElementById("kruskal-progress");
+        const kruskalButton = document.getElementById("kruskal-step");
+
+        const edgeKey = (edge) => `${edge.a}-${edge.b}`;
+        const find = (value) => {
+          while (parent[value] !== value) {
+            parent[value] = parent[parent[value]];
+            value = parent[value];
+          }
+          return value;
+        };
+
+        const resetKruskal = () => {
+          kruskalIndex = 0;
+          selectedEdges = [];
+          rejectedEdges = [];
+          parent = nodes.map((node) => node.id);
+          totalWeight = 0;
+          if (kruskalProgress)
+            kruskalProgress.textContent = `0 / ${graphEdges.length}`;
+          const buttonLabel = kruskalButton?.querySelector("span");
+          if (buttonLabel) buttonLabel.textContent = "Next edge";
+        };
+
+        const updateModeCopy = () => {
+          const content = modeContent[mode];
+          if (modeLabel) modeLabel.textContent = content.label;
+          if (modeTitle) modeTitle.textContent = content.title;
+          if (modeCopy) modeCopy.textContent = content.copy;
+          if (metricALabel) metricALabel.textContent = content.aLabel;
+          if (metricAValue) metricAValue.textContent = content.aValue;
+          if (metricBLabel) metricBLabel.textContent = content.bLabel;
+          if (metricBValue) metricBValue.textContent = content.bValue;
+        };
+
+        const resetViewport = () => {
+          viewport = {
+            x: 0,
+            y: stage.clientWidth < 680 ? 8 : 18,
+            scale: stage.clientWidth < 680 ? 0.62 : 0.82,
+          };
+          requestDraw();
+        };
+
+        const requestDraw = () => {
+          if (animationFrame) return;
+          animationFrame = requestAnimationFrame(() => {
+            animationFrame = 0;
+            draw();
+          });
+        };
+
+        const resizeCanvas = () => {
+          const ratio = Math.min(window.devicePixelRatio || 1, 2);
+          const rect = stage.getBoundingClientRect();
+          canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+          canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+          canvas.style.width = `${rect.width}px`;
+          canvas.style.height = `${rect.height}px`;
+          context.setTransform(ratio, 0, 0, ratio, 0, 0);
+          resetViewport();
+        };
+
+        const roundRect = (
+          x,
+          y,
+          width,
+          height,
+          radius,
+        ) => {
+          context.beginPath();
+          context.roundRect(x, y, width, height, radius);
+        };
+
+        const drawEdgeLabel = (
+          edge,
+          pointA,
+          pointB,
+          color,
+        ) => {
+          const x = (pointA.x + pointB.x) / 2;
+          const y = (pointA.y + pointB.y) / 2;
+          context.save();
+          roundRect(x - 12, y - 10, 24, 20, 3);
+          context.fillStyle = palette.background;
+          context.fill();
+          context.strokeStyle = color;
+          context.lineWidth = 1;
+          context.stroke();
+          context.fillStyle = color;
+          context.font = "700 10px SFMono-Regular, monospace";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(String(edge.w), x, y + 0.5);
+          context.restore();
+        };
+
+        const draw = () => {
+          const width = stage.clientWidth;
+          const height = stage.clientHeight;
+          context.clearRect(0, 0, width, height);
+          context.save();
+          context.translate(width / 2 + viewport.x, height / 2 + viewport.y);
+          context.scale(viewport.scale, viewport.scale);
+
+          const edges = mode === "mst" ? graphEdges : treeEdges;
+          edges.forEach((edge, index) => {
+            const pointA = nodes[edge.a];
+            const pointB = nodes[edge.b];
+            let color = palette.line;
+            let lineWidth = 2;
+            let alpha = 1;
+
+            if (mode === "diameter") {
+              const key = edgeKey(edge);
+              const reverseKey = `${edge.b}-${edge.a}`;
+              const active =
+                diameterEdgeKeys.has(key) || diameterEdgeKeys.has(reverseKey);
+              color = active ? palette.accent : palette.line;
+              lineWidth = active ? 6 : 1.5;
+              alpha = active ? 1 : 0.35;
+            }
+
+            if (mode === "centroid") {
+              const touchesCentroid =
+                edge.a === centroidId || edge.b === centroidId;
+              color = touchesCentroid ? palette.accent : palette.line;
+              lineWidth = touchesCentroid ? 4 : 1.5;
+              alpha = touchesCentroid ? 0.92 : 0.4;
+            }
+
+            if (mode === "mst") {
+              const isSelected = selectedEdges.includes(index);
+              const isRejected = rejectedEdges.includes(index);
+              const isCurrent =
+                index === kruskalIndex && kruskalIndex < graphEdges.length;
+              if (isSelected) {
+                color = palette.selected;
+                lineWidth = 5;
+              } else if (isRejected) {
+                color = palette.rejected;
+                lineWidth = 3;
+                alpha = 0.7;
+              } else if (isCurrent) {
+                color = palette.text;
+                lineWidth = 3;
+              } else {
+                color = palette.line;
+                alpha = index < kruskalIndex ? 0.22 : 0.58;
+              }
+            }
+
+            context.save();
+            context.globalAlpha = alpha;
+            context.beginPath();
+            context.moveTo(pointA.x, pointA.y);
+            context.lineTo(pointB.x, pointB.y);
+            context.strokeStyle = color;
+            context.lineWidth = lineWidth;
+            context.lineCap = "round";
+            context.stroke();
+            context.restore();
+
+            if (mode === "mst") drawEdgeLabel(edge, pointA, pointB, color);
+          });
+
+          nodes.forEach((node) => {
+            const isLeaf = !treeEdges.some((edge) => edge.a === node.id);
+            const isDiameterNode =
+              mode === "diameter" && [7, 3, 1, 0, 2, 6, 9].includes(node.id);
+            const isCentroid = mode === "centroid" && node.id === centroidId;
+            const radius = isCentroid ? 24 : 19;
+
+            if (isCentroid) {
+              context.beginPath();
+              context.arc(node.x, node.y, 40, 0, Math.PI * 2);
+              context.fillStyle = "rgba(53, 242, 164, 0.1)";
+              context.fill();
+              context.strokeStyle = "rgba(53, 242, 164, 0.38)";
+              context.setLineDash([4, 5]);
+              context.stroke();
+              context.setLineDash([]);
+            }
+
+            context.beginPath();
+            context.arc(node.x, node.y, radius, 0, Math.PI * 2);
+            context.fillStyle =
+              isCentroid || isDiameterNode ? palette.accent : "#101b25";
+            context.fill();
+            context.strokeStyle =
+              isCentroid || isDiameterNode
+                ? palette.accent
+                : isLeaf
+                  ? palette.muted
+                  : palette.line;
+            context.lineWidth = 2;
+            context.stroke();
+
+            context.fillStyle =
+              isCentroid || isDiameterNode ? "#07110d" : palette.text;
+            context.font = "800 12px SFMono-Regular, monospace";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillText(node.label, node.x, node.y + 0.5);
+
+            if (mode === "basics") {
+              context.fillStyle = isLeaf ? palette.accent : palette.faint;
+              context.font = "700 9px SFMono-Regular, monospace";
+              context.fillText(
+                isLeaf ? "LEAF" : `NODE ${node.id + 1}`,
+                node.x,
+                node.y + 34,
+              );
+            }
+
+            if (mode === "centroid") {
+              const label =
+                node.id === centroidId
+                  ? `CENTROID · ${subtreeWeights[node.id]}`
+                  : `SIZE ${subtreeWeights[node.id]}`;
+              context.fillStyle =
+                node.id === centroidId ? palette.accent : palette.muted;
+              context.font = "700 9px SFMono-Regular, monospace";
+              context.fillText(label, node.x, node.y + 36);
+            }
+          });
+
+          context.restore();
+        };
+
+        const zoomAt = (clientX, clientY, factor) => {
+          const rect = stage.getBoundingClientRect();
+          const pointX = clientX - rect.left - rect.width / 2;
+          const pointY = clientY - rect.top - rect.height / 2;
+          const previousScale = viewport.scale;
+          const nextScale = Math.min(
+            2.2,
+            Math.max(0.42, previousScale * factor),
+          );
+          const scaleRatio = nextScale / previousScale;
+          viewport.x = pointX - (pointX - viewport.x) * scaleRatio;
+          viewport.y = pointY - (pointY - viewport.y) * scaleRatio;
+          viewport.scale = nextScale;
+          requestDraw();
+        };
+
+        const setMode = (nextMode) => {
+          mode = nextMode;
+          lab.dataset.mode = mode;
+          document.querySelectorAll(".mode-button").forEach((button) => {
+            button.setAttribute(
+              "aria-pressed",
+              button.getAttribute("data-mode") === mode ? "true" : "false",
+            );
+          });
+          if (mode === "mst") resetKruskal();
+          updateModeCopy();
+          requestDraw();
+        };
+
+        document.querySelectorAll(".mode-button").forEach((button) => {
+          button.addEventListener("click", () =>
+            setMode(button.getAttribute("data-mode") || "basics"),
+          );
+        });
+
+        document.querySelectorAll(".graph-control").forEach((button) => {
+          button.addEventListener("click", () => {
+            const action = button.getAttribute("data-action");
+            if (action === "reset") resetViewport();
+            if (action === "zoom-in")
+              zoomAt(
+                stage.getBoundingClientRect().left + stage.clientWidth / 2,
+                stage.getBoundingClientRect().top + stage.clientHeight / 2,
+                1.2,
+              );
+            if (action === "zoom-out")
+              zoomAt(
+                stage.getBoundingClientRect().left + stage.clientWidth / 2,
+                stage.getBoundingClientRect().top + stage.clientHeight / 2,
+                0.84,
+              );
+          });
+        });
+
+        stage.addEventListener(
+          "wheel",
+          (event) => {
+            event.preventDefault();
+            zoomAt(event.clientX, event.clientY, event.deltaY < 0 ? 1.1 : 0.9);
+          },
+          { passive: false },
+        );
+
+        stage.addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "touch") return;
+          dragging = true;
+          previousPointer = { x: event.clientX, y: event.clientY };
+          stage.classList.add("is-dragging");
+          stage.setPointerCapture(event.pointerId);
+        });
+
+        stage.addEventListener("pointermove", (event) => {
+          if (!dragging || event.pointerType === "touch") return;
+          viewport.x += event.clientX - previousPointer.x;
+          viewport.y += event.clientY - previousPointer.y;
+          previousPointer = { x: event.clientX, y: event.clientY };
+          requestDraw();
+        });
+
+        const endPointerDrag = () => {
+          dragging = false;
+          stage.classList.remove("is-dragging");
+        };
+        stage.addEventListener("pointerup", endPointerDrag);
+        stage.addEventListener("pointercancel", endPointerDrag);
+
+        stage.addEventListener(
+          "touchstart",
+          (event) => {
+            if (event.touches.length === 1) {
+              previousPointer = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY,
+              };
+              stage.classList.add("is-dragging");
+            }
+            if (event.touches.length === 2) {
+              pinchDistance = Math.hypot(
+                event.touches[0].clientX - event.touches[1].clientX,
+                event.touches[0].clientY - event.touches[1].clientY,
+              );
+            }
+          },
+          { passive: false },
+        );
+
+        stage.addEventListener(
+          "touchmove",
+          (event) => {
+            event.preventDefault();
+            if (event.touches.length === 1) {
+              const touch = event.touches[0];
+              viewport.x += touch.clientX - previousPointer.x;
+              viewport.y += touch.clientY - previousPointer.y;
+              previousPointer = { x: touch.clientX, y: touch.clientY };
+              requestDraw();
+            }
+            if (event.touches.length === 2) {
+              const currentDistance = Math.hypot(
+                event.touches[0].clientX - event.touches[1].clientX,
+                event.touches[0].clientY - event.touches[1].clientY,
+              );
+              const centerX =
+                (event.touches[0].clientX + event.touches[1].clientX) / 2;
+              const centerY =
+                (event.touches[0].clientY + event.touches[1].clientY) / 2;
+              if (pinchDistance)
+                zoomAt(centerX, centerY, currentDistance / pinchDistance);
+              pinchDistance = currentDistance;
+            }
+          },
+          { passive: false },
+        );
+
+        stage.addEventListener("touchend", () => {
+          pinchDistance = 0;
+          stage.classList.remove("is-dragging");
+        });
+
+        kruskalButton?.addEventListener("click", () => {
+          if (kruskalIndex >= graphEdges.length) {
+            resetKruskal();
+            updateModeCopy();
+            requestDraw();
+            return;
+          }
+
+          const edge = graphEdges[kruskalIndex];
+          const rootA = find(edge.a);
+          const rootB = find(edge.b);
+          if (rootA !== rootB) {
+            parent[rootA] = rootB;
+            selectedEdges.push(kruskalIndex);
+            totalWeight += edge.w;
+          } else {
+            rejectedEdges.push(kruskalIndex);
+          }
+          kruskalIndex += 1;
+          if (kruskalProgress)
+            kruskalProgress.textContent = `${kruskalIndex} / ${graphEdges.length}`;
+          if (metricAValue)
+            metricAValue.textContent = `${selectedEdges.length} / 9`;
+          if (metricBValue) metricBValue.textContent = String(totalWeight);
+          if (kruskalIndex >= graphEdges.length && kruskalButton) {
+            const buttonLabel = kruskalButton.querySelector("span");
+            if (buttonLabel) buttonLabel.textContent = "Restart";
+          }
+          requestDraw();
+        });
+
+        const observer = new ResizeObserver(() => {
+          if (
+            Math.abs(stage.clientWidth - lastCanvasWidth) < 1 &&
+            Math.abs(stage.clientHeight - lastCanvasHeight) < 1
+          )
+            return;
+          lastCanvasWidth = stage.clientWidth;
+          lastCanvasHeight = stage.clientHeight;
+          resizeCanvas();
+        });
+        observer.observe(stage);
+
+        updateModeCopy();
+        if (prefersReducedMotion) canvas.setAttribute("data-static", "true");
+      });
+    </script>
+  </body>
+</html>

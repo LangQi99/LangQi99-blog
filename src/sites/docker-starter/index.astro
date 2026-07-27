@@ -1,0 +1,175 @@
+---
+import type { CollectionEntry } from "astro:content";
+import OriginalArticle from "../../components/article/OriginalArticle.astro";
+interface Props { blog: CollectionEntry<"blog"> }
+const { blog } = Astro.props;
+const { title, description } = blog.data;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="dockyard">
+    <nav class="dock-nav">
+      <a href="/blog/">LANGQI / DOCKYARD</a>
+      <span>CONTAINER ANATOMY</span>
+    </nav>
+    <main>
+      <section class="dock-hero">
+        <div class="dock-copy">
+          <h1>把应用封进一个<br /><strong>可搬运的世界。</strong></h1>
+          <p>拖动剖面，拆开镜像层。启动容器，观察端口、进程与持久化数据如何各司其职。</p>
+          <div class="dock-controls">
+            <button id="explode-toggle" type="button">拆解镜像</button>
+            <button id="run-toggle" type="button">启动容器</button>
+          </div>
+        </div>
+        <div class="container-rig" id="container-rig" aria-label="可拆解容器分层剖面">
+          <div class="rig-label"><span>my_app:latest</span><output id="rig-state">IMAGE / IDLE</output></div>
+          <div class="rig-scene">
+            <div class="layer layer-runtime" data-label="RUNTIME"><b>node:18-alpine</b><span>28 MB</span></div>
+            <div class="layer layer-deps" data-label="DEPENDENCIES"><b>node_modules</b><span>64 MB</span></div>
+            <div class="layer layer-source" data-label="SOURCE"><b>server.js</b><span>12 KB</span></div>
+            <div class="layer layer-config" data-label="CONFIG"><b>CMD + EXPOSE</b><span>3000/tcp</span></div>
+            <div class="process-core"><i></i><span>PID 1</span></div>
+          </div>
+          <label class="rotation-control">ROTATE VIEW <input id="rotation" type="range" min="-28" max="28" value="-12" /></label>
+          <div class="runtime-strip">
+            <span><i id="health-light"></i> HEALTH <b id="health-value">STOPPED</b></span>
+            <span>PORT <b id="port-value">-</b></span>
+            <span>MEMORY <b id="memory-value">0 MB</b></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="dock-principle">
+        <div><span>IMAGE</span><h2>只读模板，按层复用。</h2><p>Dockerfile 的每条指令生成一层。没有变化的依赖层可以直接命中缓存。</p></div>
+        <div><span>CONTAINER</span><h2>镜像的运行实例。</h2><p>共享宿主机内核，却拥有自己的文件系统、网络与进程空间。</p></div>
+        <div><span>ENGINE</span><h2>构建、运行、连接。</h2><p>dockerd、REST API 与 CLI 共同管理镜像、容器、网络和卷。</p></div>
+      </section>
+
+      <section class="dock-compare">
+        <header><h2>隔离，不必搬进一整台机器。</h2><p>容器共享内核，所以启动更快、体积更小、密度更高。</p></header>
+        <div class="compare-visual">
+          <div class="container-side">
+            <div class="mini-app">APP</div><div class="mini-app">APP</div><div class="mini-app">APP</div>
+            <div class="shared">SHARED OS KERNEL</div><div class="host">HOST</div>
+          </div>
+          <div class="vm-side">
+            <div><span>APP</span><b>GUEST OS</b></div><div><span>APP</span><b>GUEST OS</b></div>
+            <div class="hypervisor">HYPERVISOR + HOST</div>
+          </div>
+        </div>
+        <div class="metrics"><span>启动 <b>秒级</b></span><span>体积 <b>MB</b></span><span>性能 <b>接近原生</b></span><span>隔离 <b>进程级</b></span></div>
+      </section>
+
+      <section class="command-deck">
+        <div class="command-intro"><h2>六个动作，掌握生命周期。</h2><p>点击命令，把同一个容器从不存在推进到运行、观察、进入与删除。</p></div>
+        <div class="command-console">
+          <div class="command-tabs">
+            <button data-command="run" class="selected">run</button><button data-command="ps">ps</button><button data-command="logs">logs</button><button data-command="exec">exec</button><button data-command="stop">stop</button><button data-command="rm">rm</button>
+          </div>
+          <pre id="command-output">docker run -d -p 8080:80 --name my_nginx nginx
+
+Creating writable layer...
+Mapping 0.0.0.0:8080 -> 80/tcp
+Container my_nginx is running.</pre>
+        </div>
+      </section>
+
+      <section class="storage-map">
+        <div class="network-map">
+          <h2>网络让服务互相找到。</h2>
+          <div class="network-line"><span>WEB :3000</span><i></i><span>DB :5432</span></div>
+          <code>docker network create my-network</code>
+        </div>
+        <div class="volume-map">
+          <h2>卷让数据活得更久。</h2>
+          <div class="volume-vessel"><span>CONTAINER</span><i></i><b>app-data</b></div>
+          <code>docker run -v app-data:/data my-image</code>
+        </div>
+      </section>
+
+      <section class="build-recipe">
+        <h2>让最终镜像只带走运行所需。</h2>
+        <pre><code>FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine
+USER node
+COPY --from=builder /app/dist ./dist
+EXPOSE 3000
+CMD ["node", "dist/server.js"]</code></pre>
+        <div><b>多阶段构建</b><b>固定版本</b><b>非 root 用户</b><b>.dockerignore</b><b>健康检查</b></div>
+      </section>
+    </main>
+    <footer class="dock-footer"><a href="/blog/">返回文章列表</a><span>BUILD ONCE. RUN ANYWHERE.</span></footer>
+  </div>
+
+  <style>
+    .dockyard{--ink:#17212a;--steel:#d7dfe3;--blue:#1667d9;--orange:#ff6b2c;--paper:#eef2f2;position:relative;z-index:10000;min-height:100dvh;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans","Noto Sans SC",sans-serif}.dockyard~*{display:none!important}.dockyard *{box-sizing:border-box}.dockyard a{color:inherit}.dock-nav{height:64px;display:flex;justify-content:space-between;align-items:center;padding:0 clamp(18px,4vw,64px);border-bottom:1px solid #9ca9af;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em}.dock-nav a{text-decoration:none}.dock-nav span{color:#63727a}
+    .dock-hero{min-height:calc(100dvh - 64px);display:grid;grid-template-columns:.8fr 1.2fr;align-items:center;gap:clamp(26px,5vw,80px);padding:clamp(32px,5vh,58px) clamp(18px,4vw,64px);background:linear-gradient(90deg,#eef2f2 0 48%,#dce4e7 48%)}.dock-copy h1{font-size:clamp(45px,5.7vw,84px);line-height:.97;letter-spacing:-.06em;margin:0}.dock-copy h1 strong{color:var(--blue)}.dock-copy p{font-size:19px;line-height:1.65;color:#52616a;max-width:540px;margin:28px 0}.dock-controls{display:flex;gap:12px}.dock-controls button{font:700 12px "IBM Plex Mono",monospace;padding:13px 17px;border:2px solid var(--ink);background:transparent;cursor:pointer}.dock-controls button:last-child{background:var(--orange);color:#131b20}
+    .container-rig{border:2px solid var(--ink);background:#c8d2d7;box-shadow:16px 16px 0 #23313a;min-height:650px;display:grid;grid-template-rows:46px 1fr 48px 74px}.rig-label{display:flex;justify-content:space-between;align-items:center;padding:0 16px;border-bottom:2px solid var(--ink);font:700 11px "IBM Plex Mono",monospace}.rig-label output{color:var(--blue)}.rig-scene{position:relative;perspective:900px;display:grid;place-items:center;overflow:hidden}.layer{position:absolute;width:64%;height:104px;border:2px solid var(--ink);display:flex;justify-content:space-between;align-items:flex-end;padding:14px 18px;transform:rotateX(58deg) rotateZ(var(--rotation,-12deg)) translateY(var(--y));transition:transform .65s cubic-bezier(.2,.8,.2,1),filter .3s;box-shadow:0 18px 28px rgba(23,33,42,.18)}.layer:before{content:attr(data-label);position:absolute;top:12px;left:18px;font:700 10px "IBM Plex Mono",monospace;letter-spacing:.1em}.layer b{font-size:14px}.layer span{font:600 10px "IBM Plex Mono",monospace}.layer-runtime{--y:95px;background:#91a5af}.layer-deps{--y:32px;background:#5ba1dc}.layer-source{--y:-31px;background:#a6d87d}.layer-config{--y:-94px;background:#ff8b55}.container-rig.exploded .layer-runtime{--y:175px}.container-rig.exploded .layer-deps{--y:60px}.container-rig.exploded .layer-source{--y:-55px}.container-rig.exploded .layer-config{--y:-170px}.process-core{position:absolute;display:grid;place-items:center;width:100px;height:100px;border-radius:50%;background:#16232b;color:white;font:700 10px "IBM Plex Mono",monospace;transform:translateY(-8px);opacity:0;transition:opacity .3s,transform .3s}.process-core i{width:18px;height:18px;border:4px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:docker-spin 1s linear infinite}.container-rig.running .process-core{opacity:1;transform:translateY(-18px)}.rotation-control{display:flex;align-items:center;gap:16px;padding:0 18px;border-top:1px solid #75858d;font:700 10px "IBM Plex Mono",monospace}.rotation-control input{flex:1;accent-color:var(--orange)}.runtime-strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--ink)}.runtime-strip>span{display:flex;flex-direction:column;justify-content:center;padding:10px 14px;font:700 9px "IBM Plex Mono",monospace}.runtime-strip>span+span{border-left:1px solid var(--ink)}.runtime-strip b{font-size:15px;margin-top:5px}.runtime-strip i{display:inline-block;width:7px;height:7px;background:#7e8983;margin-right:6px}.running #health-light{background:#58be48}
+    .dock-principle{display:grid;grid-template-columns:repeat(3,1fr);background:#17212a;color:#edf2f3;padding:100px clamp(18px,6vw,92px);gap:1px}.dock-principle>div{padding:40px;border-left:1px solid #52616a}.dock-principle span{font:700 11px "IBM Plex Mono",monospace;color:#76b8ff}.dock-principle h2{font-size:30px;line-height:1.08;margin:24px 0}.dock-principle p{color:#aeb9be;line-height:1.7}
+    .dock-compare{padding:120px clamp(18px,7vw,110px)}.dock-compare header{max-width:850px}.dock-compare h2,.command-deck h2,.storage-map h2,.build-recipe h2{font-size:clamp(38px,5vw,72px);line-height:1;letter-spacing:-.055em;margin:0}.dock-compare header p{font-size:18px;color:#5a6870}.compare-visual{display:grid;grid-template-columns:1fr 1fr;gap:50px;margin-top:70px}.container-side,.vm-side{min-height:310px;display:grid;gap:8px;align-content:end}.container-side{grid-template-columns:repeat(3,1fr)}.mini-app,.vm-side>div{display:grid;place-items:center;background:#74b7f0;border:2px solid var(--ink);min-height:130px;font:700 13px "IBM Plex Mono",monospace}.shared,.host,.hypervisor{grid-column:1/-1;text-align:center;padding:18px;background:#adc0c9;border:2px solid var(--ink);font:700 11px "IBM Plex Mono",monospace}.host{background:#455963;color:white}.vm-side{grid-template-columns:1fr 1fr}.vm-side>div{display:flex;flex-direction:column;gap:30px}.vm-side b{font-size:10px;background:#d2d9dc;padding:10px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);margin-top:60px;border-top:1px solid #a5b0b5}.metrics span{padding:24px 0;font-size:13px}.metrics b{display:block;font-size:22px;margin-top:7px;color:var(--blue)}
+    .command-deck{background:#ff6b2c;padding:120px clamp(18px,7vw,110px);display:grid;grid-template-columns:.8fr 1.2fr;gap:8vw}.command-intro p{line-height:1.7}.command-console{background:#17212a;color:#dfe9ed;border:2px solid var(--ink);align-self:center}.command-tabs{display:flex;overflow:auto;border-bottom:1px solid #52616a}.command-tabs button{border:0;border-right:1px solid #52616a;background:transparent;color:#aebbc0;padding:14px 18px;font:700 11px "IBM Plex Mono",monospace;cursor:pointer}.command-tabs button.selected{background:#dfe7e9;color:#17212a}.command-console pre{white-space:pre-wrap;min-height:210px;margin:0;padding:26px;font:13px/1.8 "IBM Plex Mono",monospace}
+    .storage-map{display:grid;grid-template-columns:1fr 1fr}.storage-map>div{padding:100px clamp(20px,6vw,80px);min-height:520px}.network-map{background:#d9e6ef}.volume-map{background:#dcebcf}.storage-map h2{font-size:clamp(34px,4vw,58px)}.network-line{display:flex;align-items:center;margin:80px 0}.network-line span{border:2px solid var(--ink);padding:22px;font:700 11px "IBM Plex Mono",monospace}.network-line i{height:3px;background:var(--blue);flex:1}.storage-map code{font-size:12px}.volume-vessel{position:relative;border:2px solid var(--ink);height:150px;margin:65px 0;display:grid;place-items:center;font:700 12px "IBM Plex Mono",monospace}.volume-vessel i{position:absolute;width:4px;height:80px;background:var(--orange);bottom:-80px}.volume-vessel b{position:absolute;bottom:-120px;border:2px solid var(--ink);padding:13px 30px;background:#a4c984}
+    .build-recipe{padding:120px clamp(18px,7vw,110px);display:grid;grid-template-columns:.8fr 1.2fr;gap:6vw;background:#f7f4ec}.build-recipe pre{margin:0;background:#18242b;color:#e5eef1;padding:30px;overflow:auto;font:12px/1.8 "IBM Plex Mono",monospace}.build-recipe>div{grid-column:2;display:flex;flex-wrap:wrap;gap:8px}.build-recipe>div b{border:1px solid var(--ink);padding:10px 12px;font-size:11px}.dock-footer{display:flex;justify-content:space-between;padding:28px clamp(18px,4vw,64px);font:700 11px "IBM Plex Mono",monospace}
+    @keyframes docker-spin{to{transform:rotate(360deg)}}@media(max-width:900px){.dock-hero,.command-deck,.build-recipe{grid-template-columns:1fr}.dock-hero{background:#eef2f2}.dock-principle{grid-template-columns:1fr}.dock-principle>div{border-left:0;border-top:1px solid #52616a}.compare-visual,.storage-map{grid-template-columns:1fr}.build-recipe>div{grid-column:auto}.container-rig{min-height:590px}}@media(max-width:560px){.dock-nav span{display:none}.dock-hero{padding:42px 16px 70px}.layer{width:78%}.metrics{grid-template-columns:1fr 1fr}.runtime-strip b{font-size:12px}.dock-footer span{display:none}}@media(prefers-reduced-motion:reduce){.layer,.process-core{transition:none}.process-core i{animation:none}}
+  </style>
+  <OriginalArticle blog={blog} />
+  <script>
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) document.documentElement.dataset.reducedMotion = 'true';
+    const rig = document.querySelector('#container-rig');
+    const explodeButton = document.querySelector('#explode-toggle');
+    const runButton = document.querySelector('#run-toggle');
+    const rotation = document.querySelector('#rotation');
+    const rigState = document.querySelector('#rig-state');
+    const health = document.querySelector('#health-value');
+    const port = document.querySelector('#port-value');
+    const memory = document.querySelector('#memory-value');
+    explodeButton?.addEventListener('click', () => {
+      rig.classList.toggle('exploded');
+      explodeButton.textContent = rig.classList.contains('exploded') ? '合并镜像' : '拆解镜像';
+    });
+    runButton?.addEventListener('click', () => {
+      rig.classList.toggle('running');
+      const running = rig.classList.contains('running');
+      runButton.textContent = running ? '停止容器' : '启动容器';
+      rigState.textContent = running ? 'CONTAINER / RUNNING' : 'IMAGE / IDLE';
+      health.textContent = running ? 'HEALTHY' : 'STOPPED'; port.textContent = running ? '8080:80' : '-'; memory.textContent = running ? '42 MB' : '0 MB';
+    });
+    rotation?.addEventListener('input', event => rig.style.setProperty('--rotation', `${event.target.value}deg`));
+    const commandOutputs = {
+      run:'docker run -d -p 8080:80 --name my_nginx nginx\\n\\nCreating writable layer...\\nMapping 0.0.0.0:8080 -> 80/tcp\\nContainer my_nginx is running.',
+      ps:'docker ps\\n\\nCONTAINER ID   IMAGE   PORTS                  STATUS\\n68c1d2a4       nginx   0.0.0.0:8080->80/tcp   Up 12 seconds',
+      logs:'docker logs -f my_nginx\\n\\nnginx entered RUNNING state\\nGET / HTTP/1.1 200',
+      exec:'docker exec -it my_nginx /bin/sh\\n\\n/ # whoami\\nroot\\n/ # ls\\nbin  etc  usr  var',
+      stop:'docker stop my_nginx\\n\\nSending SIGTERM...\\nmy_nginx',
+      rm:'docker rm my_nginx\\n\\nWritable layer removed.\\nImage layers remain cached.'
+    };
+    document.querySelectorAll('.command-tabs button').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('.command-tabs button').forEach(item => item.classList.toggle('selected', item === button));
+      document.querySelector('#command-output').textContent = commandOutputs[button.dataset.command];
+    }));
+  </script>
+</body>
+</html>

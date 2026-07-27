@@ -1,0 +1,915 @@
+---
+const { blog } = Astro.props;
+const title = blog?.data?.title || "LeetCode 算法可视化";
+const description = blog?.data?.description || "A curated collection of interactive algorithm visualizations";
+const pubDate = blog?.data?.pubDate || new Date().toISOString();
+const categories = blog?.data?.categories || ["Algorithm"];
+const tags = blog?.data?.tags || ["visualization", "leetcode", "algorithm"];
+
+const algorithms = [
+  { id: "rain", zone: "classic", title: "接雨水", english: "Trapping Rain Water", slug: "trapping-rain-water", difficulty: "Hard", x: 48, y: 18 },
+  { id: "reverse", zone: "list", title: "K个一组翻转链表", english: "Reverse Nodes in k-Group", slug: "reverse-nodes-in-k-group", difficulty: "Hard", x: 20, y: 42 },
+  { id: "merge", zone: "list", title: "合并K个升序链表", english: "Merge k Sorted Lists", slug: "merge-k-sorted-lists", difficulty: "Hard", x: 31, y: 67 },
+  { id: "kth", zone: "array", title: "寻找第K大元素", english: "Kth Largest Element in an Array", slug: "kth-largest-element", difficulty: "Medium", x: 59, y: 44 },
+  { id: "substring", zone: "array", title: "无重复字符的最长子串", english: "Longest Substring Without Repeating Characters", slug: "longest-substring-without-repeating-characters", difficulty: "Medium", x: 73, y: 26 },
+  { id: "sum", zone: "array", title: "三数之和", english: "3Sum", slug: "3sum", difficulty: "Medium", x: 79, y: 55 },
+  { id: "add", zone: "array", title: "大数相加", english: "Add Strings", slug: "add-strings", difficulty: "Unrated", x: 66, y: 76 },
+  { id: "version", zone: "array", title: "比较版本号", english: "Compare Version Numbers", slug: "compare-version-numbers", difficulty: "Unrated", x: 88, y: 79 },
+  { id: "lca", zone: "graph", title: "二叉树最近公共祖先", english: "Lowest Common Ancestor", slug: "lowest-common-ancestor", difficulty: "Medium", x: 40, y: 84 },
+  { id: "islands", zone: "graph", title: "岛屿数量", english: "Number of Islands", slug: "number-of-islands", difficulty: "Medium", x: 52, y: 62 },
+  { id: "lru", zone: "system", title: "LRU 缓存", english: "LRU Cache", slug: "lru-cache", difficulty: "Medium", x: 12, y: 78 },
+];
+---
+
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="article:published_time" content={typeof pubDate === 'string' ? pubDate : pubDate.toISOString()} />
+  {categories.map((cat: string) => <meta property="article:section" content={cat} />)}
+  {tags.map((tag: string) => <meta property="article:tag" content={tag} />)}
+  <link rel="preconnect" href="https://api.fontshare.com" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --accent: #8B5CF6;
+      --accent-dim: rgba(139, 92, 246, 0.12);
+      --accent-border: rgba(139, 92, 246, 0.25);
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-hover: #f8f6ff;
+      --text-primary: #1a1a2e;
+      --text-secondary: #64648b;
+      --text-muted: #9494b8;
+      --border: #e8e8f0;
+      --border-hover: #d4d4e0;
+      --radius: 12px;
+      --font: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100dvh;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+      padding: 8px 0;
+    }
+    .back-link:hover {
+      color: var(--accent);
+    }
+    .back-link svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+    }
+    .back-link:hover svg {
+      transform: translateX(-3px);
+    }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250, 250, 250, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-logo svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .algo-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    /* Hero */
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 24px 48px;
+    }
+    .hero-eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    .hero-description {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 560px;
+    }
+
+    /* Category sections */
+    .categories {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 120px;
+    }
+    .category-section {
+      margin-bottom: 64px;
+    }
+    .category-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .category-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .category-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Asymmetric grid */
+    .algo-grid {
+      display: grid;
+      gap: 16px;
+    }
+    .algo-grid[data-count="1"] {
+      grid-template-columns: 1fr;
+      max-width: 600px;
+    }
+    .algo-grid[data-count="2"] {
+      grid-template-columns: 1.4fr 1fr;
+    }
+    .algo-grid[data-count="3"] {
+      grid-template-columns: 1fr 1fr 1.5fr;
+    }
+    .algo-grid[data-count="4"] {
+      grid-template-columns: 1.6fr 1fr;
+    }
+    .algo-grid[data-count="5"] {
+      grid-template-columns: 1fr 1.3fr 1fr;
+    }
+
+    /* Cards */
+    .algo-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.25s,
+                  box-shadow 0.25s,
+                  background 0.2s;
+      will-change: transform;
+    }
+    .algo-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-border);
+      background: var(--surface-hover);
+      box-shadow: 0 12px 40px -8px rgba(139, 92, 246, 0.12),
+                  0 4px 12px -2px rgba(0, 0, 0, 0.04);
+    }
+    .algo-card:active {
+      transform: translateY(-2px) scale(0.99);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+    }
+    .difficulty-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .card-description {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    .card-arrow {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .algo-card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .card-arrow svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 48px 20px 32px;
+      }
+      .categories {
+        padding: 0 20px 80px;
+      }
+      .algo-grid[data-count="2"],
+      .algo-grid[data-count="3"],
+      .algo-grid[data-count="4"],
+      .algo-grid[data-count="5"] {
+        grid-template-columns: 1fr;
+      }
+      .category-section {
+        margin-bottom: 48px;
+      }
+      .header-title {
+        display: none;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .algo-grid[data-count="3"] {
+        grid-template-columns: 1fr 1fr;
+      }
+      .algo-grid[data-count="5"] {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+      .algo-card {
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .algo-card:hover {
+        transform: none;
+        box-shadow: none;
+      }
+      .back-link:hover svg {
+        transform: none;
+      }
+      .card-arrow {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+  </style>
+  <style>
+    :root {
+      --space: #071615;
+      --space-2: #0d211e;
+      --paper: #dff8ef;
+      --mint: #4df2b4;
+      --amber: #f7b955;
+      --line: rgba(168, 232, 209, 0.24);
+      --muted: #8fb4a8;
+      --mono: "SFMono-Regular", "Cascadia Code", monospace;
+    }
+
+    html {
+      background: var(--space);
+      color: var(--paper);
+      font-family: "Satoshi", "Avenir Next", sans-serif;
+    }
+
+    body {
+      min-width: 320px;
+      overflow: hidden;
+      background: var(--space);
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--mint);
+      outline-offset: 3px;
+    }
+
+    .galaxy-shell {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-columns: minmax(270px, 0.38fr) minmax(0, 1fr);
+      background:
+        radial-gradient(circle at 72% 30%, rgba(77, 242, 180, 0.08), transparent 28%),
+        var(--space);
+    }
+
+    .galaxy-copy {
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(1.4rem, 4vw, 4rem);
+      border-right: 1px solid var(--line);
+      background: rgba(7, 22, 21, 0.86);
+    }
+
+    .galaxy-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font: 700 0.7rem/1 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .galaxy-nav a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .galaxy-copy h1 {
+      max-width: 8ch;
+      margin: 0;
+      font-size: clamp(3.5rem, 6vw, 7rem);
+      font-weight: 500;
+      line-height: 0.85;
+      letter-spacing: -0.075em;
+    }
+
+    .galaxy-copy h1 span {
+      display: block;
+      color: var(--mint);
+    }
+
+    .galaxy-copy p {
+      max-width: 29rem;
+      margin: 1.6rem 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .galaxy-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .galaxy-stats div {
+      padding: 0.85rem;
+      background: var(--space);
+      font: 0.64rem/1.4 var(--mono);
+      color: var(--muted);
+    }
+
+    .galaxy-stats b {
+      display: block;
+      color: var(--paper);
+      font-size: 1.35rem;
+    }
+
+    .viewport {
+      position: relative;
+      min-width: 0;
+      min-height: 100dvh;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+      background-image:
+        radial-gradient(circle, rgba(223, 248, 239, 0.48) 0 1px, transparent 1.4px),
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 113px 113px, 72px 72px, 72px 72px;
+    }
+
+    .viewport.is-dragging {
+      cursor: grabbing;
+    }
+
+    .galaxy-world {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 1180px;
+      height: 760px;
+      transform: translate3d(calc(-50% + var(--pan-x, 0px)), calc(-50% + var(--pan-y, 0px)), 0) scale(var(--zoom, 1));
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    .orbit {
+      position: absolute;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .orbit.one { inset: 80px 260px 80px 160px; }
+    .orbit.two { inset: 180px 120px 180px 320px; border-style: dashed; }
+    .orbit.three { inset: 250px 420px 250px 60px; }
+
+    .sector {
+      position: absolute;
+      color: rgba(223, 248, 239, 0.34);
+      font: 700 0.62rem/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .sector.list { left: 90px; top: 270px; }
+    .sector.array { right: 90px; top: 210px; }
+    .sector.graph { left: 390px; bottom: 65px; }
+    .sector.system { left: 30px; bottom: 80px; }
+
+    .edge {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(77, 242, 180, 0.42), transparent);
+      transform-origin: left center;
+      pointer-events: none;
+    }
+
+    .edge.e1 { width: 350px; left: 220px; top: 385px; transform: rotate(-13deg); }
+    .edge.e2 { width: 400px; left: 520px; top: 345px; transform: rotate(17deg); }
+    .edge.e3 { width: 470px; left: 350px; top: 555px; transform: rotate(-20deg); }
+    .edge.e4 { width: 320px; left: 175px; top: 610px; transform: rotate(9deg); }
+
+    .star {
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      width: clamp(88px, 9vw, 126px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--paper);
+      cursor: pointer;
+    }
+
+    .star::before,
+    .star::after {
+      content: "";
+      position: absolute;
+      inset: 31%;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .star::after {
+      inset: 41%;
+      background: currentColor;
+      box-shadow: 0 0 22px currentColor;
+    }
+
+    .star span {
+      position: absolute;
+      inset: calc(100% - 8px) auto auto 50%;
+      width: 150px;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font: 600 0.68rem/1.28 var(--mono);
+      text-align: center;
+    }
+
+    .star[data-difficulty="Hard"] { color: #ff7f66; }
+    .star[data-difficulty="Medium"] { color: var(--amber); }
+    .star[data-difficulty="Unrated"] { color: #8fb4a8; }
+
+    .star:hover::before,
+    .star[aria-pressed="true"]::before {
+      transform: scale(1.7);
+      background: rgba(77, 242, 180, 0.08);
+    }
+
+    .star[aria-pressed="true"] span {
+      color: var(--paper);
+    }
+
+    .viewport-tools {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.2rem;
+      z-index: 6;
+      display: flex;
+      border: 1px solid var(--line);
+      background: rgba(7, 22, 21, 0.88);
+    }
+
+    .viewport-tools button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      color: var(--paper);
+      cursor: pointer;
+      font: 700 1rem/1 var(--mono);
+    }
+
+    .viewport-tools button:last-child {
+      width: auto;
+      padding: 0 0.8rem;
+      border-right: 0;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+    }
+
+    .detail {
+      position: absolute;
+      z-index: 8;
+      right: 1.2rem;
+      bottom: 1.2rem;
+      width: min(370px, calc(100% - 2.4rem));
+      padding: 1.3rem;
+      border: 1px solid var(--line);
+      background: rgba(7, 22, 21, 0.94);
+      backdrop-filter: blur(18px);
+    }
+
+    .detail small {
+      color: var(--mint);
+      font: 700 0.62rem/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .detail h2 {
+      margin: 0.6rem 0 0.35rem;
+      font-size: 1.45rem;
+      letter-spacing: -0.035em;
+    }
+
+    .detail p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+
+    .detail a {
+      display: inline-flex;
+      margin-top: 1rem;
+      padding: 0.65rem 0.9rem;
+      background: var(--mint);
+      color: #061310;
+      font: 800 0.68rem/1 var(--mono);
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+
+      .galaxy-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .galaxy-copy {
+        min-height: 56dvh;
+        gap: 2rem;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .galaxy-copy h1 {
+        max-width: 10ch;
+        font-size: clamp(3.4rem, 15vw, 6.6rem);
+      }
+
+      .viewport {
+        min-height: 760px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .galaxy-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .galaxy-stats div:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .viewport {
+        min-height: 690px;
+      }
+
+      .galaxy-world {
+        width: 900px;
+        height: 650px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="galaxy-shell">
+    <section class="galaxy-copy">
+      <nav class="galaxy-nav">
+        <a href="/blog/">Back to blog</a>
+        <span>11 live demos</span>
+      </nav>
+      <div>
+        <h1>算法<span>星系</span></h1>
+        <p>{description} 拖拽空间、缩放轨道并选择一个节点，进入原文对应的真实可视化 Demo。</p>
+      </div>
+      <div class="galaxy-stats">
+        <div><b>11</b>visualizations</div>
+        <div><b>5</b>semantic sectors</div>
+        <div><b>100%</b>real demo links</div>
+      </div>
+    </section>
+
+    <section class="viewport" data-viewport aria-label="可拖拽算法星系">
+      <div class="viewport-tools">
+        <button type="button" data-action="zoom-in" aria-label="放大">+</button>
+        <button type="button" data-action="zoom-out" aria-label="缩小">-</button>
+        <button type="button" data-action="reset">Reset</button>
+      </div>
+      <div class="galaxy-world" data-world>
+        <div class="orbit one"></div>
+        <div class="orbit two"></div>
+        <div class="orbit three"></div>
+        <span class="sector list">Linked list sector</span>
+        <span class="sector array">Array and string sector</span>
+        <span class="sector graph">Tree and graph sector</span>
+        <span class="sector system">Design sector</span>
+        <i class="edge e1"></i>
+        <i class="edge e2"></i>
+        <i class="edge e3"></i>
+        <i class="edge e4"></i>
+        {algorithms.map((algo, index) => (
+          <button
+            type="button"
+            class="star"
+            style={`--x:${algo.x};--y:${algo.y}`}
+            data-index={index}
+            data-difficulty={algo.difficulty}
+            aria-pressed={index === 0 ? "true" : "false"}
+          >
+            <span>{algo.title}</span>
+          </button>
+        ))}
+      </div>
+      <aside class="detail" aria-live="polite">
+        <small data-detail-meta>Classic / Hard</small>
+        <h2 data-detail-title>{algorithms[0].title}</h2>
+        <p data-detail-copy>{algorithms[0].english}</p>
+        <a data-detail-link href={`/demo/${algorithms[0].slug}.html`}>Open Demo</a>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = JSON.parse(document.querySelector('[data-algorithms]')?.textContent || '[]');
+      const viewport = document.querySelector('[data-viewport]');
+      const world = document.querySelector('[data-world]');
+      const title = document.querySelector('[data-detail-title]');
+      const meta = document.querySelector('[data-detail-meta]');
+      const copy = document.querySelector('[data-detail-copy]');
+      const link = document.querySelector('[data-detail-link]');
+      if (!(viewport instanceof HTMLElement) || !(world instanceof HTMLElement)) return;
+
+      let panX = 0;
+      let panY = 0;
+      let zoom = window.innerWidth < 700 ? 0.72 : 1;
+      let dragging = false;
+      let previousX = 0;
+      let previousY = 0;
+      let pinch = 0;
+
+      const renderTransform = () => {
+        world.style.setProperty('--pan-x', `${panX}px`);
+        world.style.setProperty('--pan-y', `${panY}px`);
+        world.style.setProperty('--zoom', String(zoom));
+      };
+
+      const select = (index: number) => {
+        const item = data[index];
+        if (!item) return;
+        document.querySelectorAll('.star').forEach((star, starIndex) => {
+          star.setAttribute('aria-pressed', String(starIndex === index));
+        });
+        if (title) title.textContent = item.title;
+        if (meta) meta.textContent = `${item.zone} / ${item.difficulty}`;
+        if (copy) copy.textContent = item.english;
+        if (link instanceof HTMLAnchorElement) link.href = `/demo/${item.slug}.html`;
+      };
+
+      document.querySelectorAll('.star').forEach((star) => {
+        star.addEventListener('click', (event) => {
+          event.stopPropagation();
+          select(Number(star.getAttribute('data-index')));
+        });
+      });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'touch') return;
+        dragging = true;
+        previousX = event.clientX;
+        previousY = event.clientY;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!dragging || event.pointerType === 'touch') return;
+        panX += event.clientX - previousX;
+        panY += event.clientY - previousY;
+        previousX = event.clientX;
+        previousY = event.clientY;
+        renderTransform();
+      });
+
+      const endDrag = () => {
+        dragging = false;
+        viewport.classList.remove('is-dragging');
+      };
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+
+      viewport.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        zoom = Math.min(1.65, Math.max(0.48, zoom * (event.deltaY < 0 ? 1.08 : 0.92)));
+        renderTransform();
+      }, { passive: false });
+
+      viewport.addEventListener('touchstart', (event) => {
+        if (event.touches.length === 1) {
+          previousX = event.touches[0].clientX;
+          previousY = event.touches[0].clientY;
+        } else if (event.touches.length === 2) {
+          pinch = Math.hypot(
+            event.touches[0].clientX - event.touches[1].clientX,
+            event.touches[0].clientY - event.touches[1].clientY,
+          );
+        }
+      }, { passive: false });
+
+      viewport.addEventListener('touchmove', (event) => {
+        event.preventDefault();
+        if (event.touches.length === 1) {
+          panX += event.touches[0].clientX - previousX;
+          panY += event.touches[0].clientY - previousY;
+          previousX = event.touches[0].clientX;
+          previousY = event.touches[0].clientY;
+        } else if (event.touches.length === 2) {
+          const distance = Math.hypot(
+            event.touches[0].clientX - event.touches[1].clientX,
+            event.touches[0].clientY - event.touches[1].clientY,
+          );
+          if (pinch) zoom = Math.min(1.65, Math.max(0.48, zoom * distance / pinch));
+          pinch = distance;
+        }
+        renderTransform();
+      }, { passive: false });
+
+      document.querySelector('[data-action="zoom-in"]')?.addEventListener('click', () => {
+        zoom = Math.min(1.65, zoom * 1.15);
+        renderTransform();
+      });
+      document.querySelector('[data-action="zoom-out"]')?.addEventListener('click', () => {
+        zoom = Math.max(0.48, zoom * 0.85);
+        renderTransform();
+      });
+      document.querySelector('[data-action="reset"]')?.addEventListener('click', () => {
+        panX = 0;
+        panY = 0;
+        zoom = window.innerWidth < 700 ? 0.72 : 1;
+        renderTransform();
+      });
+
+      renderTransform();
+    });
+  </script>
+  <script type="application/json" data-algorithms set:html={JSON.stringify(algorithms)}></script>
+</body>
+</html>
