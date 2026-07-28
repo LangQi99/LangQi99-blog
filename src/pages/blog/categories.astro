@@ -1,8 +1,7 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
-import BaseCard from "@components/BaseCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 import { t } from "@config";
-import { Icon } from "astro-icon/components";
 import dayjs from "@utils/dayjs";
 import { DATE_FORMAT } from "@config";
 import type { CollectionEntry } from "astro:content";
@@ -31,114 +30,59 @@ const totalCategories = categoryMap.size;
 ---
 
 <BaseLayout title={t("label.categoryPage")}>
-  <BaseCard title={t("label.categoryPage")}>
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div class="flex items-center gap-2">
-        <Icon name="lucide:folder" class="w-6 h-6 text-primary" />
-        <h1 id="h1" class="text-2xl md:text-3xl font-bold">{t("label.categoryPage")}</h1>
-        <div class="badge badge-primary">{totalCategories} {t("label.totalCategories")}</div>
+  <header class="tui-page-head">
+    <div><p>tree ./categories</p><h1>分类目录。</h1><span>像浏览目录树一样选择主题，右侧即时查看该分类下的文章。</span></div>
+    <div class="tui-page-stat"><b>{totalCategories}</b><span>directories</span></div>
+  </header>
+  <Pane title="tree ./categories --posts" meta={`${allPosts.length} posts`} bodyClass="category-browser-body">
+    <div class="category-browser" data-category-browser>
+      <nav aria-label="分类目录">
+        {categoryEntries.map(([category, posts], index) => (
+          <button type="button" data-category-button data-index={index} aria-pressed={index === 0 ? "true" : "false"}>
+            <span>▸ {category}</span><small>{posts.length}</small>
+          </button>
+        ))}
+      </nav>
+      <div class="category-results">
+        {categoryEntries.map(([category, posts], index) => (
+          <section data-category-panel data-index={index} hidden={index !== 0}>
+            <header><span>./categories/{category}</span><a href={`/blog/category/${category}`}>open route ↗</a></header>
+            <ul class="tui-list">
+              {posts.map((post) => (
+                <li><a class="tui-list-row" href={`/blog/${post.slug}`}><time>{dayjs(post.data.pubDate).format(DATE_FORMAT)}</time><span><strong>{post.data.title}</strong><p>{post.data.description}</p></span><span>{post.data.tags?.[0] || "post"}</span></a></li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
-      <a href="/blog" class="btn btn-outline btn-sm gap-2">
-        <Icon name="lucide:book-open" class="w-4 h-4" />
-        <span>{t("label.backToBlog")}</span>
-      </a>
     </div>
-    <div class="divider my-2"></div>
-    <p class="text-sm opacity-75">{t("label.categoriesPageDescription")}</p>
-  </BaseCard>
-  <BaseCard title={t("label.categoryPage")}>
-    <div class="categories-container">
-      {
-        categoryEntries.length > 0 ? (
-          <div class="categories-grid">
-            {categoryEntries.map(([category, posts], index) => (
-              <div class="category-card" data-index={index}>
-                <div class={`category-inner ${getCategoryColorClass(index)}`}>
-                  <div class="category-header" data-category={category}>
-                    <div class="category-title">
-                      <div class="category-icon">
-                        <Icon name="lucide:folder" />
-                      </div>
-                      <h2>{category}</h2>
-                      <span class="category-count">{posts.length}</span>
-                    </div>
-                    <button class="toggle-btn" aria-label="Toggle category content">
-                      <Icon name="ri:arrow-down-s-line" class="toggle-icon" />
-                    </button>
-                  </div>
-                  <div class="category-content scrollbar-none">
-                    <div class="category-divider" />
-                    <ul class="post-list">
-                      {posts.map((post) => (
-                        <li class="post-item">
-                          <a href={`/blog/${post.slug}`} class="post-link">
-                            <span class="post-title">{post.data.title}</span>
-                            <span class="post-date">{dayjs(post.data.pubDate).format(DATE_FORMAT)}</span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div class="empty-state">
-            <Icon name="ri:emotion-sad-line" class="empty-icon" />
-            <p class="empty-text">{t("label.noCategory")}</p>
-          </div>
-        )
-      }
-    </div>
-  </BaseCard>
+  </Pane>
 </BaseLayout>
 
 <script>
-  document.addEventListener("astro:page-load", () => {
-    const categoryHeaders = document.querySelectorAll(".category-header");
-
-    categoryHeaders.forEach((header) => {
-      header.addEventListener("click", () => {
-        const card = header.closest(".category-card");
-        if (!card) return;
-
-        const content = card.querySelector(".category-content");
-        const toggleIcon = header.querySelector(".toggle-icon");
-        const inner = card.querySelector(".category-inner");
-
-        if (content && toggleIcon && inner) {
-          if (content.classList.contains("expanded")) {
-            // Collapse
-            content.classList.remove("expanded");
-            toggleIcon.classList.remove("rotate-180");
-            inner.classList.remove("expanded");
-          } else {
-            // Expand
-            content.classList.add("expanded");
-            toggleIcon.classList.add("rotate-180");
-            inner.classList.add("expanded");
-
-            // Auto-collapse other cards (accordion behavior)
-            document.querySelectorAll(".category-content.expanded").forEach((openContent) => {
-              if (openContent !== content) {
-                openContent.classList.remove("expanded");
-                const otherCard = openContent.closest(".category-card");
-                if (otherCard) {
-                  const otherToggleIcon = otherCard.querySelector(".toggle-icon");
-                  const otherInner = otherCard.querySelector(".category-inner");
-                  if (otherToggleIcon) {
-                    otherToggleIcon.classList.remove("rotate-180");
-                  }
-                  if (otherInner) {
-                    otherInner.classList.remove("expanded");
-                  }
-                }
-              }
-            });
-          }
-        }
-      });
-    });
-  });
+  const initCategories = () => {
+    const root = document.querySelector("[data-category-browser]");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const buttons = [...root.querySelectorAll("[data-category-button]")];
+    const panels = [...root.querySelectorAll("[data-category-panel]")];
+    buttons.forEach((button) => button.addEventListener("click", () => {
+      buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      panels.forEach((panel) => panel.hidden = panel.dataset.index !== button.dataset.index);
+    }));
+  };
+  document.addEventListener("astro:page-load", initCategories);
+  document.addEventListener("DOMContentLoaded", initCategories, { once: true });
 </script>
+
+<style>
+  .category-browser-body { padding: 0; }
+  .category-browser { min-height: 520px; display: grid; grid-template-columns: 230px minmax(0, 1fr); }
+  .category-browser > nav { padding: 7px; border-right: 1px solid var(--tui-border); background: var(--tui-panel-soft); }
+  .category-browser > nav button { width: 100%; min-height: 38px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; border: 1px solid transparent; background: transparent; color: var(--tui-muted); font: 700 11px var(--tui-code); cursor: pointer; }
+  .category-browser > nav button:hover, .category-browser > nav button[aria-pressed="true"] { border-color: var(--tui-border); background: var(--tui-accent-soft); color: var(--tui-text); }
+  .category-browser > nav small { color: var(--tui-dim); }
+  .category-results section > header { min-height: 42px; display: flex; align-items: center; justify-content: space-between; padding: 0 13px; border-bottom: 1px solid var(--tui-border); color: var(--tui-dim); font: 700 10px var(--tui-code); }
+  .category-results header a { color: var(--tui-accent); text-decoration: none; }
+  @media (max-width: 760px) { .category-browser { grid-template-columns: 1fr; } .category-browser > nav { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--tui-border); } .category-browser > nav button { flex: 0 0 auto; width: auto; } }
+</style>

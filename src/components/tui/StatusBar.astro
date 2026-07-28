@@ -1,0 +1,9 @@
+---
+const path = Astro.url.pathname;
+---
+
+<footer class="tui-statusbar" aria-label="状态栏">
+  <span class="tui-status-branch">static</span>
+  <span class="tui-status-route">{path}</span>
+  <span class="tui-status-keys"><kbd class="tui-kbd">?</kbd> help · <kbd class="tui-kbd">⌘K</kbd> commands</span>
+</footer>

@@ -1,9 +1,8 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
-import BaseCard from "@components/BaseCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 import { t } from "@config";
-import { Icon } from "astro-icon/components";
-import { getAllPosts, getTagsWithCount, getTagColorClass, getTagFontSize } from "@utils/blogUtils";
+import { getAllPosts, getTagsWithCount } from "@utils/blogUtils";
 
 // 获取所有博客文章
 const allPosts = await getAllPosts();
@@ -16,57 +15,64 @@ const tagEntries = Array.from(tagMap.entries());
 tagEntries.sort((a, b) => b[1] - a[1]);
 
 // 找到最大和最小计数，用于缩放
-const maxCount = Math.max(...tagMap.values());
-const minCount = Math.min(...tagMap.values());
-
 // 计算总标签数
 const totalTags = tagMap.size;
 ---
 
 <BaseLayout title={t("label.tagPage")}>
-  <BaseCard title={t("label.tagPage")}>
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div class="flex items-center gap-2">
-        <Icon name="lucide:tag" class="w-6 h-6 text-secondary" />
-        <h1 id="h1" class="text-2xl md:text-3xl font-bold">{t("label.tagPage")}</h1>
-        <div class="badge badge-secondary">{totalTags} {t("label.totalTags")}</div>
-      </div>
-      <a href="/blog" class="btn btn-outline btn-sm gap-2">
-        <Icon name="lucide:book-open" class="w-4 h-4" />
-        <span>{t("label.backToBlog")}</span>
-      </a>
+  <header class="tui-page-head">
+    <div><p>grep -R "#tag" ./posts</p><h1>标签索引。</h1><span>过滤标签、查看频次，并跳转到对应的文章结果工作区。</span></div>
+    <div class="tui-page-stat"><b>{totalTags}</b><span>indexed tags</span></div>
+  </header>
+  <Pane title="grep ./posts --tags --count" meta={`${allPosts.length} posts`} bodyClass="tag-index-body">
+    <div class="tag-query">
+      <span class="tui-prompt">›</span>
+      <input type="search" placeholder="filter tags..." data-tag-filter aria-label="过滤标签" />
+      <span>sorted by frequency</span>
     </div>
-    <div class="divider my-2"></div>
-    <p class="text-sm opacity-75">{t("label.tagsPageDescription")}</p>
-  </BaseCard>
-  <BaseCard title={t("label.tagPage")}>
-    <div class="tags-container">
-      {
-        tagEntries.length > 0 ? (
-          <div class="tags-cloud">
-            {tagEntries.map(([tag, count], index) => (
-              <a
-                href={`/blog/tag/${tag}`}
-                class={`tags-item ${getTagColorClass(count, maxCount)}`}
-                style={`font-size: ${getTagFontSize(count, maxCount, minCount)}rem;`}
-                data-count={count}
-                data-index={index}
-              >
-                <span class="tags-content">
-                  <Icon name="lucide:tag" />
-                  <span class="tags-text">{tag}</span>
-                  <span class="tags-count">{count}</span>
-                </span>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div class="empty-state">
-            <Icon name="ri:emotion-sad-line" class="empty-icon" />
-            <p class="empty-text">{t("label.noTag")}</p>
-          </div>
-        )
-      }
-    </div>
-  </BaseCard>
+    <ol class="tag-index" data-tag-index>
+      {tagEntries.map(([tag, count], index) => (
+        <li data-tag-row data-search={tag.toLowerCase()}>
+          <a href={`/blog/tag/${tag}`}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>#{tag}</strong>
+            <span>{count} matches</span>
+            <i style={`--tag-weight:${Math.min(100, count * 18)}%`}></i>
+          </a>
+        </li>
+      ))}
+      <li class="tag-empty" data-tag-empty hidden>0 matching tags</li>
+    </ol>
+  </Pane>
 </BaseLayout>
+
+<script>
+  const initTagIndex = () => {
+    const input = document.querySelector("[data-tag-filter]");
+    const rows = [...document.querySelectorAll("[data-tag-row]")];
+    const empty = document.querySelector("[data-tag-empty]");
+    if (!(input instanceof HTMLInputElement) || input.dataset.initialized === "true") return;
+    input.dataset.initialized = "true";
+    input.addEventListener("input", () => {
+      const term = input.value.trim().toLowerCase();
+      rows.forEach((row) => row.hidden = !row.dataset.search.includes(term));
+      empty.hidden = rows.some((row) => !row.hidden);
+    });
+  };
+  document.addEventListener("astro:page-load", initTagIndex);
+  document.addEventListener("DOMContentLoaded", initTagIndex, { once: true });
+</script>
+
+<style>
+  .tag-index-body { padding: 0; }
+  .tag-query { min-height: 46px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 0 13px; border-bottom: 1px solid var(--tui-border); background: var(--tui-panel-soft); color: var(--tui-dim); font: 700 10px var(--tui-code); }
+  .tag-query input { border: 0; outline: 0; background: transparent; color: var(--tui-text); font: 700 12px var(--tui-code); }
+  .tag-index { margin: 0; padding: 0; list-style: none; }
+  .tag-index a { min-height: 52px; display: grid; grid-template-columns: 38px minmax(0,1fr) 90px 140px; align-items: center; gap: 12px; padding: 0 13px; border-bottom: 1px solid var(--tui-border); color: var(--tui-muted); text-decoration: none; }
+  .tag-index a:hover { background: var(--tui-panel-raised); color: var(--tui-text); }
+  .tag-index a > span { color: var(--tui-dim); font: 700 9px var(--tui-code); }
+  .tag-index strong { color: inherit; font: 700 12px var(--tui-code); }
+  .tag-index i { height: 3px; background: linear-gradient(90deg, var(--tui-accent) var(--tag-weight), var(--tui-border) var(--tag-weight)); }
+  .tag-empty { padding: 38px; color: var(--tui-dim); text-align: center; font: 700 11px var(--tui-code); }
+  @media (max-width: 620px) { .tag-index a { grid-template-columns: 28px minmax(0,1fr) 74px; } .tag-index i, .tag-query > span:last-child { display: none; } }
+</style>

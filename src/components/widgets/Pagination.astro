@@ -8,7 +8,7 @@ import { t } from "@config";
 const { page, totalPages, pageLinks, baseUrl } = Astro.props as PaginationProps;
 ---
 
-<div class="flex justify-between items-center w-full gap-2 order-4" transition:name="pagination">
+<div class="tui-pagination" transition:name="pagination">
   <PaginationArrow direction="prev" url={page.url.prev} label={t("label.prevPage")} />
   <div class="join">
     {
@@ -31,3 +31,34 @@ const { page, totalPages, pageLinks, baseUrl } = Astro.props as PaginationProps;
   </div>
   <PaginationArrow direction="next" url={page.url.next} label={t("label.nextPage")} />
 </div>
+
+<style>
+  .tui-pagination {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 7px;
+    border: 1px solid var(--tui-border);
+    background: var(--tui-panel);
+  }
+  .tui-pagination :global(.btn) {
+    min-height: 32px;
+    height: 32px;
+    border: 1px solid var(--tui-border) !important;
+    border-radius: 2px !important;
+    background: var(--tui-panel-soft) !important;
+    color: var(--tui-muted) !important;
+    box-shadow: none !important;
+    font: 700 10px/1 var(--tui-code);
+  }
+  .tui-pagination :global(.btn:hover),
+  .tui-pagination :global(.btn-active) {
+    border-color: var(--tui-border-strong) !important;
+    background: var(--tui-accent-soft) !important;
+    color: var(--tui-text) !important;
+  }
+  .tui-pagination :global(.btn-disabled) { opacity: .35; }
+</style>

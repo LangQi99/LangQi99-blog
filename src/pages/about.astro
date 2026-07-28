@@ -1,153 +1,86 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
-import MainCard from "@/components/MainCard.astro";
 import GitHubStats from "@/components/mdx/GitHubStats.astro";
+import Pane from "@/components/tui/Pane.astro";
 ---
 
 <BaseLayout title="About">
-  <MainCard
-    title="About LangQi99"
-    description="Developer, open-source enthusiast, and creator of the Frosti blog theme."
-  >
-    <div class="space-y-10 mb-8">
-      <!-- Profile Section -->
-      <section class="flex flex-col md:flex-row gap-8 items-center md:items-start">
-        <div class="avatar">
-          <div
-            class="w-32 h-32 md:w-40 md:h-40 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden"
-          >
-            <img src="https://github.com/LangQi99.png" alt="LangQi99" width="160" height="160" loading="eager" />
-          </div>
+  <header class="tui-page-head">
+    <div><p>whoami --verbose</p><h1>LangQi99</h1><span>Developer、开源爱好者，以及这个博客工作区的维护者。</span></div>
+    <div class="about-avatar"><img src="https://github.com/LangQi99.png" alt="LangQi99" width="128" height="128" /></div>
+  </header>
+  <div class="about-grid">
+    <Pane title="identity" meta="local user">
+      <dl class="about-identity">
+        <div><dt>name</dt><dd>LangQi99</dd></div>
+        <div><dt>role</dt><dd>Developer & Open-Source Enthusiast</dd></div>
+        <div><dt>github</dt><dd><a href="https://github.com/LangQi99" target="_blank" rel="noopener">@LangQi99 ↗</a></dd></div>
+        <div><dt>email</dt><dd><a href="mailto:2032771946@qq.com">2032771946@qq.com</a></dd></div>
+      </dl>
+    </Pane>
+    <Pane title="skills --group" meta="12 tools">
+      <div class="skill-groups" data-skill-groups>
+        <div class="skill-tabs">
+          <button type="button" data-skill-tab="web" aria-pressed="true">web</button>
+          <button type="button" data-skill-tab="systems" aria-pressed="false">systems</button>
+          <button type="button" data-skill-tab="languages" aria-pressed="false">languages</button>
         </div>
-
-        <div class="flex-1 text-center md:text-left">
-          <h1 class="text-3xl md:text-4xl font-bold mb-2">LangQi99</h1>
-          <p class="text-xl text-base-content/80 mb-4">Developer & Open-Source Enthusiast</p>
-
-          <div class="flex flex-wrap gap-3 justify-center md:justify-start mb-6">
-            <a
-              href="https://github.com/LangQi99"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn btn-sm btn-outline gap-2"
-            >
-              <Icon name="lucide:github" class="w-4 h-4" />
-              <span>GitHub</span>
-            </a>
-            <!-- <a
-              href="https://twitter.com/LangQi99"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn btn-sm btn-outline gap-2"
-            >
-              <Icon name="lucide:twitter" class="w-4 h-4" />
-              <span>Twitter</span>
-            </a> -->
-            <a href="mailto:2032771946@qq.com" class="btn btn-sm btn-outline gap-2">
-              <Icon name="lucide:mail" class="w-4 h-4" />
-              <span>Email</span>
-            </a>
-          </div>
-
-          <p class="text-base-content/80">Hello! I'm LangQi99.</p>
+        <div class="skill-panel" data-skill-panel="web">
+          {[
+            { name: "Astro", icon: "simple-icons:astro" }, { name: "JavaScript", icon: "simple-icons:javascript" }, { name: "TypeScript", icon: "simple-icons:typescript" }, { name: "React", icon: "simple-icons:react" }, { name: "Node.js", icon: "simple-icons:nodedotjs" }, { name: "TailwindCSS", icon: "simple-icons:tailwindcss" },
+          ].map((tech) => <span><Icon name={tech.icon} />{tech.name}</span>)}
         </div>
-      </section>
-
-      <!-- GitHub Stats -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:github" class="w-6 h-6 text-primary" />
-          <span>GitHub Statistics</span>
-        </h2>
-
-        <GitHubStats username="LangQi99" showLanguages={false} showCommitGraph={true} />
-      </section>
-
-      <!-- Tech Stack -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:code-2" class="w-6 h-6 text-primary" />
-          <span>Tech Stack</span>
-        </h2>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {
-            [
-              { name: "Astro", icon: "simple-icons:astro", color: "oklch(0.5 0.2 300)" },
-              { name: "JavaScript", icon: "simple-icons:javascript", color: "oklch(0.8 0.2 80)" },
-              { name: "TypeScript", icon: "simple-icons:typescript", color: "oklch(0.6 0.2 250)" },
-              { name: "React", icon: "simple-icons:react", color: "oklch(0.7 0.2 200)" },
-              { name: "Node.js", icon: "simple-icons:nodedotjs", color: "oklch(0.7 0.2 140)" },
-              { name: "TailwindCSS", icon: "simple-icons:tailwindcss", color: "oklch(0.6 0.2 220)" },
-              { name: "HTML5", icon: "simple-icons:html5", color: "oklch(0.7 0.2 30)" },
-              { name: "CSS3", icon: "simple-icons:css3", color: "oklch(0.7 0.2 220)" },
-              { name: "Git", icon: "simple-icons:git", color: "oklch(0.7 0.2 30)" },
-              { name: "C++", icon: "simple-icons:cplusplus", color: "oklch(0.6 0.2 240)" },
-              { name: "C#", icon: "simple-icons:csharp", color: "oklch(0.6 0.2 160)" },
-              { name: "Python", icon: "simple-icons:python", color: "oklch(0.7 0.2 250)" },
-            ].map((tech) => (
-              <div class="flex flex-col items-center justify-center p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors">
-                <div class="text-3xl mb-2" style={`color: ${tech.color}`}>
-                  <Icon name={tech.icon} class="w-10 h-10" />
-                </div>
-                <span class="text-sm font-medium">{tech.name}</span>
-              </div>
-            ))
-          }
+        <div class="skill-panel" data-skill-panel="systems" hidden>
+          {[
+            { name: "Git", icon: "simple-icons:git" }, { name: "HTML5", icon: "simple-icons:html5" }, { name: "CSS3", icon: "simple-icons:css3" },
+          ].map((tech) => <span><Icon name={tech.icon} />{tech.name}</span>)}
         </div>
-      </section>
-
-      <!-- Contribution Activity -->
-      <!-- <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:activity" class="w-6 h-6 text-primary" />
-          <span>Recent Activity</span>
-        </h2>
-
-        <div class="bg-base-200 rounded-xl p-6 overflow-x-auto">
-          <div class="flex flex-col md:flex-row gap-8 md:gap-4 md:overflow-x-auto md:pb-2">
-            {
-              [
-                {
-                  date: "January 2024",
-                  title: "Open Source Contributions",
-                  desc: "Contributed to several open source projects, focusing on performance optimizations.",
-                },
-                {
-                  date: "March 2024",
-                  title: "Initiated Frosti Project",
-                  desc: "Started development of the Frosti blog theme for Astro, focusing on modern design principles.",
-                },
-                {
-                  date: "July 2024",
-                  title: "Released Frosti v2",
-                  desc: "Published version 2 with improved responsive design and extended plugin support.",
-                },
-                {
-                  date: "March 2025",
-                  title: "Released Frosti v3",
-                  desc: "Launched version 3 of the Frosti blog theme with enhanced performance and new customization options.",
-                },
-              ].map((item, i) => (
-                <div class="relative flex gap-4 pb-2 md:pb-0 md:min-w-[250px]">
-                  <div class="flex flex-col items-center">
-                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-content text-xl">
-                      {i + 1}
-                    </div>
-                    <div class="w-0.5 h-16 bg-base-300 mt-2 md:hidden" />
-                  </div>
-                  <div>
-                    <div class="text-sm text-base-content/60 mb-1">{item.date}</div>
-                    <h3 class="text-lg font-bold">{item.title}</h3>
-                    <p class="text-base-content/80 mt-1">{item.desc}</p>
-                  </div>
-                </div>
-              ))
-            }
-          </div>
+        <div class="skill-panel" data-skill-panel="languages" hidden>
+          {[
+            { name: "Python", icon: "simple-icons:python" }, { name: "C++", icon: "simple-icons:cplusplus" }, { name: "C#", icon: "simple-icons:csharp" },
+          ].map((tech) => <span><Icon name={tech.icon} />{tech.name}</span>)}
         </div>
-      </section> -->
-    </div>
-  </MainCard>
+      </div>
+    </Pane>
+  </div>
+  <Pane title="github stats" meta="live data">
+    <GitHubStats username="LangQi99" showLanguages={false} showCommitGraph={true} />
+  </Pane>
 </BaseLayout>
+
+<script>
+  const initSkills = () => {
+    const root = document.querySelector("[data-skill-groups]");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const tabs = [...root.querySelectorAll("[data-skill-tab]")];
+    const panels = [...root.querySelectorAll("[data-skill-panel]")];
+    tabs.forEach((tab) => tab.addEventListener("click", () => {
+      tabs.forEach((item) => item.setAttribute("aria-pressed", String(item === tab)));
+      panels.forEach((panel) => panel.hidden = panel.dataset.skillPanel !== tab.dataset.skillTab);
+    }));
+  };
+  document.addEventListener("astro:page-load", initSkills);
+  document.addEventListener("DOMContentLoaded", initSkills, { once: true });
+</script>
+
+<style>
+  .about-avatar { width: 128px; height: 128px; border: 1px solid var(--tui-border-strong); background: var(--tui-panel-soft); }
+  .about-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; filter: grayscale(.35); }
+  .about-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 12px; margin-bottom: 12px; }
+  .about-identity { margin: 0; }
+  .about-identity div { display: grid; grid-template-columns: 80px minmax(0,1fr); min-height: 48px; align-items: center; border-bottom: 1px solid var(--tui-border); }
+  .about-identity div:last-child { border-bottom: 0; }
+  .about-identity dt { color: var(--tui-dim); font: 700 9px var(--tui-code); text-transform: uppercase; }
+  .about-identity dd { margin: 0; color: var(--tui-text); font-weight: 700; }
+  .about-identity a { color: var(--tui-accent); text-decoration: none; }
+  .skill-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .skill-tabs button { padding: 8px 11px; border: 1px solid var(--tui-border); background: var(--tui-panel-soft); color: var(--tui-muted); font: 700 10px var(--tui-code); cursor: pointer; }
+  .skill-tabs button[aria-pressed="true"] { border-color: var(--tui-accent); color: var(--tui-text); background: var(--tui-accent-soft); }
+  .skill-panel { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--tui-border); }
+  .skill-panel span { min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--tui-panel); color: var(--tui-muted); }
+  .skill-panel svg { width: 20px; height: 20px; color: var(--tui-accent); }
+  :global(github-stats) { margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+  @media (max-width: 780px) { .about-grid { grid-template-columns: 1fr; } .skill-panel { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+</style>

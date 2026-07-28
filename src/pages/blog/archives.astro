@@ -1,8 +1,7 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
-import BaseCard from "@components/BaseCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 import { t } from "@config";
-import { Icon } from "astro-icon/components";
 import dayjs from "@utils/dayjs";
 import { DATE_FORMAT } from "@config";
 import { getAllPosts, sortPostsByDate, getPostsByYearAndMonth } from "@utils/blogUtils";
@@ -30,69 +29,86 @@ const totalPosts = allPosts.length;
 ---
 
 <BaseLayout title={t("label.archivePage")}>
-  <BaseCard title={t("label.archivePage")}>
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div class="flex items-center gap-2">
-        <Icon name="lucide:archive" class="w-6 h-6 text-accent" />
-        <h1 id="h1" class="text-2xl md:text-3xl font-bold">{t("label.archivePage")}</h1>
-        <div class="badge badge-accent">{totalPosts} {totalPosts === 1 ? t("label.post") : t("label.posts")}</div>
-      </div>
-      <a href="/blog" class="btn btn-outline btn-sm gap-2">
-        <Icon name="lucide:book-open" class="w-4 h-4" />
-        <span>{t("label.backToBlog")}</span>
-      </a>
+  <header class="tui-page-head">
+    <div>
+      <p>git log --all --date-order</p>
+      <h1>文章归档。</h1>
+      <span>按年份和月份追踪全部文章，像阅读一段持续生长的提交历史。</span>
     </div>
-    <div class="divider my-2"></div>
-    <p class="text-sm opacity-75">{t("label.archivesPageDescription")}</p>
-  </BaseCard>
-  <BaseCard title={t("label.archivePage")}>
-    <div class="archives-container">
+    <div class="tui-page-stat"><b>{totalPosts}</b><span>commits / posts</span></div>
+  </header>
+  <Pane title="git log --graph --date=short" meta={`${years.length} years`} bodyClass="archive-log-body">
+    <div class="archive-log">
       {
         years.length > 0 ? (
-          <div class="archives-timeline">
+          <div class="archive-years">
             {years.map((year) => (
-              <div class="timeline-year">
-                <div class="year-header">
-                  <div class="year-badge">{year}</div>
-                </div>
-
-                <div class="year-content">
+              <details class="archive-year" open>
+                <summary><span>{year}</span><small>{Array.from(postsByDate.get(year)!.values()).flat().length} posts</small></summary>
+                <div>
                   {Array.from(postsByDate.get(year)!.entries())
                     .sort((a, b) => parseInt(b[0]) - parseInt(a[0]))
                     .map(([month, posts]) => (
-                      <div class="timeline-month">
-                        <h3 class="month-title">
-                          <Icon name="lucide:calendar" class="month-icon" />
-                          <span>
-                            {getMonthName(month)} {year}
-                          </span>
-                          <span class="month-count">{posts.length}</span>
-                        </h3>
-
-                        <ul class="archive-posts">
+                      <section class="archive-month">
+                        <h2><span>{month}</span>{getMonthName(month)}<small>{posts.length}</small></h2>
+                        <ul class="tui-list">
                           {posts.map((post) => (
-                            <li class="archive-item">
-                              <a href={`/blog/${post.slug}`} class="archive-card">
-                                <time class="archive-date">{dayjs(post.data.pubDate).format(DATE_FORMAT)}</time>
-                                <h4 class="archive-title">{post.data.title}</h4>
-                                {post.data.description && <p class="archive-description">{post.data.description}</p>}
+                            <li>
+                              <a href={`/blog/${post.slug}`} class="tui-list-row">
+                                <time>{dayjs(post.data.pubDate).format(DATE_FORMAT)}</time>
+                                <span><strong>{post.data.title}</strong>{post.data.description && <p>{post.data.description}</p>}</span>
+                                <span>{post.data.categories?.[0] || "uncategorized"}</span>
                               </a>
                             </li>
                           ))}
                         </ul>
-                      </div>
+                      </section>
                     ))}
                 </div>
-              </div>
+              </details>
             ))}
           </div>
         ) : (
-          <div class="empty-state">
-            <Icon name="ri:emotion-sad-line" class="empty-icon" />
-            <p class="empty-text">{t("label.noPosts")}</p>
-          </div>
+          <div class="archive-empty">{t("label.noPosts")}</div>
         )
       }
     </div>
-  </BaseCard>
+  </Pane>
 </BaseLayout>
+
+<style>
+  .archive-log-body { padding: 0; }
+  .archive-year { border-bottom: 1px solid var(--tui-border); }
+  .archive-year > summary {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    color: var(--tui-text);
+    background: var(--tui-panel-soft);
+    cursor: pointer;
+    font: 800 12px/1 var(--tui-code);
+    list-style: none;
+  }
+  .archive-year > summary::-webkit-details-marker { display: none; }
+  .archive-year > summary::before { content: "▾"; margin-right: 9px; color: var(--tui-accent); }
+  .archive-year:not([open]) > summary::before { content: "▸"; }
+  .archive-year > summary span { margin-right: auto; }
+  .archive-year > summary small { color: var(--tui-dim); }
+  .archive-month h2 {
+    min-height: 38px;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--tui-border);
+    color: var(--tui-muted);
+    font: 700 10px/1 var(--tui-code);
+  }
+  .archive-month h2 span { color: var(--tui-accent); }
+  .archive-month h2 small { color: var(--tui-dim); }
+  .archive-empty { padding: 40px; color: var(--tui-dim); text-align: center; font: 700 12px var(--tui-code); }
+</style>

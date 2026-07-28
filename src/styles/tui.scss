@@ -1,0 +1,757 @@
+:root {
+  --tui-bg: #000000;
+  --tui-panel: rgba(8, 8, 8, 0.78);
+  --tui-panel-raised: rgba(15, 15, 15, 0.88);
+  --tui-panel-soft: rgba(5, 5, 5, 0.72);
+  --tui-border: rgba(255, 255, 255, 0.12);
+  --tui-border-strong: rgba(255, 255, 255, 0.32);
+  --tui-text: #ffffff;
+  --tui-muted: #a1a1aa;
+  --tui-dim: #71717a;
+  --tui-accent: #ffffff;
+  --tui-accent-soft: rgba(255, 255, 255, 0.09);
+  --tui-success: #8fa875;
+  --tui-warning: #d4ad65;
+  --tui-error: #c96f6f;
+  --tui-info: #7f9fb8;
+  --tui-focus: #ffffff;
+  --tui-code: ui-monospace, "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  --tui-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --tui-nav-width: 224px;
+  --tui-top-height: 58px;
+  --tui-status-height: 30px;
+}
+
+html[data-theme="winter"] {
+  --tui-bg: #f2f1ec;
+  --tui-panel: rgba(250, 249, 244, 0.92);
+  --tui-panel-raised: #ffffff;
+  --tui-panel-soft: rgba(235, 233, 225, 0.9);
+  --tui-border: rgba(0, 0, 0, 0.14);
+  --tui-border-strong: rgba(0, 0, 0, 0.36);
+  --tui-text: #111111;
+  --tui-muted: #5f5f5b;
+  --tui-dim: #888781;
+  --tui-accent: #000000;
+  --tui-accent-soft: rgba(0, 0, 0, 0.07);
+  --tui-success: #637d56;
+  --tui-warning: #927027;
+  --tui-error: #a84949;
+  --tui-info: #55748e;
+  --tui-focus: #000000;
+}
+
+html {
+  color: var(--tui-text);
+  background: var(--tui-bg);
+}
+
+body.tui-body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--tui-bg);
+  color: var(--tui-text);
+  font-family: var(--tui-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  background-image: none;
+}
+
+.tui-skip {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  padding: 9px 12px;
+  transform: translateY(-150%);
+  background: var(--tui-accent);
+  color: #171410;
+  font: 700 12px/1 var(--tui-code);
+}
+
+.tui-skip:focus { transform: translateY(0); }
+
+.tui-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: var(--tui-top-height) minmax(0, 1fr) var(--tui-status-height);
+}
+
+.tui-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  height: var(--tui-top-height);
+  padding: 0 18px;
+  border-bottom: 1px solid var(--tui-border);
+  background: color-mix(in srgb, var(--tui-bg) 88%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.tui-path,
+.tui-session,
+.tui-top-actions,
+.tui-statusbar,
+.tui-pane-title,
+.tui-kicker,
+.tui-command {
+  font-family: var(--tui-code);
+}
+
+.tui-path {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tui-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tui-path strong {
+  overflow: hidden;
+  color: var(--tui-text);
+  text-overflow: ellipsis;
+}
+
+.tui-prompt {
+  color: var(--tui-accent);
+  font-weight: 800;
+}
+
+.tui-session {
+  color: var(--tui-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tui-top-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tui-icon-action,
+.tui-command-trigger,
+.tui-mobile-nav-trigger {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid var(--tui-border);
+  border-radius: 2px;
+  background: var(--tui-panel);
+  color: var(--tui-muted);
+  font: 700 11px/1 var(--tui-code);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tui-theme-toggle.btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid var(--tui-border);
+  border-radius: 2px;
+  background: var(--tui-panel);
+  color: var(--tui-muted);
+  box-shadow: none;
+}
+
+.tui-theme-toggle.btn:hover {
+  border-color: var(--tui-border-strong);
+  background: var(--tui-panel-raised);
+  color: var(--tui-text);
+  transform: none;
+}
+
+.tui-theme-toggle .theme-toggle-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.tui-icon-action:hover,
+.tui-command-trigger:hover,
+.tui-mobile-nav-trigger:hover {
+  border-color: var(--tui-border-strong);
+  color: var(--tui-text);
+}
+
+.tui-icon-action:active,
+.tui-command-trigger:active,
+.tui-mobile-nav-trigger:active {
+  transform: translateY(1px);
+}
+
+.tui-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--tui-nav-width) minmax(0, 1fr);
+}
+
+.tui-workspace-nav {
+  position: sticky;
+  top: var(--tui-top-height);
+  align-self: start;
+  height: calc(100dvh - var(--tui-top-height) - var(--tui-status-height));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--tui-border);
+  background: var(--tui-panel-soft);
+}
+
+.tui-nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 13px;
+  border-bottom: 1px solid var(--tui-border);
+  color: var(--tui-dim);
+  font: 700 10px/1 var(--tui-code);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.tui-nav-tree {
+  flex: 1;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tui-nav-section {
+  margin: 12px 8px 6px;
+  color: var(--tui-dim);
+  font: 700 9px/1 var(--tui-code);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tui-nav-item {
+  position: relative;
+  width: 100%;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--tui-muted);
+  font: 600 12px/1 var(--tui-code);
+  text-decoration: none;
+}
+
+.tui-nav-item:hover,
+.tui-nav-item[data-keyboard-active="true"] {
+  background: var(--tui-panel-raised);
+  color: var(--tui-text);
+}
+
+.tui-nav-item[aria-current="page"] {
+  border-color: var(--tui-border);
+  background: var(--tui-accent-soft);
+  color: var(--tui-text);
+}
+
+.tui-nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset: 4px auto 4px -1px;
+  width: 2px;
+  background: var(--tui-accent);
+}
+
+.tui-nav-icon {
+  color: var(--tui-dim);
+  font-size: 15px;
+}
+
+.tui-nav-shortcut {
+  color: var(--tui-dim);
+  font-size: 9px;
+}
+
+.tui-nav-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--tui-border);
+  color: var(--tui-dim);
+  font: 600 10px/1.5 var(--tui-code);
+}
+
+.tui-main {
+  min-width: 0;
+  min-height: 0;
+  padding: 18px;
+}
+
+.tui-content {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+}
+
+.tui-pane {
+  border: 1px solid var(--tui-border);
+  border-radius: 2px;
+  background: var(--tui-panel);
+  backdrop-filter: blur(8px);
+}
+
+.tui-body .btn-category,
+.tui-body .btn-tag {
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.tui-pane + .tui-pane { margin-top: 12px; }
+
+.tui-pane-header {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--tui-border);
+  color: var(--tui-muted);
+}
+
+.tui-pane-title {
+  overflow: hidden;
+  color: var(--tui-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tui-pane-meta {
+  color: var(--tui-dim);
+  font: 600 10px/1 var(--tui-code);
+}
+
+.tui-pane-body { padding: 16px; }
+
+.tui-page-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 28px;
+  margin-bottom: 12px;
+  padding: clamp(24px, 4vw, 52px);
+  border: 1px solid var(--tui-border);
+  background: var(--tui-panel);
+}
+
+.tui-page-head p {
+  margin: 0 0 12px;
+  color: var(--tui-muted);
+  font: 800 10px/1 var(--tui-code);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.tui-page-head h1 {
+  max-width: 1000px;
+  margin: 0;
+  color: var(--tui-text);
+  font-size: clamp(34px, 5.5vw, 70px);
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", serif;
+  font-weight: 400;
+  line-height: .96;
+  letter-spacing: -.055em;
+}
+
+.tui-page-head > div > span {
+  display: block;
+  max-width: 680px;
+  margin-top: 18px;
+  color: var(--tui-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.tui-page-stat {
+  min-width: 150px;
+  padding: 14px;
+  border: 1px solid var(--tui-border);
+  background: var(--tui-panel-soft);
+}
+
+.tui-page-stat b {
+  display: block;
+  color: var(--tui-text);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.tui-page-stat span {
+  display: block;
+  margin-top: 7px;
+  color: var(--tui-dim);
+  font: 700 9px/1 var(--tui-code);
+  text-transform: uppercase;
+}
+
+.tui-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tui-list-row {
+  position: relative;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(100px, .24fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--tui-border);
+  color: var(--tui-muted);
+  text-decoration: none;
+}
+
+.tui-list-row:hover,
+.tui-list-row[aria-selected="true"] {
+  background: var(--tui-panel-raised);
+  color: var(--tui-text);
+}
+
+.tui-list-row[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 7px auto 7px 0;
+  width: 2px;
+  background: var(--tui-accent);
+}
+
+.tui-list-row > :first-child,
+.tui-list-row > :last-child {
+  color: var(--tui-dim);
+  font: 700 10px/1.4 var(--tui-code);
+}
+
+.tui-list-row strong {
+  display: block;
+  overflow: hidden;
+  color: inherit;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tui-list-row p {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--tui-dim);
+  font-size: 11px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.tui-section-label {
+  margin: 0;
+  color: var(--tui-accent);
+  font: 800 10px/1 var(--tui-code);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 680px) {
+  .tui-page-head { grid-template-columns: 1fr; padding: 24px 18px; }
+  .tui-page-stat { min-width: 0; }
+  .tui-list-row { grid-template-columns: 74px minmax(0, 1fr); }
+  .tui-list-row > :last-child { display: none; }
+}
+
+.tui-statusbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 80;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--tui-status-height);
+  padding: 0 12px;
+  border-top: 1px solid var(--tui-border);
+  background: var(--tui-panel-raised);
+  color: var(--tui-muted);
+  font-size: 10px;
+}
+
+.tui-status-branch {
+  color: var(--tui-text);
+  font-weight: 800;
+}
+
+.tui-status-route {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tui-status-keys { color: var(--tui-dim); }
+
+.tui-kbd {
+  min-width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+  border: 1px solid var(--tui-border);
+  border-bottom-color: var(--tui-border-strong);
+  border-radius: 2px;
+  background: var(--tui-panel);
+  color: var(--tui-muted);
+  font: 700 9px/1 var(--tui-code);
+}
+
+.tui-command-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(15vh, 130px) 18px 18px;
+  background: rgba(5, 5, 4, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.tui-command-overlay[data-open="true"] { display: flex; }
+
+.tui-command-dialog {
+  width: min(100%, 680px);
+  overflow: hidden;
+  border: 1px solid var(--tui-border-strong);
+  border-radius: 3px;
+  background: var(--tui-panel-raised);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
+}
+
+.tui-command-input-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--tui-border);
+}
+
+.tui-command-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--tui-text);
+  font: 600 14px/1 var(--tui-code);
+}
+
+.tui-command-input::placeholder { color: var(--tui-dim); }
+
+.tui-command-list {
+  max-height: min(50vh, 430px);
+  margin: 0;
+  padding: 7px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tui-command-item {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--tui-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tui-command-item[hidden] { display: none; }
+
+.tui-command-item[data-active="true"] {
+  border-color: var(--tui-border);
+  background: var(--tui-accent-soft);
+  color: var(--tui-text);
+}
+
+.tui-command-item strong {
+  display: block;
+  color: inherit;
+  font: 700 12px/1.3 var(--tui-code);
+}
+
+.tui-command-item span {
+  display: block;
+  margin-top: 3px;
+  color: var(--tui-dim);
+  font-size: 11px;
+}
+
+.tui-command-item code {
+  color: var(--tui-dim);
+  font: 600 10px/1 var(--tui-code);
+}
+
+.tui-command-empty {
+  padding: 28px 16px;
+  color: var(--tui-dim);
+  text-align: center;
+  font: 600 12px/1.5 var(--tui-code);
+}
+
+.tui-help {
+  position: fixed;
+  inset: 0;
+  z-index: 145;
+  display: none;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 5, 4, 0.62);
+}
+
+.tui-help[data-open="true"] { display: grid; }
+
+.tui-help-panel {
+  width: min(100%, 560px);
+  border: 1px solid var(--tui-border-strong);
+  background: var(--tui-panel-raised);
+}
+
+.tui-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  padding: 1px;
+  background: var(--tui-border);
+}
+
+.tui-help-grid div {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 12px;
+  background: var(--tui-panel);
+  color: var(--tui-muted);
+}
+
+.tui-flash {
+  position: fixed;
+  right: 18px;
+  bottom: calc(var(--tui-status-height) + 14px);
+  z-index: 160;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 10px 12px;
+  border: 1px solid var(--tui-border-strong);
+  background: var(--tui-panel-raised);
+  color: var(--tui-text);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+  font: 600 11px/1.45 var(--tui-code);
+}
+
+.tui-flash[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tui-mobile-nav-trigger { display: none; }
+
+@media (max-width: 960px) {
+  :root { --tui-nav-width: 66px; }
+  .tui-nav-item {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0;
+  }
+  .tui-nav-label,
+  .tui-nav-shortcut,
+  .tui-nav-section,
+  .tui-nav-head span:first-child,
+  .tui-nav-footer {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --tui-top-height: 52px;
+    --tui-status-height: 28px;
+  }
+  .tui-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0 10px;
+  }
+  .tui-session { display: none; }
+  .tui-top-actions .tui-icon-action { display: none; }
+  .tui-command-trigger span { display: none; }
+  .tui-mobile-nav-trigger { display: inline-flex; }
+  .tui-workspace { display: block; }
+  .tui-workspace-nav {
+    position: fixed;
+    top: var(--tui-top-height);
+    bottom: var(--tui-status-height);
+    left: 0;
+    z-index: 100;
+    width: min(84vw, 300px);
+    height: auto;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    box-shadow: 18px 0 46px rgba(0, 0, 0, 0.28);
+  }
+  .tui-workspace-nav[data-mobile-open="true"] { transform: translateX(0); }
+  .tui-nav-item {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    justify-items: stretch;
+    padding: 0 9px;
+  }
+  .tui-nav-label,
+  .tui-nav-shortcut,
+  .tui-nav-section,
+  .tui-nav-head span:first-child,
+  .tui-nav-footer {
+    display: initial;
+  }
+  .tui-main { padding: 10px; }
+  .tui-statusbar { grid-template-columns: auto minmax(0, 1fr); }
+  .tui-status-keys { display: none; }
+  .tui-help-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tui-flash,
+  .tui-workspace-nav {
+    transition: none;
+  }
+}

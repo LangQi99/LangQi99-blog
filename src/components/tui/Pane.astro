@@ -1,0 +1,25 @@
+---
+interface Props {
+  title?: string;
+  meta?: string;
+  class?: string;
+  bodyClass?: string;
+}
+
+const {
+  title = "workspace",
+  meta = "",
+  class: className = "",
+  bodyClass = "",
+} = Astro.props;
+---
+
+<section class:list={["tui-pane", className]}>
+  <header class="tui-pane-header">
+    <span class="tui-pane-title">{title}</span>
+    {meta && <span class="tui-pane-meta">{meta}</span>}
+  </header>
+  <div class:list={["tui-pane-body", bodyClass]}>
+    <slot />
+  </div>
+</section>

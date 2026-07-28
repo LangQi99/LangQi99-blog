@@ -1,17 +1,13 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import MainCard from "@/components/MainCard.astro";
-import FeatureCard from "@/components/mdx/FeatureCard.astro";
-import GitHubStats from "@/components/mdx/GitHubStats.astro";
 import PinnedRepos from "@/components/mdx/PinnedRepos.astro";
-import PostCard from "@components/PostCard.astro";
 import Pagination from "@components/widgets/Pagination.astro";
-import CardGroup from "@components/temple/CardGroup.astro";
-import { Icon } from "astro-icon/components";
-import { t } from "@config";
+import Pane from "@/components/tui/Pane.astro";
+import PostWorkspace from "@/components/tui/PostWorkspace.astro";
+import WelcomePanel from "@/components/tui/WelcomePanel.astro";
 import { generatePageLinks } from "@utils/blogUtils";
 import { getMainBlogPaginationPaths } from "@utils/paginationUtils";
-import type { Post, Page } from "@interfaces/data";
+import type { Page } from "@interfaces/data";
 
 export async function getStaticPaths({ paginate }: { paginate: any }) {
   return getMainBlogPaginationPaths({ paginate });
@@ -21,51 +17,63 @@ const { page }: { page: Page } = Astro.props;
 const totalPages = Math.ceil(page.total / page.size);
 const pageLinks = generatePageLinks(totalPages);
 const isFirstPage = page.currentPage === 1;
+const latestPost = page.data[0];
 ---
 
 <BaseLayout title={isFirstPage ? "Home" : `Blog - Page ${page.currentPage}`}>
-  
-  {/* Hero Section - Only on First Page */}
-  {isFirstPage && (
-    <MainCard title="~/README.md" description="LangQi99/blog" extraClasses="min-h-[60vh] mb-16">
-      <div class="space-y-8 font-mono">
-        <!-- Hero Section -->
-        <section class="py-6">
-          <div class="flex flex-col items-start text-left">
-            
-            <div class="mb-6 text-gray-400 dark:text-zinc-400 text-sm">
-              <span class="text-purple-600 dark:text-purple-300">import</span> <span class="text-yellow-600 dark:text-yellow-300">{`{ Welcome }`}</span> <span class="text-purple-600 dark:text-purple-300">from</span> <span class="text-green-600 dark:text-green-300">'@universe/blog'</span>;
-              <br/>
-              <span class="text-gray-400 dark:text-zinc-400">// <span class="text-orange-400 dark:text-orange-300">TODO:</span> Explore the universe of code</span>
+  {
+    isFirstPage && (
+      <section class="home-dashboard">
+        <WelcomePanel postCount={page.total} latestTitle={latestPost?.data.title} />
+        <Pane title="whoami" meta="session ready" class="home-identity">
+          <div class="identity-grid">
+            <div>
+              <p class="tui-kicker">LANGQI99 / PERSONAL WORKSTATION</p>
+              <h1>代码、Agent、系统与偶尔的生活记录。</h1>
+              <p class="identity-copy">
+                这里是 LangQi99 的个人工作区。文章被构建成独立网站，公共页面负责检索、归档和展示正在进行的技术实践。
+              </p>
+              <div class="identity-actions">
+                <a href="#recent-posts">open recent posts</a>
+                <a href="https://github.com/LangQi99" target="_blank" rel="noopener">open github ↗</a>
+              </div>
             </div>
-
-            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-black dark:text-zinc-100">
-              <span class="text-blue-600 dark:text-blue-300">const</span> <span class="text-yellow-600 dark:text-yellow-300">author</span> = <span class="text-green-600 dark:text-green-300">'LangQi99'</span>;
-            </h1>
-            
-            <p class="text-xl text-gray-600 dark:text-zinc-300 max-w-3xl mb-8 border-l-2 border-gray-200 dark:border-zinc-600 pl-4">
-               A minimal, responsive, and <span class="text-purple-600 dark:text-purple-300 font-bold">feature-rich</span> Astro blog theme designed for <span class="text-pink-500 dark:text-pink-300 font-bold">&lt;Developers /&gt;</span> who value data density.
-            </p>
-
-            <div class="flex flex-wrap gap-4">
-              <a href="#blog-posts" class="btn-category group !text-sm !px-4 !py-2">
-                <Icon name="lucide:arrow-down" class="w-4 h-4 text-purple-600 dark:text-purple-300" />
-                <span class="text-black dark:text-zinc-100 font-bold">./read_posts.sh</span>
-              </a>
-              <a href="https://github.com/LangQi99/LangQi99-blog/" target="_blank" class="btn-category group !text-sm !px-4 !py-2 !border-gray-400 dark:!border-zinc-500">
-                 <Icon name="lucide:github" class="w-4 h-4 text-black dark:text-zinc-100" />
-                <span class="text-gray-600 dark:text-zinc-300">git clone repo</span>
-              </a>
-            </div>
+            <dl class="identity-status">
+              <div><dt>workspace</dt><dd>LangQi99-blog</dd></div>
+              <div><dt>posts</dt><dd>{page.total}</dd></div>
+              <div><dt>latest</dt><dd>{latestPost?.data.title || "none"}</dd></div>
+              <div><dt>mode</dt><dd>static / interactive</dd></div>
+            </dl>
           </div>
-        </section>
+        </Pane>
 
-        <!-- GitHub Stats -->
-        <section class="py-6">
-          <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Icon name="lucide:github" class="w-6 h-6 text-primary" />
-            <span>Featured Repositories</span>
-          </h2>
+        <div class="home-console-grid">
+          <Pane title="prompt" meta="interactive" class="home-prompt-pane">
+            <div class="home-prompt" data-home-prompt>
+              <div class="prompt-output" aria-live="polite">
+                <span class="tui-prompt">›</span>
+                <div>
+                  <strong data-prompt-title>what are you working on?</strong>
+                  <p data-prompt-copy>把文章做成独立网站，同时维护 Agent、系统工具、CTF 与算法可视化实验。</p>
+                </div>
+              </div>
+              <div class="prompt-options">
+                <button type="button" data-prompt="work">current work</button>
+                <button type="button" data-prompt="read">what to read</button>
+                <button type="button" data-prompt="stack">toolchain</button>
+              </div>
+            </div>
+          </Pane>
+          <Pane title="now" meta="local state">
+            <ul class="now-processes">
+              <li><span class="process-state success">RUN</span><strong>interactive articles</strong><span>17 routes</span></li>
+              <li><span class="process-state info">DEV</span><strong>agent workflows</strong><span>context systems</span></li>
+              <li><span class="process-state warning">LAB</span><strong>security & algorithms</strong><span>visual demos</span></li>
+            </ul>
+          </Pane>
+        </div>
+
+        <Pane title="git pinned --format=compact" meta="live GitHub + fallback" class="home-repos">
           <PinnedRepos
             username="LangQi99"
             fallback={[
@@ -77,61 +85,84 @@ const isFirstPage = page.currentPage === 1;
               { author: "LangQi99", name: "dlut-NetworkStealer", description: "欺骗 DLUT 校园网认证", language: "Python", stars: 23, forks: 6 },
             ]}
           />
-        </section>
-      </div>
-    </MainCard>
-  )}
+        </Pane>
+      </section>
+    )
+  }
 
-  <div id="blog-posts" class="scroll-mt-20">
-      <!-- Command Line Toolbar -->
-      <div class="flex flex-wrap items-center gap-4 mb-8 bg-gray-50/80 dark:bg-zinc-900/80 backdrop-blur-sm p-4 rounded-md border border-gray-200 dark:border-zinc-600 sticky top-[70px] z-40 transition-all duration-300">
-        <div class="font-mono text-sm text-gray-500 dark:text-zinc-300 mr-2">$ ./blog_tools.sh</div>
-        
-        <!-- Archives -->
-        <a href="/blog/archives" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-accent dark:hover:border-accent hover:shadow-sm transition-all duration-200">
-          <span class="text-accent font-bold group-hover:text-accent-focus">$</span>
-          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">ls -R /archives</span>
-        </a>
-
-        <!-- Categories -->
-        <a href="/blog/categories" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-primary dark:hover:border-primary hover:shadow-sm transition-all duration-200">
-          <span class="text-primary font-bold group-hover:text-primary-focus">#</span>
-          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">find /categories</span>
-        </a>
-
-        <!-- Tags -->
-        <a href="/blog/tags" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-secondary dark:hover:border-secondary hover:shadow-sm transition-all duration-200">
-          <span class="text-secondary font-bold group-hover:text-secondary-focus">@</span>
-          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">cat /tags</span>
-        </a>
-
-        <!-- Search -->
-        <a href="/blog/search" class="group flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded hover:border-info dark:hover:border-info hover:shadow-sm transition-all duration-200">
-          <Icon name="lucide:search" class="w-4 h-4 text-gray-400 dark:text-zinc-400 group-hover:text-info" />
-          <span class="font-mono text-sm text-gray-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-zinc-100">grep</span>
-        </a>
-      </div>
-
-      <!-- Blog Post List -->
-      <CardGroup cols="1" gap="6">
-        {
-          page.data.map((blog: Post) => (
-            <PostCard
-              title={blog.data.title}
-              image={blog.data.image}
-              description={blog.data.description}
-              url={"/blog/" + blog.slug}
-              pubDate={blog.data.pubDate}
-              badge={blog.data.badge}
-              categories={blog.data.categories}
-              tags={blog.data.tags}
-              word={blog.remarkPluginFrontmatter.totalCharCount}
-              time={blog.remarkPluginFrontmatter.readingTime}
-            />
-          ))
-        }
-      </CardGroup>
-      <Pagination page={page} totalPages={totalPages} pageLinks={pageLinks} baseUrl={``} />
+  <div id="recent-posts">
+    <PostWorkspace
+      posts={page.data}
+      title={isFirstPage ? "find ./posts -maxdepth 1 -type f | head" : `find ./posts --page ${page.currentPage}`}
+      meta={`${page.total} total · page ${page.currentPage}/${totalPages}`}
+      filterLabel="filter title, description, category or tag"
+    />
+    <Pagination page={page} totalPages={totalPages} pageLinks={pageLinks} baseUrl={``} />
   </div>
-
 </BaseLayout>
+
+<script is:inline>
+  const initializeHomePrompt = () => {
+    const root = document.querySelector("[data-home-prompt]");
+    if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const title = root.querySelector("[data-prompt-title]");
+    const copy = root.querySelector("[data-prompt-copy]");
+    const prompts = {
+      work: ["what are you working on?", "把文章做成独立网站，同时维护 Agent、系统工具、CTF 与算法可视化实验。"],
+      read: ["what should I read first?", "从 Agent Harness、Context is all you need、GitHub Issues 博客方案或树论图谱开始。"],
+      stack: ["what is the toolchain?", "Astro、TypeScript、原生 Canvas、静态搜索、GitHub 数据与大量命令行工作流。"],
+    };
+    root.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-prompt]");
+      if (button) {
+        const [nextTitle, nextCopy] = prompts[button.dataset.prompt];
+        title.textContent = nextTitle;
+        copy.textContent = nextCopy;
+        root.querySelectorAll("[data-prompt]").forEach((item) => item.dataset.active = String(item === button));
+      }
+    });
+  };
+  document.addEventListener("astro:page-load", initializeHomePrompt);
+  document.addEventListener("DOMContentLoaded", initializeHomePrompt, { once: true });
+</script>
+
+<style>
+  .home-dashboard { display: grid; gap: 12px; margin-bottom: 12px; }
+  .identity-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: clamp(28px, 5vw, 72px); min-height: 350px; align-items: center; }
+  .home-identity { background: rgba(0,0,0,.58); }
+  .home-identity :global(.tui-pane-body) { padding: clamp(28px, 5vw, 72px); }
+  .tui-kicker { margin: 0 0 18px; color: var(--tui-accent); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+  .identity-grid h1 { max-width: 870px; margin: 0; color: var(--tui-text); font-family: Georgia, "Times New Roman", "Noto Serif SC", serif; font-size: clamp(42px, 7vw, 92px); font-weight: 400; line-height: .94; letter-spacing: -.055em; }
+  .identity-copy { max-width: 720px; margin: 24px 0 0; color: var(--tui-muted); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.8; }
+  .identity-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .identity-actions a, .prompt-options button { min-height: 36px; padding: 0 12px; border: 1px solid var(--tui-border); border-radius: 2px; background: var(--tui-panel-soft); color: var(--tui-muted); font: 700 10px/1 var(--tui-code); text-decoration: none; cursor: pointer; }
+  .identity-actions a { display: inline-flex; align-items: center; }
+  .identity-actions a:first-child, .prompt-options button[data-active="true"], .prompt-options button:hover { border-color: var(--tui-accent); color: var(--tui-text); }
+  .identity-status { margin: 0; border-top: 1px solid var(--tui-border); border-left: 1px solid var(--tui-border); }
+  .identity-status div { display: grid; grid-template-columns: 90px minmax(0, 1fr); min-height: 54px; align-items: center; border-right: 1px solid var(--tui-border); border-bottom: 1px solid var(--tui-border); }
+  .identity-status dt, .identity-status dd { margin: 0; padding: 0 10px; }
+  .identity-status dt { color: var(--tui-dim); font: 700 9px/1 var(--tui-code); text-transform: uppercase; }
+  .identity-status dd { overflow: hidden; color: var(--tui-text); font: 700 11px/1.35 var(--tui-code); text-overflow: ellipsis; }
+  .home-console-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; }
+  .prompt-output { min-height: 100px; display: flex; gap: 12px; color: var(--tui-muted); }
+  .prompt-output strong { color: var(--tui-text); font: 700 15px/1.4 var(--tui-code); }
+  .prompt-output p { margin: 8px 0 0; line-height: 1.7; }
+  .prompt-options { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 12px; border-top: 1px solid var(--tui-border); }
+  .now-processes { margin: 0; padding: 0; list-style: none; }
+  .now-processes li { min-height: 55px; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 10px; border-bottom: 1px solid var(--tui-border); }
+  .now-processes li:last-child { border-bottom: 0; }
+  .now-processes strong { color: var(--tui-text); }
+  .now-processes li > span:last-child { color: var(--tui-dim); font: 600 9px/1 var(--tui-code); }
+  .process-state { font: 800 9px/1 var(--tui-code); }
+  .process-state.success { color: var(--tui-success); }
+  .process-state.info { color: var(--tui-info); }
+  .process-state.warning { color: var(--tui-warning); }
+  .home-repos :global(.tui-pane-body) { padding: 0; }
+  .home-repos :global(.pinned-grid) { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1px !important; background: var(--tui-border); }
+  .home-repos :global(.pinned-grid > a), .home-repos :global(.pinned-grid > div) { min-height: 150px; margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: var(--tui-panel) !important; box-shadow: none !important; color: var(--tui-text) !important; transform: none !important; }
+  #recent-posts { scroll-margin-top: 70px; }
+  #recent-posts > :last-child { margin-top: 12px; }
+  @media (max-width: 980px) { .identity-grid, .home-console-grid { grid-template-columns: 1fr; } .home-repos :global(.pinned-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+  @media (max-width: 600px) { .home-identity :global(.tui-pane-body) { padding: 24px 18px; } .identity-grid h1 { font-size: clamp(38px, 13vw, 58px); } .home-repos :global(.pinned-grid) { grid-template-columns: 1fr !important; } }
+</style>

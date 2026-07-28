@@ -1,31 +1,20 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
-import BaseCard from "@components/BaseCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 import { t } from "@config";
-import { Icon } from "astro-icon/components";
 ---
 
 <BaseLayout title={t("label.searchPage")}>
-  <BaseCard title={t("label.searchPage")}>
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div class="flex items-center gap-2">
-        <Icon name="lucide:search" class="w-6 h-6 text-info" />
-        <h1 id="h1" class="text-2xl md:text-3xl font-bold">{t("label.searchPage")}</h1>
-      </div>
-      <a href="/blog" class="btn btn-outline btn-sm gap-2">
-        <Icon name="lucide:book-open" class="w-4 h-4" />
-        <span>{t("label.backToBlog")}</span>
-      </a>
-    </div>
-    <div class="divider my-2"></div>
-    <p class="text-sm opacity-75">{t("label.searchPageDescription")}</p>
-  </BaseCard>
-
-  <BaseCard>
+  <header class="tui-page-head">
+    <div><p>rg --context 2</p><h1>全文搜索。</h1><span>Pagefind 在静态构建结果中检索标题、正文与上下文，输入内容后结果即时出现。</span></div>
+    <div class="tui-page-stat"><b>/</b><span>focus search</span></div>
+  </header>
+  <Pane title="pagefind --site dist" meta="static index" bodyClass="search-pane-body">
     <div id="search-container" class="w-full">
+      <div class="search-status"><span class="tui-prompt">›</span><span>index ready</span><span>j/k move · Enter open</span></div>
       <div id="pagefind-search" transition:persist></div>
     </div>
-  </BaseCard>
+  </Pane>
 </BaseLayout>
 
 <script>
@@ -78,16 +67,26 @@ import { Icon } from "astro-icon/components";
         console.error("Error initializing search:", error);
         const searchContainer = document.querySelector("#search-container");
         if (searchContainer) {
-          searchContainer.innerHTML = `
-            <div class="alert alert-error shadow-lg">
-              <div>
-                <Icon name="lucide:alert-triangle" class="w-6 h-6" />
-                <span>Error loading search functionality. Please try again later.</span>
-              </div>
-            </div>
-          `;
+          searchContainer.innerHTML = `<div class="search-error">search index unavailable. try again after a production build.</div>`;
         }
       }
     });
   }
 </script>
+
+<style>
+  .search-pane-body { padding: 0; }
+  .search-status { min-height: 40px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 9px; padding: 0 12px; border-bottom: 1px solid var(--tui-border); color: var(--tui-dim); font: 700 10px var(--tui-code); }
+  .search-error { padding: 28px; border-left: 3px solid var(--tui-error); color: var(--tui-error); font: 700 12px var(--tui-code); }
+  #pagefind-search { padding: 12px; }
+  :global(.pagefind-ui) { color: var(--tui-text) !important; font-family: var(--tui-sans) !important; }
+  :global(.pagefind-ui__form) { position: relative !important; }
+  :global(.pagefind-ui__search-input) { height: 48px !important; border: 1px solid var(--tui-border-strong) !important; border-radius: 2px !important; background: var(--tui-panel-soft) !important; color: var(--tui-text) !important; font: 700 13px var(--tui-code) !important; }
+  :global(.pagefind-ui__search-clear) { color: var(--tui-muted) !important; }
+  :global(.pagefind-ui__results-area) { margin-top: 12px !important; }
+  :global(.pagefind-ui__result) { padding: 16px 10px !important; border-top: 1px solid var(--tui-border) !important; }
+  :global(.pagefind-ui__result-link) { color: var(--tui-text) !important; font-size: 16px !important; }
+  :global(.pagefind-ui__result-excerpt) { color: var(--tui-muted) !important; }
+  :global(mark) { background: var(--tui-accent-soft) !important; color: var(--tui-accent) !important; }
+  @media (max-width: 620px) { .search-status > span:last-child { display: none; } }
+</style>

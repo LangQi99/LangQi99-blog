@@ -1,0 +1,106 @@
+<canvas class="fluid-grid" data-fluid-grid aria-hidden="true"></canvas>
+<div class="fluid-grid-veil" aria-hidden="true"></div>
+
+<script is:inline>
+  (() => {
+    const initialize = () => {
+      document.querySelectorAll("[data-fluid-grid]").forEach((canvas) => {
+        if (!(canvas instanceof HTMLCanvasElement) || canvas.dataset.initialized === "true") return;
+        canvas.dataset.initialized = "true";
+        const context = canvas.getContext("2d");
+        if (!context) return;
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const coarse = window.matchMedia("(pointer: coarse)").matches;
+        let width = 0;
+        let height = 0;
+        let pointerX = 0.55;
+        let pointerY = 0.35;
+        let targetX = pointerX;
+        let targetY = pointerY;
+        let frame = 0;
+
+        const resize = () => {
+          const ratio = Math.min(window.devicePixelRatio || 1, 2);
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = Math.max(1, Math.floor(width * ratio));
+          canvas.height = Math.max(1, Math.floor(height * ratio));
+          canvas.style.width = `${width}px`;
+          canvas.style.height = `${height}px`;
+          context.setTransform(ratio, 0, 0, ratio, 0, 0);
+          draw();
+        };
+
+        const warp = (x, y, time) => {
+          const dx = x / width - pointerX;
+          const dy = y / height - pointerY;
+          const distance = Math.max(0.08, Math.hypot(dx, dy));
+          const pull = Math.exp(-distance * 6) * 46;
+          return {
+            x: x + (dx / distance) * pull + Math.sin((x + y) * 0.006 + time) * 4,
+            y: y + (dy / distance) * pull + Math.cos(y * 0.007 + time) * 3,
+          };
+        };
+
+        function draw() {
+          if (!width || !height) return;
+          pointerX += (targetX - pointerX) * 0.045;
+          pointerY += (targetY - pointerY) * 0.045;
+          context.clearRect(0, 0, width, height);
+          const dark = document.documentElement.getAttribute("data-theme") !== "winter";
+          context.strokeStyle = dark ? "rgba(255,255,255,.075)" : "rgba(0,0,0,.075)";
+          context.lineWidth = 1;
+          const step = Math.max(42, Math.min(68, width / 20));
+          const time = frame * 0.008;
+          for (let x = -step; x <= width + step; x += step) {
+            context.beginPath();
+            for (let y = -step; y <= height + step; y += 12) {
+              const point = warp(x, y, time);
+              y === -step ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y);
+            }
+            context.stroke();
+          }
+          for (let y = -step; y <= height + step; y += step) {
+            context.beginPath();
+            for (let x = -step; x <= width + step; x += 12) {
+              const point = warp(x, y, time);
+              x === -step ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y);
+            }
+            context.stroke();
+          }
+          if (!reduced) {
+            frame += 1;
+            requestAnimationFrame(draw);
+          }
+        }
+
+        if (!coarse) {
+          window.addEventListener("pointermove", (event) => {
+            targetX = event.clientX / Math.max(1, width);
+            targetY = event.clientY / Math.max(1, height);
+          }, { passive: true });
+        }
+        window.addEventListener("resize", resize, { passive: true });
+        document.addEventListener("themechange", draw);
+        resize();
+      });
+    };
+    document.addEventListener("astro:page-load", initialize);
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  })();
+</script>
+
+<style is:inline>
+  .fluid-grid { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; pointer-events: none; }
+  .fluid-grid-veil {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(110% 80% at 50% -10%, transparent 35%, rgba(0,0,0,.28) 88%),
+      linear-gradient(180deg, rgba(0,0,0,.06), transparent 30%, transparent 72%, rgba(0,0,0,.34));
+  }
+  html[data-theme="winter"] .fluid-grid-veil {
+    background:
+      radial-gradient(110% 80% at 50% -10%, transparent 35%, rgba(255,255,255,.18) 88%),
+      linear-gradient(180deg, rgba(255,255,255,.22), transparent 32%, transparent 72%, rgba(255,255,255,.36));
+  }
+</style>

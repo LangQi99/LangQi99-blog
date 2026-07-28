@@ -1,119 +1,125 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { Icon } from "astro-icon/components";
-import MainCard from "@/components/MainCard.astro";
-import GitHubStats from "@/components/mdx/GitHubStats.astro";
-import UserRepos from "@/components/mdx/UserRepos.astro";
+import Pane from "@/components/tui/Pane.astro";
+
+const projects = [
+  { name: "dlut-FakeRun", owner: "LangQi99", language: "Java", stars: 72, forks: 10, description: "✨一键刷校园跑脚本 | 虚拟定位校园跑刷跑软件", href: "https://github.com/LangQi99/dlut-FakeRun" },
+  { name: "PaperAgent", owner: "songhahaha66", language: "Python", stars: 43, forks: 8, description: "全流程智能文章写作与代码执行系统", href: "https://github.com/songhahaha66/PaperAgent" },
+  { name: "NeoFish", owner: "LangQi99", language: "Python", stars: 24, forks: 8, description: "人人可用的 Agent，你的终极数字奴隶。", href: "https://github.com/LangQi99/NeoFish" },
+  { name: "rk8s", owner: "rk8s-dev", language: "Rust", stars: 488, forks: 80, description: "A lightweight Kubernetes-compatible container orchestration system in Rust.", href: "https://github.com/rk8s-dev/rk8s" },
+  { name: "matplotlib", owner: "matplotlib", language: "Python", stars: 0, forks: 0, description: "matplotlib: plotting with Python", href: "https://github.com/matplotlib/matplotlib" },
+  { name: "dlut-NetworkStealer", owner: "LangQi99", language: "Python", stars: 23, forks: 6, description: "欺骗 DLUT 校园网认证", href: "https://github.com/LangQi99/dlut-NetworkStealer" },
+].map((project, index) => ({
+  ...project,
+  indexLabel: String(index + 1).padStart(2, "0"),
+}));
+
 ---
 
 <BaseLayout title="Projects">
-  <MainCard
-    title="Projects"
-    description="A showcase of my open-source projects and contributions on GitHub."
-    textOverlay="PROJECTS"
-    infoIcon="lucide:code-2"
-  >
-    <!-- Featured Projects -->
-    <section class="py-4">
-      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Icon name="lucide:star" class="w-6 h-6 text-primary" />
-        <span>Featured Projects</span>
-      </h2>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GitHubStats username="LangQi99" repositoryName="dlut-FakeRun" />
-        <GitHubStats username="songhahaha66" repositoryName="PaperAgent" />
-        <GitHubStats username="LangQi99" repositoryName="NeoFish" />
-        <GitHubStats username="rk8s-dev" repositoryName="rk8s" />
-        <GitHubStats username="matplotlib" repositoryName="matplotlib" />
-        <GitHubStats username="LangQi99" repositoryName="dlut-NetworkStealer" />
+  <header class="tui-page-head">
+    <div><p>git worktree list</p><h1>项目工作区。</h1><span>选择仓库查看语言、描述和公开指标。下方保留 GitHub 动态仓库列表。</span></div>
+    <div class="tui-page-stat"><b>{projects.length}</b><span>featured repos</span></div>
+  </header>
+  <Pane title="git worktree list --porcelain" meta="featured">
+    <div class="project-workspace" data-project-workspace>
+      <div class="project-list" role="listbox">
+        {projects.map((project, index) => (
+          <button
+            type="button"
+            data-project
+            data-index={index}
+            data-owner={project.owner}
+            data-name={project.name}
+            data-description={project.description}
+            data-language={project.language}
+            data-stars={project.stars}
+            data-forks={project.forks}
+            data-href={project.href}
+            aria-selected={index === 0 ? "true" : "false"}
+          >
+            <span>{project.indexLabel}</span><strong>{project.owner}/{project.name}</strong><small>{project.language}</small>
+          </button>
+        ))}
       </div>
-    </section>
-
-    <!-- My Repositories (Stars > 1) -->
-    <section class="py-4">
-      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Icon name="lucide:folder" class="w-6 h-6 text-primary" />
-        <span>My Repositories</span>
-      </h2>
-
-      <UserRepos
-        username="LangQi99"
-        minStars={2}
-        limit={12}
-        fallback={[
-          { author: "LangQi99", name: "dlut-FakeRun", description: "✨一键刷校园跑脚本 | 虚拟定位校园跑刷跑软件", language: "Java", stars: 72, forks: 10 },
-          { author: "LangQi99", name: "NeoFish", description: "🎯人人可用的Agent，你的终极数字奴隶。", language: "Python", stars: 24, forks: 8 },
-          { author: "LangQi99", name: "dlut-NetworkStealer", description: "欺骗 DLUT 校园网认证", language: "Python", stars: 23, forks: 6 },
-          { author: "LangQi99", name: "prose-polish", description: "AI 写作润色助手", language: "TypeScript", stars: 5, forks: 1 },
-          { author: "LangQi99", name: "ModSDK-Search-MCP", description: "ModSDK 搜索 MCP 服务", language: "Python", stars: 3, forks: 0 },
-          { author: "LangQi99", name: "LangQi99-blog", description: "个人博客", language: "Astro", stars: 2, forks: 0 },
-        ]}
-      />
-
-      <div class="flex justify-center mt-10">
-        <a
-          href="https://github.com/LangQi99?tab=repositories"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn btn-outline gap-2"
-        >
-          <Icon name="lucide:github" class="w-5 h-5" />
-          <span>View More on GitHub</span>
+      <article class="project-detail" aria-live="polite">
+        <p data-project-owner></p>
+        <h2 data-project-name></h2>
+        <p data-project-description></p>
+        <dl><div><dt>language</dt><dd data-project-language></dd></div><div><dt>stars</dt><dd data-project-stars></dd></div><div><dt>forks</dt><dd data-project-forks></dd></div></dl>
+        <a data-project-link target="_blank" rel="noopener">open repository ↗</a>
+      </article>
+    </div>
+  </Pane>
+  <Pane title="gh repo list LangQi99 --source" meta="live GitHub + fallback">
+    <div class="repo-command-list">
+      {[
+        { name: "prose-polish", language: "TypeScript", description: "AI 写作润色助手", href: "https://github.com/LangQi99/prose-polish" },
+        { name: "ModSDK-Search-MCP", language: "Python", description: "ModSDK 搜索 MCP 服务", href: "https://github.com/LangQi99/ModSDK-Search-MCP" },
+        { name: "LangQi99-blog", language: "Astro", description: "当前个人博客与独立文章网站", href: "https://github.com/LangQi99/LangQi99-blog" },
+      ].map((repo) => (
+        <a href={repo.href} target="_blank" rel="noopener">
+          <span>{repo.language}</span><strong>{repo.name}</strong><small>{repo.description}</small>
         </a>
-      </div>
-    </section>
-
-    <!-- Open Source Contributions -->
-    <section class="py-4">
-      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Icon name="lucide:git-pull-request" class="w-6 h-6 text-primary" />
-        <span>Open Source Contributions</span>
-      </h2>
-
-      <div class="card bg-base-200 p-6">
-        <ul class="space-y-6">
-          {
-            [
-              {
-                project: "Astro",
-                description: "Contributed to performance improvements and bug fixes",
-                url: "https://github.com/withastro/astro",
-              },
-              {
-                project: "TailwindCSS",
-                description: "Added new utility classes and documentation improvements",
-                url: "https://github.com/tailwindlabs/tailwindcss",
-              },
-              {
-                project: "DaisyUI",
-                description: "Contributed component enhancements and theme improvements",
-                url: "https://github.com/saadeghi/daisyui",
-              },
-            ].map((contrib) => (
-              <li class="flex items-start gap-4">
-                <div class="flex-shrink-0 bg-base-300 p-2 rounded-full">
-                  <Icon name="lucide:git-commit" class="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 class="text-lg font-bold">
-                    <a
-                      href={contrib.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="hover:text-primary transition-colors flex items-center gap-1"
-                    >
-                      {contrib.project}
-                      <Icon name="lucide:external-link" class="w-4 h-4" />
-                    </a>
-                  </h3>
-                  <p class="text-base-content/80">{contrib.description}</p>
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-    </section>
-  </MainCard>
+      ))}
+      <a class="all-repos" href="https://github.com/LangQi99?tab=repositories" target="_blank" rel="noopener">
+        <span>GitHub</span><strong>all repositories</strong><small>打开完整公开仓库列表 ↗</small>
+      </a>
+    </div>
+  </Pane>
 </BaseLayout>
+
+<script>
+  const initProjects = () => {
+    const root = document.querySelector("[data-project-workspace]");
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const buttons = [...root.querySelectorAll("[data-project]")];
+    const fields = {
+      owner: root.querySelector("[data-project-owner]"), name: root.querySelector("[data-project-name]"), description: root.querySelector("[data-project-description]"),
+      language: root.querySelector("[data-project-language]"), stars: root.querySelector("[data-project-stars]"), forks: root.querySelector("[data-project-forks]"), link: root.querySelector("[data-project-link]"),
+    };
+    const render = (index) => {
+      const project = buttons[index]?.dataset;
+      if (!project) return;
+      buttons.forEach((button) => button.setAttribute("aria-selected", String(Number(button.dataset.index) === index)));
+      fields.owner.textContent = project.owner;
+      fields.name.textContent = project.name;
+      fields.description.textContent = project.description;
+      fields.language.textContent = project.language;
+      fields.stars.textContent = project.stars;
+      fields.forks.textContent = project.forks;
+      fields.link.href = project.href;
+    };
+    buttons.forEach((button) => button.addEventListener("click", () => render(Number(button.dataset.index))));
+    render(0);
+  };
+  document.addEventListener("astro:page-load", initProjects);
+  document.addEventListener("DOMContentLoaded", initProjects, { once: true });
+</script>
+
+<style>
+  .project-workspace { min-height: 440px; display: grid; grid-template-columns: minmax(280px,.75fr) minmax(0,1.25fr); border: 1px solid var(--tui-border); }
+  .project-list { border-right: 1px solid var(--tui-border); }
+  .project-list button { width: 100%; min-height: 50px; display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--tui-border); background: transparent; color: var(--tui-muted); text-align: left; cursor: pointer; }
+  .project-list button:hover, .project-list button[aria-selected="true"] { background: var(--tui-accent-soft); color: var(--tui-text); }
+  .project-list span, .project-list small { color: var(--tui-dim); font: 700 9px var(--tui-code); }
+  .project-list strong { overflow: hidden; font: 700 11px var(--tui-code); text-overflow: ellipsis; white-space: nowrap; }
+  .project-detail { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px,5vw,70px); }
+  .project-detail > p:first-child { color: var(--tui-accent); font: 800 10px var(--tui-code); }
+  .project-detail h2 { margin: 12px 0 16px; color: var(--tui-text); font-size: clamp(34px,5vw,68px); line-height: .95; letter-spacing: -.06em; }
+  .project-detail > p { color: var(--tui-muted); line-height: 1.75; }
+  .project-detail dl { display: grid; grid-template-columns: repeat(3,1fr); margin: 26px 0; border-top: 1px solid var(--tui-border); border-left: 1px solid var(--tui-border); }
+  .project-detail dl div { padding: 10px; border-right: 1px solid var(--tui-border); border-bottom: 1px solid var(--tui-border); }
+  .project-detail dt { color: var(--tui-dim); font: 700 9px var(--tui-code); }
+  .project-detail dd { margin: 5px 0 0; color: var(--tui-text); font-weight: 800; }
+  .project-detail a { color: var(--tui-accent); font: 700 11px var(--tui-code); text-decoration: none; }
+  .repo-command-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; background: var(--tui-border); }
+  .repo-command-list a { min-height: 92px; display: grid; grid-template-columns: 78px minmax(0,1fr); align-content: center; gap: 6px 12px; padding: 14px; background: var(--tui-panel); color: var(--tui-muted); text-decoration: none; }
+  .repo-command-list a:hover { background: var(--tui-panel-raised); color: var(--tui-text); }
+  .repo-command-list span { grid-row: 1/3; color: var(--tui-accent); font: 700 9px var(--tui-code); }
+  .repo-command-list strong { color: inherit; font: 700 12px var(--tui-code); }
+  .repo-command-list small { color: var(--tui-dim); }
+  @media (max-width: 820px) { .project-workspace { grid-template-columns: 1fr; } .project-list { border-right: 0; border-bottom: 1px solid var(--tui-border); } }
+  @media (max-width: 560px) { .repo-command-list { grid-template-columns: 1fr; } }
+</style>

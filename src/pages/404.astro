@@ -1,54 +1,42 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { t } from "@config";
-import { Icon } from "astro-icon/components";
-import MainCard from "@/components/MainCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 ---
 
 <BaseLayout title="404">
-  <MainCard
-    title={t("label.404title") || "Page Not Found"}
-    description={t("label.404description") ||
-      "Looks like you've ventured into the unknown. The page you're looking for doesn't exist or has been moved to another dimension."}
-    textOverlay="404"
-    infoIcon="lucide:help-circle"
-  >
-    <div class="flex flex-col sm:flex-row gap-4 justify-center my-8">
-      <a href="/" class="btn btn-primary gap-2 btn-shine-effect">
-        <Icon name="lucide:home" class="w-5 h-5" />
-        <span>{t("label.404backHome") || "Back to Home"}</span>
-      </a>
-      <button id="goBackBtn" class="btn btn-outline gap-2" onclick="history.back()">
-        <Icon name="lucide:corner-up-left" class="w-5 h-5" />
-        <span>{t("label.404goBack") || "Go Back"}</span>
-      </button>
-    </div>
-
-    <div class="divider my-6">
-      <Icon name="lucide:map" class="w-10 h-10" />
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <a href="/blog" class="card bg-base-200 p-4 hover-lift text-center transition-all duration-300">
-        <div class="text-info mb-2">
-          <Icon name="lucide:book-open" class="w-8 h-8 mx-auto" />
+  <Pane title="shell" meta="exit 127" class="not-found-pane">
+    <div class="not-found">
+      <div class="not-found-code">404</div>
+      <div class="not-found-terminal">
+        <p><span class="tui-prompt">λ</span> open <code>{Astro.url.pathname}</code></p>
+        <p class="error">command not found: {Astro.url.pathname}</p>
+        <p>{t("label.404description")}</p>
+        <div class="recovery-grid">
+          <a href="/"><span>01</span><strong>cd /</strong><small>返回首页工作区</small></a>
+          <a href="/blog"><span>02</span><strong>cd /blog</strong><small>浏览全部文章</small></a>
+          <a href="/blog/search"><span>03</span><strong>grep</strong><small>搜索内容</small></a>
+          <button type="button" onclick="history.back()"><span>04</span><strong>history.back()</strong><small>返回上一页</small></button>
         </div>
-        <h3 class="font-semibold">{t("label.404exploreBlog") || "Explore our blog"}</h3>
-      </a>
-
-      <a href="/blog/archives" class="card bg-base-200 p-4 hover-lift text-center transition-all duration-300">
-        <div class="text-info mb-2">
-          <Icon name="lucide:archive" class="w-8 h-8 mx-auto" />
-        </div>
-        <h3 class="font-semibold">{t("label.404browseArchives") || "Browse archives"}</h3>
-      </a>
-
-      <a href="/blog/search" class="card bg-base-200 p-4 hover-lift text-center transition-all duration-300">
-        <div class="text-info mb-2">
-          <Icon name="lucide:search" class="w-8 h-8 mx-auto" />
-        </div>
-        <h3 class="font-semibold">{t("label.404searchContent") || "Search content"}</h3>
-      </a>
+      </div>
     </div>
-  </MainCard>
+  </Pane>
 </BaseLayout>
+
+<style>
+  .not-found-pane :global(.tui-pane-body) { padding: 0; }
+  .not-found { min-height: calc(100dvh - 150px); display: grid; grid-template-columns: .7fr 1.3fr; }
+  .not-found-code { display: grid; place-items: center; border-right: 1px solid var(--tui-border); color: var(--tui-accent); font: 800 clamp(90px,18vw,260px)/1 var(--tui-code); letter-spacing: -.1em; }
+  .not-found-terminal { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px,6vw,84px); }
+  .not-found-terminal p { margin: 0 0 14px; color: var(--tui-muted); font-family: var(--tui-code); }
+  .not-found-terminal .error { color: var(--tui-error); }
+  .not-found-terminal code { color: var(--tui-text); }
+  .recovery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; margin-top: 28px; background: var(--tui-border); border: 1px solid var(--tui-border); }
+  .recovery-grid a, .recovery-grid button { min-height: 100px; display: grid; grid-template-columns: 28px minmax(0,1fr); align-content: center; gap: 6px 10px; padding: 16px; border: 0; background: var(--tui-panel); color: var(--tui-muted); text-align: left; text-decoration: none; cursor: pointer; }
+  .recovery-grid a:hover, .recovery-grid button:hover { background: var(--tui-panel-raised); color: var(--tui-text); }
+  .recovery-grid span { grid-row: 1/3; color: var(--tui-accent); font: 800 10px var(--tui-code); }
+  .recovery-grid strong { color: inherit; font: 800 12px var(--tui-code); }
+  .recovery-grid small { color: var(--tui-dim); }
+  @media (max-width: 760px) { .not-found { grid-template-columns: 1fr; } .not-found-code { min-height: 180px; border-right: 0; border-bottom: 1px solid var(--tui-border); } }
+  @media (max-width: 520px) { .recovery-grid { grid-template-columns: 1fr; } }
+</style>

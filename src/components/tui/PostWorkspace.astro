@@ -1,0 +1,369 @@
+---
+import dayjs from "@utils/dayjs";
+import { DATE_FORMAT } from "@config";
+import type { Post } from "@interfaces/data";
+
+interface Props {
+  posts: Post[];
+  title?: string;
+  meta?: string;
+  filterLabel?: string;
+}
+
+const {
+  posts,
+  title = "find ./posts -type f",
+  meta = `${posts.length} results`,
+  filterLabel = "filter posts",
+} = Astro.props;
+
+const serializePost = (post: Post) => ({
+  title: post.data.title,
+  description: post.data.description || "",
+  date: dayjs(post.data.pubDate).format(DATE_FORMAT),
+  categories: post.data.categories || [],
+  tags: post.data.tags || [],
+  badge: post.data.badge || "",
+  words: post.remarkPluginFrontmatter?.totalCharCount || "0",
+  time: post.remarkPluginFrontmatter?.readingTime || "0",
+  image: post.data.image || "",
+  href: `/blog/${post.slug}`,
+});
+
+const serializedPosts = posts.map(serializePost);
+---
+
+<section class="post-workspace tui-pane" data-post-workspace tabindex="0">
+  <header class="tui-pane-header">
+    <span class="tui-pane-title">{title}</span>
+    <span class="tui-pane-meta" data-result-count>{meta}</span>
+  </header>
+  <div class="post-query">
+    <span class="tui-prompt">›</span>
+    <input type="search" data-post-filter placeholder={filterLabel} aria-label={filterLabel} />
+    <span><kbd class="tui-kbd">j</kbd><kbd class="tui-kbd">k</kbd> move <kbd class="tui-kbd">↵</kbd> open</span>
+  </div>
+  <div class="post-workspace-grid">
+    <div class="post-result-pane" data-post-list role="listbox" aria-label="文章列表">
+      {
+        serializedPosts.map((post, index) => (
+          <a
+            href={post.href}
+            class="post-result"
+            data-post-item
+            data-index={index}
+            data-search={`${post.title} ${post.description} ${post.categories.join(" ")} ${post.tags.join(" ")}`.toLowerCase()}
+            role="option"
+            aria-selected={index === 0 ? "true" : "false"}
+          >
+            <span class="post-result-index">{String(index + 1).padStart(2, "0")}</span>
+            <span class="post-result-copy">
+              <strong>{post.title}</strong>
+              <span>{post.description}</span>
+            </span>
+            <span class="post-result-meta">
+              <time>{post.date}</time>
+              <span>{post.time} min</span>
+            </span>
+          </a>
+        ))
+      }
+      <div class="post-empty" data-post-empty hidden>
+        <span>0 matches</span>
+        <p>Try another title, category or tag.</p>
+      </div>
+    </div>
+    <aside class="post-preview" data-post-preview aria-live="polite">
+      <div class="post-preview-image" data-preview-image hidden></div>
+      <div class="post-preview-status">
+        <span data-preview-badge>ARTICLE</span>
+        <span data-preview-date></span>
+      </div>
+      <h2 data-preview-title></h2>
+      <p data-preview-description></p>
+      <div class="post-preview-taxonomy" data-preview-taxonomy></div>
+      <dl>
+        <div><dt>words</dt><dd data-preview-words></dd></div>
+        <div><dt>read</dt><dd data-preview-time></dd></div>
+      </dl>
+      <a data-preview-link href="#">open article ↗</a>
+    </aside>
+  </div>
+</section>
+
+<script type="application/json" data-post-payload set:html={JSON.stringify(serializedPosts)}></script>
+
+<script>
+  const initializePostWorkspaces = () => {
+    document.querySelectorAll("[data-post-workspace]").forEach((workspace) => {
+      if (!(workspace instanceof HTMLElement) || workspace.dataset.initialized === "true") return;
+      workspace.dataset.initialized = "true";
+
+      const payload = workspace.nextElementSibling;
+      const posts = JSON.parse(payload?.textContent || "[]");
+      const input = workspace.querySelector("[data-post-filter]");
+      const items = [...workspace.querySelectorAll("[data-post-item]")];
+      const empty = workspace.querySelector("[data-post-empty]");
+      const count = workspace.querySelector("[data-result-count]");
+      const preview = {
+        image: workspace.querySelector("[data-preview-image]"),
+        badge: workspace.querySelector("[data-preview-badge]"),
+        date: workspace.querySelector("[data-preview-date]"),
+        title: workspace.querySelector("[data-preview-title]"),
+        description: workspace.querySelector("[data-preview-description]"),
+        taxonomy: workspace.querySelector("[data-preview-taxonomy]"),
+        words: workspace.querySelector("[data-preview-words]"),
+        time: workspace.querySelector("[data-preview-time]"),
+        link: workspace.querySelector("[data-preview-link]"),
+      };
+      let active = 0;
+
+      const visibleItems = () => items.filter((item) => !item.hidden);
+      const renderPreview = (index) => {
+        const post = posts[index];
+        if (!post) return;
+        items.forEach((item) => item.setAttribute("aria-selected", String(Number(item.dataset.index) === index)));
+        active = index;
+        preview.badge.textContent = post.badge || "ARTICLE";
+        preview.date.textContent = post.date;
+        preview.title.textContent = post.title;
+        preview.description.textContent = post.description;
+        preview.words.textContent = post.words;
+        preview.time.textContent = `${post.time} min`;
+        preview.link.href = post.href;
+        preview.taxonomy.innerHTML = [...post.categories, ...post.tags]
+          .slice(0, 8)
+          .map((label) => `<span>${label}</span>`)
+          .join("");
+        if (post.image) {
+          preview.image.hidden = false;
+          preview.image.style.backgroundImage = `linear-gradient(180deg, transparent 45%, rgba(20,20,19,.76)), url("${post.image}")`;
+        } else {
+          preview.image.hidden = true;
+          preview.image.style.backgroundImage = "";
+        }
+      };
+
+      const setFromVisiblePosition = (position) => {
+        const visible = visibleItems();
+        if (visible.length === 0) return;
+        const currentPosition = visible.findIndex((item) => Number(item.dataset.index) === active);
+        const nextPosition = currentPosition < 0 ? 0 : (currentPosition + position + visible.length) % visible.length;
+        const item = visible[nextPosition];
+        renderPreview(Number(item.dataset.index));
+        item.scrollIntoView({ block: "nearest" });
+      };
+
+      items.forEach((item) => {
+        item.addEventListener("mouseenter", () => renderPreview(Number(item.dataset.index)));
+        item.addEventListener("focus", () => renderPreview(Number(item.dataset.index)));
+        item.addEventListener("click", () => renderPreview(Number(item.dataset.index)));
+      });
+
+      input?.addEventListener("input", () => {
+        const term = input.value.trim().toLowerCase();
+        items.forEach((item) => item.hidden = !item.dataset.search.includes(term));
+        const visible = visibleItems();
+        empty.hidden = visible.length > 0;
+        count.textContent = `${visible.length} results`;
+        if (visible.length > 0) renderPreview(Number(visible[0].dataset.index));
+      });
+
+      workspace.addEventListener("keydown", (event) => {
+        const typing = event.target instanceof HTMLInputElement;
+        if (typing && event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        if (event.key === "j" || event.key === "ArrowDown") {
+          event.preventDefault();
+          setFromVisiblePosition(1);
+        }
+        if (event.key === "k" || event.key === "ArrowUp") {
+          event.preventDefault();
+          setFromVisiblePosition(-1);
+        }
+        if (event.key === "Enter" && !typing) {
+          event.preventDefault();
+          const post = posts[active];
+          if (post) window.location.href = post.href;
+        }
+      });
+
+      renderPreview(0);
+    });
+  };
+
+  document.addEventListener("astro:page-load", initializePostWorkspaces);
+  document.addEventListener("DOMContentLoaded", initializePostWorkspaces, { once: true });
+</script>
+
+<style>
+  .post-workspace { overflow: hidden; }
+  .post-query {
+    min-height: 46px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--tui-border);
+    background: var(--tui-panel-soft);
+    color: var(--tui-dim);
+    font: 600 10px/1 var(--tui-code);
+  }
+  .post-query input {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--tui-text);
+    font: 600 12px/1 var(--tui-code);
+  }
+  .post-query input::placeholder { color: var(--tui-dim); }
+  .post-query > span:last-child { display: flex; align-items: center; gap: 5px; }
+  .post-workspace-grid {
+    min-height: 520px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(310px, .82fr);
+  }
+  .post-result-pane {
+    min-width: 0;
+    max-height: 680px;
+    overflow-y: auto;
+    border-right: 1px solid var(--tui-border);
+  }
+  .post-result {
+    position: relative;
+    min-height: 82px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 11px;
+    padding: 12px;
+    border-bottom: 1px solid var(--tui-border);
+    color: var(--tui-muted);
+    text-decoration: none;
+  }
+  .post-result:hover,
+  .post-result[aria-selected="true"] {
+    background: var(--tui-panel-raised);
+    color: var(--tui-text);
+  }
+  .post-result[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    inset: 8px auto 8px 0;
+    width: 2px;
+    background: var(--tui-accent);
+  }
+  .post-result-index {
+    color: var(--tui-dim);
+    font: 700 10px/1 var(--tui-code);
+  }
+  .post-result-copy { min-width: 0; }
+  .post-result-copy strong {
+    display: block;
+    overflow: hidden;
+    color: inherit;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .post-result-copy span {
+    display: -webkit-box;
+    margin-top: 5px;
+    overflow: hidden;
+    color: var(--tui-dim);
+    font-size: 12px;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .post-result-meta {
+    display: grid;
+    justify-items: end;
+    gap: 5px;
+    color: var(--tui-dim);
+    font: 600 9px/1 var(--tui-code);
+  }
+  .post-preview {
+    min-width: 0;
+    padding: 18px;
+    background: var(--tui-panel-soft);
+  }
+  .post-preview-image {
+    height: 180px;
+    margin: -18px -18px 18px;
+    border-bottom: 1px solid var(--tui-border);
+    background-position: center;
+    background-size: cover;
+  }
+  .post-preview-status {
+    display: flex;
+    justify-content: space-between;
+    color: var(--tui-dim);
+    font: 700 9px/1 var(--tui-code);
+    letter-spacing: .08em;
+  }
+  .post-preview-status span:first-child { color: var(--tui-accent); }
+  .post-preview h2 {
+    margin: 22px 0 12px;
+    color: var(--tui-text);
+    font-size: clamp(24px, 3vw, 39px);
+    line-height: 1.05;
+    letter-spacing: -.04em;
+  }
+  .post-preview > p {
+    min-height: 4.6em;
+    margin: 0;
+    color: var(--tui-muted);
+    line-height: 1.65;
+  }
+  .post-preview-taxonomy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 20px;
+  }
+  .post-preview-taxonomy span {
+    padding: 4px 7px;
+    border: 1px solid var(--tui-border);
+    color: var(--tui-muted);
+    font: 600 9px/1 var(--tui-code);
+  }
+  .post-preview dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 24px 0;
+    border-top: 1px solid var(--tui-border);
+    border-left: 1px solid var(--tui-border);
+  }
+  .post-preview dl div {
+    padding: 10px;
+    border-right: 1px solid var(--tui-border);
+    border-bottom: 1px solid var(--tui-border);
+  }
+  .post-preview dt {
+    color: var(--tui-dim);
+    font: 700 9px/1 var(--tui-code);
+    text-transform: uppercase;
+  }
+  .post-preview dd { margin: 5px 0 0; color: var(--tui-text); font-weight: 700; }
+  .post-preview > a {
+    display: inline-flex;
+    color: var(--tui-accent);
+    font: 700 11px/1 var(--tui-code);
+    text-decoration: none;
+  }
+  .post-empty { padding: 40px 16px; text-align: center; color: var(--tui-dim); }
+  .post-empty span { font: 700 12px/1 var(--tui-code); }
+  @media (max-width: 900px) {
+    .post-workspace-grid { grid-template-columns: 1fr; }
+    .post-result-pane { border-right: 0; }
+    .post-preview { border-top: 1px solid var(--tui-border); }
+  }
+  @media (max-width: 560px) {
+    .post-query > span:last-child,
+    .post-result-meta { display: none; }
+    .post-result { grid-template-columns: 28px minmax(0, 1fr); }
+    .post-preview { display: none; }
+  }
+</style>

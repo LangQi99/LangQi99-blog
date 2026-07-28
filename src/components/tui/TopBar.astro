@@ -1,0 +1,36 @@
+---
+import { Icon } from "astro-icon/components";
+import ThemeToggle from "../widgets/ThemeToggle.astro";
+
+interface Props {
+  title: string;
+  path: string;
+}
+
+const { title, path } = Astro.props;
+---
+
+<header class="tui-topbar">
+  <div class="tui-path">
+    <button class="tui-mobile-nav-trigger" type="button" data-mobile-nav-trigger aria-label="打开工作区导航">
+      <Icon name="tabler:layout-sidebar-left-expand" class="h-4 w-4" />
+    </button>
+    <span class="tui-prompt">λ</span>
+    <span>~/LangQi99-blog</span>
+    <span>/</span>
+    <strong>{path}</strong>
+  </div>
+  <div class="tui-session">{title}</div>
+  <div class="tui-top-actions">
+    <a class="tui-icon-action" href="/blog/search" aria-label="搜索文章">
+      <Icon name="tabler:search" class="h-4 w-4" />
+      <span>search</span>
+    </a>
+    <button class="tui-command-trigger" type="button" data-command-trigger aria-label="打开命令面板">
+      <Icon name="tabler:terminal-2" class="h-4 w-4" />
+      <span>commands</span>
+      <kbd class="tui-kbd">⌘K</kbd>
+    </button>
+    <ThemeToggle className="tui-theme-toggle" />
+  </div>
+</header>

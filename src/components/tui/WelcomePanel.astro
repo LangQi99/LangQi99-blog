@@ -1,0 +1,268 @@
+---
+interface Props {
+  postCount: number;
+  latestTitle?: string;
+}
+
+const { postCount, latestTitle = "暂无文章" } = Astro.props;
+---
+
+<section class="welcome-tui" aria-labelledby="welcome-title">
+  <div class="welcome-legend">
+    <span>LangQi Workstation</span>
+    <b>HOME</b>
+  </div>
+
+  <div class="welcome-grid">
+    <section class="welcome-primary">
+      <p class="welcome-back" id="welcome-title">Welcome back!</p>
+      <div class="pixel-mark" aria-label="LangQi99 pixel mark" role="img">
+        <span></span><span></span><span class="on"></span><span></span><span></span>
+        <span></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        <span class="on"></span><span class="on eye"></span><span class="on"></span><span class="on eye"></span><span class="on"></span>
+        <span></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span>
+        <span></span><span class="on foot"></span><span></span><span class="on foot"></span><span></span>
+      </div>
+      <div class="welcome-identity">
+        <strong>LangQi99 / Personal Blog</strong>
+        <span>{postCount} articles · static workspace</span>
+        <code>~/LangQi99-blog</code>
+      </div>
+    </section>
+
+    <aside class="welcome-side">
+      <section>
+        <h2>Tips for getting started</h2>
+        <ul>
+          <li><kbd>⌘K</kbd><span>打开全局命令面板</span></li>
+          <li><kbd>/</kbd><span>搜索全部文章内容</span></li>
+          <li><kbd>j k</kbd><span>在列表中移动焦点</span></li>
+          <li><kbd>g b</kbd><span>跳转到博客工作区</span></li>
+        </ul>
+      </section>
+      <section class="welcome-new">
+        <h2>What's new</h2>
+        <p>文章详情已升级为独立交互网站，并保留完整原文。</p>
+        <div><span>latest</span><strong>{latestTitle}</strong></div>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .welcome-tui {
+    --welcome-bg: #282b31;
+    --welcome-panel: #25282e;
+    --welcome-line: #d07b59;
+    --welcome-text: #f1f1ee;
+    --welcome-muted: #a6a6a5;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--welcome-line);
+    border-radius: 6px;
+    background: var(--welcome-bg);
+    color: var(--welcome-text);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, .24);
+    font-family: var(--tui-code);
+  }
+
+  .welcome-legend {
+    position: relative;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--welcome-line);
+    color: var(--welcome-muted);
+    font-size: 12px;
+    letter-spacing: .04em;
+  }
+
+  .welcome-legend::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 56px;
+    width: 8px;
+    height: 2px;
+    background: var(--welcome-bg);
+  }
+
+  .welcome-legend span {
+    color: var(--welcome-line);
+    font-size: clamp(16px, 2vw, 24px);
+  }
+
+  .welcome-legend b {
+    color: var(--welcome-muted);
+    font-weight: 400;
+  }
+
+  .welcome-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr);
+    min-height: 340px;
+  }
+
+  .welcome-primary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 34px;
+    text-align: center;
+  }
+
+  .welcome-back {
+    margin: 0 0 24px;
+    font-size: clamp(18px, 2.2vw, 28px);
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+
+  .pixel-mark {
+    width: 124px;
+    height: 100px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    margin-bottom: 26px;
+  }
+
+  .pixel-mark span { background: transparent; }
+  .pixel-mark .on { background: var(--welcome-line); }
+  .pixel-mark .eye {
+    position: relative;
+  }
+  .pixel-mark .eye::after {
+    content: "";
+    position: absolute;
+    inset: 25% 35%;
+    background: #111318;
+  }
+  .pixel-mark .foot { transform: scaleX(.52); }
+
+  .welcome-identity {
+    display: grid;
+    gap: 4px;
+    color: var(--welcome-muted);
+    font-size: clamp(11px, 1.2vw, 15px);
+  }
+
+  .welcome-identity strong {
+    color: var(--welcome-text);
+    font-weight: 500;
+  }
+
+  .welcome-identity code {
+    color: var(--welcome-muted);
+    background: transparent;
+    font: inherit;
+  }
+
+  .welcome-side {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    border-left: 1px solid var(--welcome-line);
+  }
+
+  .welcome-side section {
+    min-width: 0;
+    padding: 24px;
+  }
+
+  .welcome-side section + section {
+    border-top: 1px solid var(--welcome-line);
+  }
+
+  .welcome-side h2 {
+    margin: 0 0 13px;
+    color: var(--welcome-line);
+    font-size: clamp(15px, 1.7vw, 22px);
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+
+  .welcome-side ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .welcome-side li {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    color: var(--welcome-text);
+    font-size: clamp(11px, 1.15vw, 15px);
+  }
+
+  .welcome-side kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 2px 6px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 2px;
+    color: var(--welcome-muted);
+    font: 700 10px var(--tui-code);
+  }
+
+  .welcome-new p {
+    margin: 0;
+    color: var(--welcome-text);
+    font-size: clamp(11px, 1.15vw, 15px);
+    line-height: 1.6;
+  }
+
+  .welcome-new > div {
+    display: grid;
+    gap: 5px;
+    margin-top: 14px;
+    padding-top: 13px;
+    border-top: 1px solid var(--welcome-line);
+  }
+
+  .welcome-new span {
+    color: var(--welcome-line);
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  .welcome-new strong {
+    overflow: hidden;
+    color: var(--welcome-muted);
+    font-size: 12px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html[data-theme="winter"] .welcome-tui {
+    --welcome-bg: #e7e7e3;
+    --welcome-panel: #deded9;
+    --welcome-text: #292a2d;
+    --welcome-muted: #6e6f70;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .08);
+  }
+
+  @media (max-width: 850px) {
+    .welcome-grid { grid-template-columns: 1fr; }
+    .welcome-side { grid-template-columns: 1fr 1fr; grid-template-rows: auto; border-top: 1px solid var(--welcome-line); border-left: 0; }
+    .welcome-side section + section { border-top: 0; border-left: 1px solid var(--welcome-line); }
+  }
+
+  @media (max-width: 580px) {
+    .welcome-legend { padding-inline: 16px; }
+    .welcome-grid { min-height: 0; }
+    .welcome-primary { padding: 28px 18px; }
+    .welcome-side { grid-template-columns: 1fr; }
+    .welcome-side section + section { border-top: 1px solid var(--welcome-line); border-left: 0; }
+    .pixel-mark { width: 100px; height: 80px; }
+  }
+</style>

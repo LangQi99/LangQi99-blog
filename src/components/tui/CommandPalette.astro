@@ -1,0 +1,224 @@
+---
+const commands = [
+  { label: "open home", detail: "打开首页工作区", href: "/", icon: "⌂", keys: "g h" },
+  { label: "open blog", detail: "浏览全部文章", href: "/blog", icon: "▤", keys: "g b" },
+  { label: "find posts", detail: "搜索博客内容", href: "/blog/search", icon: "/", keys: "/" },
+  { label: "list archives", detail: "按时间查看归档", href: "/blog/archives", icon: "◷", keys: "a" },
+  { label: "list categories", detail: "查看文章目录", href: "/blog/categories", icon: "▱", keys: "c" },
+  { label: "list tags", detail: "查看标签索引", href: "/blog/tags", icon: "#", keys: "t" },
+  { label: "open projects", detail: "查看项目和仓库", href: "/project", icon: "⌘", keys: "g p" },
+  { label: "open friends", detail: "查看友链网络", href: "/friend", icon: "⌁", keys: "" },
+  { label: "open about", detail: "查看身份和技术栈", href: "/about", icon: "◉", keys: "g a" },
+  { label: "open github", detail: "访问 LangQi99 GitHub", href: "https://github.com/LangQi99", icon: "↗", keys: "" },
+  { label: "copy rss", detail: "复制 RSS 地址", action: "copy-rss", icon: "◌", keys: "" },
+  { label: "toggle theme", detail: "切换深色或浅色主题", action: "toggle-theme", icon: "◐", keys: "" },
+];
+---
+
+<div class="tui-command-overlay" data-command-overlay data-open="false" aria-hidden="true">
+  <section class="tui-command-dialog" role="dialog" aria-modal="true" aria-label="命令面板">
+    <div class="tui-command-input-row">
+      <span class="tui-prompt">›</span>
+      <input class="tui-command-input" data-command-input type="text" autocomplete="off" placeholder="Type a command..." />
+      <kbd class="tui-kbd">Esc</kbd>
+    </div>
+    <ul class="tui-command-list" data-command-list>
+      {
+        commands.map((command, index) => (
+          <li>
+            <button
+              class="tui-command-item"
+              type="button"
+              data-command-item
+              data-command-value={`${command.label} ${command.detail}`}
+              data-href={command.href}
+              data-action={command.action}
+              data-active={index === 0 ? "true" : "false"}
+            >
+              <span aria-hidden="true">{command.icon}</span>
+              <span><strong>{command.label}</strong><span>{command.detail}</span></span>
+              <code>{command.keys}</code>
+            </button>
+          </li>
+        ))
+      }
+      <li class="tui-command-empty" data-command-empty hidden>No matching command.</li>
+    </ul>
+  </section>
+</div>
+
+<div class="tui-help" data-help-overlay data-open="false" aria-hidden="true">
+  <section class="tui-help-panel" role="dialog" aria-modal="true" aria-label="快捷键帮助">
+    <div class="tui-pane-header"><span class="tui-pane-title">keyboard shortcuts</span><kbd class="tui-kbd">Esc</kbd></div>
+    <div class="tui-help-grid">
+      <div><span>Command palette</span><kbd class="tui-kbd">⌘K</kbd></div>
+      <div><span>Search</span><kbd class="tui-kbd">/</kbd></div>
+      <div><span>Next item</span><kbd class="tui-kbd">j</kbd></div>
+      <div><span>Previous item</span><kbd class="tui-kbd">k</kbd></div>
+      <div><span>Open item</span><kbd class="tui-kbd">Enter</kbd></div>
+      <div><span>Close overlay</span><kbd class="tui-kbd">Esc</kbd></div>
+      <div><span>Go home</span><kbd class="tui-kbd">g h</kbd></div>
+      <div><span>Go blog</span><kbd class="tui-kbd">g b</kbd></div>
+    </div>
+  </section>
+</div>
+
+<div class="tui-flash" data-tui-flash aria-live="polite"></div>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      const overlay = document.querySelector("[data-command-overlay]");
+      const help = document.querySelector("[data-help-overlay]");
+      const input = document.querySelector("[data-command-input]");
+      const items = [...document.querySelectorAll("[data-command-item]")];
+      const empty = document.querySelector("[data-command-empty]");
+      const flash = document.querySelector("[data-tui-flash]");
+      const nav = document.querySelector("[data-workspace-nav]");
+      const navTrigger = document.querySelector("[data-mobile-nav-trigger]");
+      if (!overlay || !help || !input || items.length === 0) return;
+      if (overlay.dataset.initialized === "true") return;
+      overlay.dataset.initialized = "true";
+      let active = 0;
+      let previousFocus = null;
+      let sequence = "";
+      let sequenceTimer = 0;
+
+      const showFlash = (message) => {
+        if (!flash) return;
+        flash.textContent = message;
+        flash.dataset.visible = "true";
+        window.clearTimeout(Number(flash.dataset.timer || 0));
+        const timer = window.setTimeout(() => flash.dataset.visible = "false", 1800);
+        flash.dataset.timer = String(timer);
+      };
+
+      const visibleItems = () => items.filter((item) => !item.hidden);
+      const setActive = (next) => {
+        const visible = visibleItems();
+        if (visible.length === 0) return;
+        active = (next + visible.length) % visible.length;
+        items.forEach((item) => item.dataset.active = "false");
+        visible[active].dataset.active = "true";
+        visible[active].scrollIntoView({ block: "nearest" });
+      };
+
+      const filter = () => {
+        const term = input.value.trim().toLowerCase();
+        items.forEach((item) => {
+          item.hidden = !item.dataset.commandValue.toLowerCase().includes(term);
+        });
+        empty.hidden = visibleItems().length > 0;
+        active = 0;
+        setActive(0);
+      };
+
+      const open = () => {
+        previousFocus = document.activeElement;
+        overlay.dataset.open = "true";
+        overlay.setAttribute("aria-hidden", "false");
+        input.value = "";
+        filter();
+        requestAnimationFrame(() => input.focus());
+      };
+
+      const close = () => {
+        overlay.dataset.open = "false";
+        overlay.setAttribute("aria-hidden", "true");
+        previousFocus?.focus?.();
+      };
+
+      const closeHelp = () => {
+        help.dataset.open = "false";
+        help.setAttribute("aria-hidden", "true");
+      };
+
+      const execute = async (item) => {
+        const href = item.dataset.href;
+        const action = item.dataset.action;
+        if (href) {
+          if (href.startsWith("http")) window.open(href, "_blank", "noopener");
+          else window.location.href = href;
+          return;
+        }
+        if (action === "copy-rss") {
+          await navigator.clipboard.writeText(new URL("/rss.xml", window.location.origin).href);
+          showFlash("copied /rss.xml");
+        }
+        if (action === "toggle-theme") {
+          document.querySelector("[data-theme-toggle]")?.click();
+          showFlash("theme toggled");
+        }
+        close();
+      };
+
+      document.querySelectorAll("[data-command-trigger]").forEach((button) => button.addEventListener("click", open));
+      navTrigger?.addEventListener("click", () => {
+        nav.dataset.mobileOpen = nav.dataset.mobileOpen === "true" ? "false" : "true";
+      });
+      overlay.addEventListener("click", (event) => { if (event.target === overlay) close(); });
+      help.addEventListener("click", (event) => { if (event.target === help) closeHelp(); });
+      input.addEventListener("input", filter);
+      items.forEach((item) => item.addEventListener("click", () => execute(item)));
+
+      document.addEventListener("keydown", (event) => {
+        const target = event.target;
+        const typing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
+        const commandOpen = overlay.dataset.open === "true";
+        const helpOpen = help.dataset.open === "true";
+
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+          event.preventDefault();
+          commandOpen ? close() : open();
+          return;
+        }
+        if (commandOpen) {
+          if (event.key === "Escape") { event.preventDefault(); close(); }
+          if (event.key === "ArrowDown") { event.preventDefault(); setActive(active + 1); }
+          if (event.key === "ArrowUp") { event.preventDefault(); setActive(active - 1); }
+          if (event.key === "Enter") {
+            event.preventDefault();
+            const item = visibleItems()[active];
+            if (item) execute(item);
+          }
+          return;
+        }
+        if (helpOpen) {
+          if (event.key === "Escape" || event.key === "?") { event.preventDefault(); closeHelp(); }
+          return;
+        }
+        if (typing) return;
+        if (event.key === "/") {
+          event.preventDefault();
+          window.location.href = "/blog/search";
+          return;
+        }
+        if (event.key === "?") {
+          event.preventDefault();
+          help.dataset.open = "true";
+          help.setAttribute("aria-hidden", "false");
+          return;
+        }
+        if (event.key === "Escape") {
+          nav && (nav.dataset.mobileOpen = "false");
+          return;
+        }
+        if (event.key.toLowerCase() === "g") {
+          sequence = "g";
+          window.clearTimeout(sequenceTimer);
+          sequenceTimer = window.setTimeout(() => sequence = "", 900);
+          return;
+        }
+        if (sequence === "g") {
+          const routes = { h: "/", b: "/blog", p: "/project", a: "/about" };
+          const route = routes[event.key.toLowerCase()];
+          sequence = "";
+          if (route) window.location.href = route;
+        }
+      });
+    };
+
+    document.addEventListener("astro:page-load", init);
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  })();
+</script>

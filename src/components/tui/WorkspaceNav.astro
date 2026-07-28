@@ -1,0 +1,55 @@
+---
+import { Icon } from "astro-icon/components";
+
+const path = Astro.url.pathname;
+const items = [
+  { label: "home", href: "/", icon: "tabler:home", key: "g h", group: "workspace" },
+  { label: "blog", href: "/blog", icon: "tabler:file-text", key: "g b", group: "workspace" },
+  { label: "projects", href: "/project", icon: "tabler:code", key: "g p", group: "workspace" },
+  { label: "friends", href: "/friend", icon: "tabler:network", key: "", group: "workspace" },
+  { label: "about", href: "/about", icon: "tabler:user-code", key: "g a", group: "workspace" },
+  { label: "archives", href: "/blog/archives", icon: "tabler:history", key: "a", group: "blog tools" },
+  { label: "categories", href: "/blog/categories", icon: "tabler:folders", key: "c", group: "blog tools" },
+  { label: "tags", href: "/blog/tags", icon: "tabler:tags", key: "t", group: "blog tools" },
+  { label: "search", href: "/blog/search", icon: "tabler:search", key: "/", group: "blog tools" },
+];
+
+const isActive = (href: string) => {
+  if (href === "/") return path === "/";
+  if (href === "/blog") return path === "/blog" || /^\/blog\/\d+\/?$/.test(path);
+  return path === href || path.startsWith(`${href}/`);
+};
+---
+
+<aside class="tui-workspace-nav" data-workspace-nav aria-label="工作区导航">
+  <div class="tui-nav-head">
+    <span>Explorer</span>
+    <span>WORKSPACE</span>
+  </div>
+  <ul class="tui-nav-tree" data-focus-list>
+    {
+      items.map((item, index) => (
+        <>
+          {(index === 0 || items[index - 1]?.group !== item.group) && <li class="tui-nav-section">{item.group}</li>}
+          <li>
+            <a
+              class="tui-nav-item"
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              data-focus-item
+              data-command-label={`open ${item.label}`}
+            >
+              <Icon name={item.icon} class="tui-nav-icon" />
+              <span class="tui-nav-label">{item.label}</span>
+              <span class="tui-nav-shortcut">{item.key}</span>
+            </a>
+          </li>
+        </>
+      ))
+    }
+  </ul>
+  <div class="tui-nav-footer">
+    <div>LANGQI99 / LOCAL</div>
+    <div>Astro static workspace</div>
+  </div>
+</aside>

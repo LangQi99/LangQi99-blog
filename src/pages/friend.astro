@@ -4,24 +4,21 @@ import { Icon } from "astro-icon/components";
 import MainCard from "@/components/MainCard.astro";
 import LinkCard from "@/components/mdx/LinkCard.astro";
 import FriendCard from "@/components/mdx/FriendCard.astro";
+import Pane from "@/components/tui/Pane.astro";
 ---
 
 <BaseLayout title="Friends">
-  <MainCard
-    title="Friends & Resources"
-    description="A collection of links to friends, technologies, and contributors to the Frosti project."
-    textOverlay="FRIENDS"
-    infoIcon="lucide:link"
-  >
-    <div class="space-y-10">
+  <header class="tui-page-head">
+    <div><p>cat ~/.ssh/known_hosts</p><h1>友链网络。</h1><span>朋友、贡献者与常用资源组成的可信节点列表。所有原有链接和描述均保留。</span></div>
+    <div class="tui-page-stat"><b>peer</b><span>network index</span></div>
+  </header>
+  <Pane title="known_hosts --grouped" meta="friends / contributors / resources" class="friends-pane">
+    <div class="friends-workspace">
       <!-- Friends Section -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:users" class="w-6 h-6 text-primary" />
-          <span>Friends</span>
-        </h2>
+      <section class="friend-group">
+        <h2><span>01</span>Friends</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="friend-grid">
           <FriendCard
             name="1Liu"
             avatar="https://blog.ac1liu.tech/img/avatar.png"
@@ -154,13 +151,10 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
       </section>
 
       <!-- Contributors Section -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:git-pull-request" class="w-6 h-6 text-primary" />
-          <span>Contributors</span>
-        </h2>
+      <section class="friend-group">
+        <h2><span>02</span>Contributors</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="friend-grid">
           <FriendCard
             name="SunMaple"
             avatar="https://github.com/EveSunMaple.png"
@@ -207,13 +201,10 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
       </section>
 
       <!-- Useful Resources Section -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Icon name="lucide:bookmark" class="w-6 h-6 text-primary" />
-          <span>Useful Resources</span>
-        </h2>
+      <section class="friend-group">
+        <h2><span>03</span>Useful Resources</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="resource-grid">
           <LinkCard
             title="Astro Documentation"
             desc="The official documentation for Astro, covering everything from getting started to advanced techniques."
@@ -248,11 +239,7 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
         </div>
       </section>
 
-      <div class="divider my-8">
-        <Icon name="lucide:heart" class="w-10 h-10 text-primary" />
-      </div>
-
-      <div class="text-center">
+      <div class="friend-cta">
         <p class="text-base-content/80 mb-4">
           Want to be featured on this page? Feel free to reach out or contribute to the project!
         </p>
@@ -260,12 +247,31 @@ import FriendCard from "@/components/mdx/FriendCard.astro";
           href="https://github.com/EveSunMaple/Frosti"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-primary gap-2"
+          class="friend-contribute"
         >
           <Icon name="lucide:github" class="w-5 h-5" />
           <span>Contribute on GitHub</span>
         </a>
       </div>
     </div>
-  </MainCard>
+  </Pane>
 </BaseLayout>
+
+<style>
+  .friends-pane :global(.tui-pane-body) { padding: 0; }
+  .friends-workspace { display: grid; }
+  .friend-group { padding: 24px; border-bottom: 1px solid var(--tui-border); }
+  .friend-group h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; color: var(--tui-text); font: 800 14px var(--tui-code); }
+  .friend-group h2 span { color: var(--tui-accent); font-size: 10px; }
+  .friend-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; background: var(--tui-border); }
+  .resource-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; background: var(--tui-border); }
+  .friend-grid :global(.card),
+  .resource-grid :global(.card) { height: 100%; margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: var(--tui-panel) !important; box-shadow: none !important; color: var(--tui-text) !important; }
+  .friend-grid :global(.card:hover),
+  .resource-grid :global(.card:hover) { background: var(--tui-panel-raised) !important; transform: none !important; }
+  .friend-cta { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; }
+  .friend-cta p { margin: 0; color: var(--tui-muted); }
+  .friend-contribute { display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--tui-accent); border-radius: 2px; color: var(--tui-text); font: 700 10px var(--tui-code); text-decoration: none; white-space: nowrap; }
+  @media (max-width: 900px) { .friend-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 620px) { .friend-grid, .resource-grid { grid-template-columns: 1fr; } .friend-cta { align-items: flex-start; flex-direction: column; } }
+</style>

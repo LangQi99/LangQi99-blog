@@ -6,11 +6,15 @@ import { ClientRouter } from "astro:transitions";
 import ElementCrossing from "astro-vtbot/components/ElementCrossing.astro";
 import PointerOnNavigation from "astro-vtbot/components/PointerOnNavigation.astro";
 import Header from "@components/Header.astro";
-import Footer from "@components/Footer.astro";
-import Navbar from "@components/Navbar.astro";
-import MobileTOC from "@components/widgets/MobileTOC.astro";
+import TopBar from "@components/tui/TopBar.astro";
+import WorkspaceNav from "@components/tui/WorkspaceNav.astro";
+import StatusBar from "@components/tui/StatusBar.astro";
+import CommandPalette from "@components/tui/CommandPalette.astro";
+import FluidGrid from "@components/tui/FluidGrid.astro";
+import "../styles/tui.scss";
 
 const { title, image, headings = [], showTOC = false } = Astro.props;
+const workspacePath = Astro.url.pathname.replace(/^\/|\/$/g, "") || "home";
 ---
 
 <!doctype html>
@@ -64,22 +68,22 @@ const { title, image, headings = [], showTOC = false } = Astro.props;
       })();
     </script>
   </head>
-  <body class="bg-transparent font-mono text-gray-800 dark:text-zinc-100 antialiased min-h-screen flex flex-col">
-    <!-- Top Navbar -->
-    <Navbar />
-
-    <div class="flex-grow w-full max-w-5xl mx-auto px-4 py-8">
-        <main class="w-full">
-           <slot />
+  <body class="tui-body">
+    <FluidGrid />
+    <a class="tui-skip" href="#main-content">跳到正文</a>
+    <div class="tui-shell">
+      <TopBar title={title} path={workspacePath} />
+      <div class="tui-workspace">
+        <WorkspaceNav />
+        <main class="tui-main" id="main-content">
+          <div class="tui-content">
+            <slot />
+          </div>
         </main>
+      </div>
+      <StatusBar />
     </div>
-    
-    <div class="max-w-5xl mx-auto w-full px-4">
-        <Footer />
-    </div>
-
-    <!-- Mobile TOC Button (only visible on mobile if needed) -->
-    <MobileTOC headings={headings} showTOC={showTOC} />
+    <CommandPalette />
 
     <!-- Code copy functionality -->
     <script is:inline>
