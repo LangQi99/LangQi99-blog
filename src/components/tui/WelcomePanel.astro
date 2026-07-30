@@ -1,4 +1,6 @@
 ---
+import GreenOctopus from "./GreenOctopus.astro";
+
 interface Props {
   postCount: number;
   latestTitle?: string;
@@ -16,13 +18,7 @@ const { postCount, latestTitle = "暂无文章" } = Astro.props;
   <div class="welcome-grid">
     <section class="welcome-primary">
       <p class="welcome-back" id="welcome-title">Welcome back!</p>
-      <div class="pixel-mark" aria-label="LangQi99 pixel mark" role="img">
-        <span></span><span></span><span class="on"></span><span></span><span></span>
-        <span></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span>
-        <span class="on"></span><span class="on eye"></span><span class="on"></span><span class="on eye"></span><span class="on"></span>
-        <span></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span>
-        <span></span><span class="on foot"></span><span></span><span class="on foot"></span><span></span>
-      </div>
+      <GreenOctopus />
       <div class="welcome-identity">
         <strong>LangQi99 / Personal Blog</strong>
         <span>{postCount} articles · static workspace</span>
@@ -51,11 +47,13 @@ const { postCount, latestTitle = "暂无文章" } = Astro.props;
 
 <style>
   .welcome-tui {
-    --welcome-bg: #282b31;
-    --welcome-panel: #25282e;
-    --welcome-line: #d07b59;
-    --welcome-text: #f1f1ee;
-    --welcome-muted: #a6a6a5;
+    --welcome-bg: #151e19;
+    --welcome-panel: #1a2620;
+    --welcome-line: #50c989;
+    --welcome-bright: #a0f4c5;
+    --welcome-text: #eef8f1;
+    --welcome-muted: #99b2a3;
+    --welcome-screen: #08140d;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--welcome-line);
@@ -120,28 +118,6 @@ const { postCount, latestTitle = "暂无文章" } = Astro.props;
     font-weight: 700;
     letter-spacing: .02em;
   }
-
-  .pixel-mark {
-    width: 124px;
-    height: 100px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    margin-bottom: 26px;
-  }
-
-  .pixel-mark span { background: transparent; }
-  .pixel-mark .on { background: var(--welcome-line); }
-  .pixel-mark .eye {
-    position: relative;
-  }
-  .pixel-mark .eye::after {
-    content: "";
-    position: absolute;
-    inset: 25% 35%;
-    background: #111318;
-  }
-  .pixel-mark .foot { transform: scaleX(.52); }
 
   .welcome-identity {
     display: grid;
@@ -244,10 +220,13 @@ const { postCount, latestTitle = "暂无文章" } = Astro.props;
   }
 
   html[data-theme="winter"] .welcome-tui {
-    --welcome-bg: #e7e7e3;
-    --welcome-panel: #deded9;
-    --welcome-text: #292a2d;
-    --welcome-muted: #6e6f70;
+    --welcome-bg: #e5eee8;
+    --welcome-panel: #dbe8df;
+    --welcome-line: #2f8f5b;
+    --welcome-bright: #166b40;
+    --welcome-text: #173224;
+    --welcome-muted: #567062;
+    --welcome-screen: #d1e2d7;
     box-shadow: 0 20px 60px rgba(0, 0, 0, .08);
   }
 
@@ -263,6 +242,5 @@ const { postCount, latestTitle = "暂无文章" } = Astro.props;
     .welcome-primary { padding: 28px 18px; }
     .welcome-side { grid-template-columns: 1fr; }
     .welcome-side section + section { border-top: 1px solid var(--welcome-line); border-left: 0; }
-    .pixel-mark { width: 100px; height: 80px; }
   }
 </style>
