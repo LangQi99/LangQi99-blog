@@ -5,6 +5,7 @@ import Pagination from "@components/widgets/Pagination.astro";
 import Pane from "@/components/tui/Pane.astro";
 import PostWorkspace from "@/components/tui/PostWorkspace.astro";
 import WelcomePanel from "@/components/tui/WelcomePanel.astro";
+import WebGLOctopus from "@/components/tui/WebGLOctopus.astro";
 import { generatePageLinks } from "@utils/blogUtils";
 import { getMainBlogPaginationPaths } from "@utils/paginationUtils";
 import type { Page } from "@interfaces/data";
@@ -27,7 +28,7 @@ const latestPost = page.data[0];
         <WelcomePanel postCount={page.total} latestTitle={latestPost?.data.title} />
         <Pane title="whoami" meta="session ready" class="home-identity">
           <div class="identity-grid">
-            <div>
+            <div class="identity-copy-panel">
               <p class="tui-kicker">LANGQI99 / PERSONAL WORKSTATION</p>
               <h1>代码、Agent、系统与偶尔的生活记录。</h1>
               <p class="identity-copy">
@@ -38,40 +39,9 @@ const latestPost = page.data[0];
                 <a href="https://github.com/LangQi99" target="_blank" rel="noopener">open github ↗</a>
               </div>
             </div>
-            <dl class="identity-status">
-              <div><dt>workspace</dt><dd>LangQi99-blog</dd></div>
-              <div><dt>posts</dt><dd>{page.total}</dd></div>
-              <div><dt>latest</dt><dd>{latestPost?.data.title || "none"}</dd></div>
-              <div><dt>mode</dt><dd>static / interactive</dd></div>
-            </dl>
+            <WebGLOctopus postCount={page.total} />
           </div>
         </Pane>
-
-        <div class="home-console-grid">
-          <Pane title="prompt" meta="interactive" class="home-prompt-pane">
-            <div class="home-prompt" data-home-prompt>
-              <div class="prompt-output" aria-live="polite">
-                <span class="tui-prompt">›</span>
-                <div>
-                  <strong data-prompt-title>what are you working on?</strong>
-                  <p data-prompt-copy>把文章做成独立网站，同时维护 Agent、系统工具、CTF 与算法可视化实验。</p>
-                </div>
-              </div>
-              <div class="prompt-options">
-                <button type="button" data-prompt="work">current work</button>
-                <button type="button" data-prompt="read">what to read</button>
-                <button type="button" data-prompt="stack">toolchain</button>
-              </div>
-            </div>
-          </Pane>
-          <Pane title="now" meta="local state">
-            <ul class="now-processes">
-              <li><span class="process-state success">RUN</span><strong>interactive articles</strong><span>17 routes</span></li>
-              <li><span class="process-state info">DEV</span><strong>agent workflows</strong><span>context systems</span></li>
-              <li><span class="process-state warning">LAB</span><strong>security & algorithms</strong><span>visual demos</span></li>
-            </ul>
-          </Pane>
-        </div>
 
         <Pane title="git pinned --format=compact" meta="live GitHub + fallback" class="home-repos">
           <PinnedRepos
@@ -101,68 +71,24 @@ const latestPost = page.data[0];
   </div>
 </BaseLayout>
 
-<script is:inline>
-  const initializeHomePrompt = () => {
-    const root = document.querySelector("[data-home-prompt]");
-    if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") return;
-    root.dataset.initialized = "true";
-    const title = root.querySelector("[data-prompt-title]");
-    const copy = root.querySelector("[data-prompt-copy]");
-    const prompts = {
-      work: ["what are you working on?", "把文章做成独立网站，同时维护 Agent、系统工具、CTF 与算法可视化实验。"],
-      read: ["what should I read first?", "从 Agent Harness、Context is all you need、GitHub Issues 博客方案或树论图谱开始。"],
-      stack: ["what is the toolchain?", "Astro、TypeScript、原生 Canvas、静态搜索、GitHub 数据与大量命令行工作流。"],
-    };
-    root.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-prompt]");
-      if (button) {
-        const [nextTitle, nextCopy] = prompts[button.dataset.prompt];
-        title.textContent = nextTitle;
-        copy.textContent = nextCopy;
-        root.querySelectorAll("[data-prompt]").forEach((item) => item.dataset.active = String(item === button));
-      }
-    });
-  };
-  document.addEventListener("astro:page-load", initializeHomePrompt);
-  document.addEventListener("DOMContentLoaded", initializeHomePrompt, { once: true });
-</script>
-
 <style>
   .home-dashboard { display: grid; gap: 12px; margin-bottom: 12px; }
-  .identity-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: clamp(28px, 5vw, 72px); min-height: 350px; align-items: center; }
+  .identity-grid { display: grid; grid-template-columns: minmax(0, 1.04fr) minmax(380px, .96fr); min-height: 440px; align-items: stretch; }
   .home-identity { background: rgba(0,0,0,.58); }
-  .home-identity :global(.tui-pane-body) { padding: clamp(28px, 5vw, 72px); }
+  .home-identity :global(.tui-pane-body) { padding: 0; }
+  .identity-copy-panel { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: clamp(34px, 4vw, 56px); }
   .tui-kicker { margin: 0 0 18px; color: var(--tui-accent); font-size: 10px; font-weight: 800; letter-spacing: .13em; }
-  .identity-grid h1 { max-width: 870px; margin: 0; color: var(--tui-text); font-family: Georgia, "Times New Roman", "Noto Serif SC", serif; font-size: clamp(42px, 7vw, 92px); font-weight: 400; line-height: .94; letter-spacing: -.055em; }
+  .identity-grid h1 { max-width: 870px; margin: 0; color: var(--tui-text); font-family: Georgia, "Times New Roman", "Noto Serif SC", serif; font-size: clamp(42px, 4.25vw, 68px); font-weight: 400; line-height: .96; letter-spacing: -.05em; }
   .identity-copy { max-width: 720px; margin: 24px 0 0; color: var(--tui-muted); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.8; }
   .identity-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
-  .identity-actions a, .prompt-options button { min-height: 36px; padding: 0 12px; border: 1px solid var(--tui-border); border-radius: 2px; background: var(--tui-panel-soft); color: var(--tui-muted); font: 700 10px/1 var(--tui-code); text-decoration: none; cursor: pointer; }
+  .identity-actions a { min-height: 36px; padding: 0 12px; border: 1px solid var(--tui-border); border-radius: 2px; background: var(--tui-panel-soft); color: var(--tui-muted); font: 700 10px/1 var(--tui-code); text-decoration: none; cursor: pointer; }
   .identity-actions a { display: inline-flex; align-items: center; }
-  .identity-actions a:first-child, .prompt-options button[data-active="true"], .prompt-options button:hover { border-color: var(--tui-accent); color: var(--tui-text); }
-  .identity-status { margin: 0; border-top: 1px solid var(--tui-border); border-left: 1px solid var(--tui-border); }
-  .identity-status div { display: grid; grid-template-columns: 90px minmax(0, 1fr); min-height: 54px; align-items: center; border-right: 1px solid var(--tui-border); border-bottom: 1px solid var(--tui-border); }
-  .identity-status dt, .identity-status dd { margin: 0; padding: 0 10px; }
-  .identity-status dt { color: var(--tui-dim); font: 700 9px/1 var(--tui-code); text-transform: uppercase; }
-  .identity-status dd { overflow: hidden; color: var(--tui-text); font: 700 11px/1.35 var(--tui-code); text-overflow: ellipsis; }
-  .home-console-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; }
-  .prompt-output { min-height: 100px; display: flex; gap: 12px; color: var(--tui-muted); }
-  .prompt-output strong { color: var(--tui-text); font: 700 15px/1.4 var(--tui-code); }
-  .prompt-output p { margin: 8px 0 0; line-height: 1.7; }
-  .prompt-options { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 12px; border-top: 1px solid var(--tui-border); }
-  .now-processes { margin: 0; padding: 0; list-style: none; }
-  .now-processes li { min-height: 55px; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 10px; border-bottom: 1px solid var(--tui-border); }
-  .now-processes li:last-child { border-bottom: 0; }
-  .now-processes strong { color: var(--tui-text); }
-  .now-processes li > span:last-child { color: var(--tui-dim); font: 600 9px/1 var(--tui-code); }
-  .process-state { font: 800 9px/1 var(--tui-code); }
-  .process-state.success { color: var(--tui-success); }
-  .process-state.info { color: var(--tui-info); }
-  .process-state.warning { color: var(--tui-warning); }
+  .identity-actions a:first-child { border-color: var(--tui-accent); color: var(--tui-text); }
   .home-repos :global(.tui-pane-body) { padding: 0; }
   .home-repos :global(.pinned-grid) { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 1px !important; background: var(--tui-border); }
   .home-repos :global(.pinned-grid > a), .home-repos :global(.pinned-grid > div) { min-height: 150px; margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: var(--tui-panel) !important; box-shadow: none !important; color: var(--tui-text) !important; transform: none !important; }
   #recent-posts { scroll-margin-top: 70px; }
   #recent-posts > :last-child { margin-top: 12px; }
-  @media (max-width: 980px) { .identity-grid, .home-console-grid { grid-template-columns: 1fr; } .home-repos :global(.pinned-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
-  @media (max-width: 600px) { .home-identity :global(.tui-pane-body) { padding: 24px 18px; } .identity-grid h1 { font-size: clamp(38px, 13vw, 58px); } .home-repos :global(.pinned-grid) { grid-template-columns: 1fr !important; } }
+  @media (max-width: 980px) { .identity-grid { grid-template-columns: 1fr; } .home-repos :global(.pinned-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+  @media (max-width: 600px) { .identity-copy-panel { padding: 24px 18px 30px; } .identity-grid h1 { font-size: clamp(38px, 13vw, 58px); } .home-repos :global(.pinned-grid) { grid-template-columns: 1fr !important; } }
 </style>

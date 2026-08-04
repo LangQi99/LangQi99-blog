@@ -1,0 +1,796 @@
+---
+import GreenOctopus from "./GreenOctopus.astro";
+
+interface Props {
+  postCount: number;
+}
+
+const { postCount } = Astro.props;
+
+const rows = [
+  "000001111100000",
+  "000111111111000",
+  "001111111111100",
+  "011111111111110",
+  "011100111001110",
+  "111100111001111",
+  "111111111111111",
+  "111111000111111",
+  "011111111111110",
+  "001111111111100",
+  "001101101101100",
+  "011011011011110",
+  "110110110110011",
+];
+
+const pixelData = rows
+  .flatMap((row, y) =>
+    [...row].flatMap((value, x) => (value === "1" ? [`${x},${y}`] : [])),
+  )
+  .join(";");
+---
+
+<figure
+  class="octopus-engine"
+  data-octopus-engine
+  data-engine-state="loading"
+  data-pixels={pixelData}
+  aria-label={`绿色像素章鱼悬浮在交互网格上，代表 ${postCount} 个独立文章网站`}
+  role="img"
+>
+  <canvas aria-hidden="true"></canvas>
+  <div class="octopus-engine__fallback" aria-hidden="true">
+    <GreenOctopus />
+  </div>
+  <div class="octopus-engine__caption" aria-hidden="true">
+    <span>› {postCount} INTERACTIVE SITES</span>
+    <b>GPU RENDERED</b>
+  </div>
+</figure>
+
+<script>
+  const vertexCube = `#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPosition;
+    layout(location = 1) in vec3 aNormal;
+    layout(location = 2) in vec3 aInstance;
+    layout(location = 3) in float aSeed;
+
+    uniform mat4 uViewProjection;
+    uniform float uTime;
+    uniform vec2 uPointer;
+
+    out vec3 vNormal;
+    out vec3 vWorld;
+    out float vSeed;
+
+    mat2 rotate2d(float angle) {
+      float c = cos(angle);
+      float s = sin(angle);
+      return mat2(c, -s, s, c);
+    }
+
+    void main() {
+      vec3 local = aPosition * 0.132;
+      vec3 world = aInstance + local;
+      float yaw = -0.11 + uPointer.x * 0.15;
+      float pitch = 0.035 - uPointer.y * 0.07;
+      world.xz = rotate2d(yaw) * world.xz;
+      world.yz = rotate2d(pitch) * world.yz;
+      world.y += sin(uTime * 0.72) * 0.035;
+      world.y += sin(uTime * 0.48 + aSeed * 6.2831) * 0.006;
+
+      vec3 normal = aNormal;
+      normal.xz = rotate2d(yaw) * normal.xz;
+      normal.yz = rotate2d(pitch) * normal.yz;
+
+      vNormal = normalize(normal);
+      vWorld = world;
+      vSeed = aSeed;
+      gl_Position = uViewProjection * vec4(world, 1.0);
+    }
+  `;
+
+  const fragmentCube = `#version 300 es
+    precision highp float;
+    in vec3 vNormal;
+    in vec3 vWorld;
+    in float vSeed;
+
+    uniform vec3 uCamera;
+    uniform float uTheme;
+
+    out vec4 outColor;
+
+    void main() {
+      vec3 normal = normalize(vNormal);
+      vec3 viewDirection = normalize(uCamera - vWorld);
+      vec3 keyDirection = normalize(vec3(-0.72, 1.0, 0.58));
+      vec3 fillDirection = normalize(vec3(0.85, 0.35, 0.42));
+      float key = max(dot(normal, keyDirection), 0.0);
+      float fill = max(dot(normal, fillDirection), 0.0);
+      float rim = pow(1.0 - max(dot(normal, viewDirection), 0.0), 2.7);
+      float topLight = smoothstep(-0.45, 0.95, normal.y);
+      float variation = mix(0.92, 1.08, vSeed);
+
+      vec3 darkBase = vec3(0.20, 0.62, 0.13);
+      vec3 lightBase = vec3(0.10, 0.40, 0.07);
+      vec3 base = mix(darkBase, lightBase, uTheme) * variation;
+      vec3 color = base * (0.24 + key * 0.78 + fill * 0.16 + topLight * 0.10);
+      color += mix(vec3(0.30, 0.95, 0.17), vec3(0.16, 0.57, 0.08), uTheme) * rim * 0.38;
+      color += mix(vec3(0.08, 0.22, 0.05), vec3(0.03, 0.08, 0.02), uTheme);
+
+      outColor = vec4(color, 1.0);
+    }
+  `;
+
+  const vertexGrid = `#version 300 es
+    precision highp float;
+    layout(location = 0) in vec2 aGrid;
+
+    uniform mat4 uViewProjection;
+    uniform float uTime;
+    uniform vec2 uPointer;
+
+    out vec2 vGrid;
+    out vec3 vWorld;
+
+    void main() {
+      vec2 point = aGrid;
+      float radius = length(vec2(point.x * 0.82, point.y * 0.74));
+      float radialWave = sin(radius * 3.0 - uTime * 0.22) * exp(-radius * 0.42) * 0.10;
+      float pointerWave = exp(-length(point - vec2(uPointer.x * 1.5, uPointer.y * 0.7)) * 0.72) * 0.07;
+      float quietWave = sin(point.x * 1.15 + uTime * 0.15) * cos(point.y * 0.78) * 0.018;
+      float height = -0.10 + radialWave + pointerWave + quietWave;
+
+      vGrid = point;
+      vWorld = vec3(point.x, height, point.y);
+      gl_Position = uViewProjection * vec4(vWorld, 1.0);
+    }
+  `;
+
+  const fragmentGrid = `#version 300 es
+    precision highp float;
+    in vec2 vGrid;
+    in vec3 vWorld;
+
+    uniform float uTheme;
+
+    out vec4 outColor;
+
+    float gridLine(vec2 coordinate, float scale) {
+      vec2 scaled = coordinate * scale;
+      vec2 derivative = fwidth(scaled) * 1.45;
+      vec2 line = abs(fract(scaled - 0.5) - 0.5) / max(derivative, vec2(0.0001));
+      return 1.0 - min(min(line.x, line.y), 1.0);
+    }
+
+    void main() {
+      float minorLine = gridLine(vGrid, 1.18);
+      float majorLine = gridLine(vGrid, 0.236);
+      float distanceFade = 1.0 - smoothstep(2.8, 6.0, length(vec2(vGrid.x * 0.72, vGrid.y * 0.48)));
+      float horizonFade = 1.0 - smoothstep(2.6, 4.4, abs(vGrid.y));
+      float contactShadow = exp(-(vGrid.x * vGrid.x * 1.28 + vGrid.y * vGrid.y * 4.2));
+      float lightPool = exp(-(vGrid.x * vGrid.x * 0.24 + vGrid.y * vGrid.y * 0.72));
+      float lineStrength = max(minorLine * 0.56, majorLine * 0.82);
+      lineStrength *= mix(1.0, 0.24, contactShadow);
+      lineStrength *= distanceFade * horizonFade;
+
+      vec3 darkGrid = vec3(0.17, 0.62, 0.12);
+      vec3 lightGrid = vec3(0.10, 0.36, 0.06);
+      vec3 gridColor = mix(darkGrid, lightGrid, uTheme);
+      float surfaceLight = lightPool * mix(0.10, 0.055, uTheme);
+      vec3 color = gridColor * (0.58 + lineStrength * 0.42 + surfaceLight);
+      float alpha = clamp(lineStrength * 1.08 + surfaceLight, 0.0, 0.78);
+
+      outColor = vec4(color, alpha);
+    }
+  `;
+
+  const vertexMotes = `#version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 aPosition;
+    layout(location = 1) in float aSeed;
+
+    uniform mat4 uViewProjection;
+    uniform float uTime;
+    uniform float uDpr;
+
+    out float vStrength;
+
+    void main() {
+      vec3 position = aPosition;
+      position.x += sin(uTime * 0.24 + aSeed * 8.0) * 0.06;
+      position.y += sin(uTime * 0.34 + aSeed * 12.0) * 0.035;
+      gl_Position = uViewProjection * vec4(position, 1.0);
+      gl_PointSize = mix(1.4, 3.2, aSeed) * uDpr;
+      vStrength = mix(0.24, 0.70, aSeed);
+    }
+  `;
+
+  const fragmentMotes = `#version 300 es
+    precision highp float;
+    in float vStrength;
+    uniform float uTheme;
+    out vec4 outColor;
+
+    void main() {
+      vec2 center = abs(gl_PointCoord - 0.5);
+      float square = 1.0 - smoothstep(0.34, 0.50, max(center.x, center.y));
+      vec3 color = mix(vec3(0.34, 0.90, 0.18), vec3(0.13, 0.44, 0.07), uTheme);
+      outColor = vec4(color, square * vStrength);
+    }
+  `;
+
+  function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    if (!shader) throw new Error("Unable to create shader");
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const detail = gl.getShaderInfoLog(shader) || "Unknown shader error";
+      gl.deleteShader(shader);
+      throw new Error(detail);
+    }
+    return shader;
+  }
+
+  function createProgram(gl, vertexSource, fragmentSource) {
+    const program = gl.createProgram();
+    if (!program) throw new Error("Unable to create program");
+    const vertex = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragment = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
+    gl.linkProgram(program);
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const detail = gl.getProgramInfoLog(program) || "Unknown link error";
+      gl.deleteProgram(program);
+      throw new Error(detail);
+    }
+    return program;
+  }
+
+  function perspective(fieldOfView, aspect, near, far) {
+    const f = 1 / Math.tan(fieldOfView / 2);
+    const inverseRange = 1 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (near + far) * inverseRange, -1,
+      0, 0, near * far * inverseRange * 2, 0,
+    ]);
+  }
+
+  function normalize(vector) {
+    const length = Math.hypot(vector[0], vector[1], vector[2]) || 1;
+    return [vector[0] / length, vector[1] / length, vector[2] / length];
+  }
+
+  function cross(a, b) {
+    return [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0],
+    ];
+  }
+
+  function dot(a, b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  }
+
+  function lookAt(eye, center, up) {
+    const z = normalize([eye[0] - center[0], eye[1] - center[1], eye[2] - center[2]]);
+    const x = normalize(cross(up, z));
+    const y = cross(z, x);
+    return new Float32Array([
+      x[0], y[0], z[0], 0,
+      x[1], y[1], z[1], 0,
+      x[2], y[2], z[2], 0,
+      -dot(x, eye), -dot(y, eye), -dot(z, eye), 1,
+    ]);
+  }
+
+  function multiply(a, b) {
+    const output = new Float32Array(16);
+    for (let column = 0; column < 4; column += 1) {
+      for (let row = 0; row < 4; row += 1) {
+        output[column * 4 + row] =
+          a[row] * b[column * 4] +
+          a[4 + row] * b[column * 4 + 1] +
+          a[8 + row] * b[column * 4 + 2] +
+          a[12 + row] * b[column * 4 + 3];
+      }
+    }
+    return output;
+  }
+
+  function createCubeGeometry() {
+    const vertices = [];
+    const addFace = (normal, a, b, c, d) => {
+      [a, b, c, a, c, d].forEach((point) => vertices.push(...point, ...normal));
+    };
+    addFace([0, 0, 1], [-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]);
+    addFace([0, 0, -1], [.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]);
+    addFace([1, 0, 0], [.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]);
+    addFace([-1, 0, 0], [-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]);
+    addFace([0, 1, 0], [-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]);
+    addFace([0, -1, 0], [-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]);
+    return new Float32Array(vertices);
+  }
+
+  function createGridGeometry(columns = 72, rows = 52) {
+    const vertices = [];
+    const indices = [];
+    for (let row = 0; row < rows; row += 1) {
+      const z = -3.4 + (row / (rows - 1)) * 7.8;
+      for (let column = 0; column < columns; column += 1) {
+        const x = -5.2 + (column / (columns - 1)) * 10.4;
+        vertices.push(x, z);
+      }
+    }
+    for (let row = 0; row < rows - 1; row += 1) {
+      for (let column = 0; column < columns - 1; column += 1) {
+        const a = row * columns + column;
+        const b = a + 1;
+        const c = a + columns;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+    return {
+      vertices: new Float32Array(vertices),
+      indices: new Uint16Array(indices),
+    };
+  }
+
+  function initOctopusEngine(root) {
+    root.__octopusEngine?.destroy();
+
+    const canvas = root.querySelector("canvas");
+    const gl = canvas?.getContext("webgl2", {
+      alpha: true,
+      antialias: true,
+      desynchronized: true,
+      powerPreference: "high-performance",
+      premultipliedAlpha: false,
+    });
+
+    if (!canvas || !gl) {
+      root.dataset.engineState = "unsupported";
+      return;
+    }
+
+    const resources = [];
+    let animationFrame = 0;
+    let visible = true;
+    let destroyed = false;
+    let needsResize = true;
+    let pointerX = 0;
+    let pointerY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let lastRender = 0;
+    const startTime = performance.now();
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const release = (resource, method) => {
+      resources.push(() => gl[method]?.(resource));
+      return resource;
+    };
+
+    try {
+      const cubeProgram = release(createProgram(gl, vertexCube, fragmentCube), "deleteProgram");
+      const gridProgram = release(createProgram(gl, vertexGrid, fragmentGrid), "deleteProgram");
+      const moteProgram = release(createProgram(gl, vertexMotes, fragmentMotes), "deleteProgram");
+
+      const cubeVao = release(gl.createVertexArray(), "deleteVertexArray");
+      gl.bindVertexArray(cubeVao);
+      const cubeBuffer = release(gl.createBuffer(), "deleteBuffer");
+      gl.bindBuffer(gl.ARRAY_BUFFER, cubeBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, createCubeGeometry(), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+
+      const pixels = (root.dataset.pixels || "").split(";").filter(Boolean);
+      const instances = new Float32Array(pixels.length * 4);
+      pixels.forEach((pixel, index) => {
+        const [xValue, yValue] = pixel.split(",").map(Number);
+        const seed = ((xValue * 37 + yValue * 61 + index * 17) % 101) / 100;
+        const centerDistance = Math.hypot((xValue - 7) / 7, (yValue - 5) / 7);
+        const bodyDepth = Math.max(0, 1 - centerDistance) * 0.15;
+        instances[index * 4] = (xValue - 7) * 0.145;
+        instances[index * 4 + 1] = (12 - yValue) * 0.145 + 0.31;
+        instances[index * 4 + 2] = bodyDepth + (seed - 0.5) * 0.07;
+        instances[index * 4 + 3] = seed;
+      });
+
+      const instanceBuffer = release(gl.createBuffer(), "deleteBuffer");
+      gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, instances, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribDivisor(2, 1);
+      gl.enableVertexAttribArray(3);
+      gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 16, 12);
+      gl.vertexAttribDivisor(3, 1);
+
+      const grid = createGridGeometry();
+      const gridVao = release(gl.createVertexArray(), "deleteVertexArray");
+      gl.bindVertexArray(gridVao);
+      const gridBuffer = release(gl.createBuffer(), "deleteBuffer");
+      gl.bindBuffer(gl.ARRAY_BUFFER, gridBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, grid.vertices, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      const gridIndexBuffer = release(gl.createBuffer(), "deleteBuffer");
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gridIndexBuffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, grid.indices, gl.STATIC_DRAW);
+
+      const moteValues = [];
+      for (let index = 0; index < 34; index += 1) {
+        const seed = ((index * 47) % 97) / 96;
+        const x = ((index * 53) % 101) / 100 * 7.8 - 3.9;
+        const y = ((index * 29) % 83) / 82 * 1.65 + 0.10;
+        const z = ((index * 71) % 89) / 88 * 3.2 - 1.5;
+        moteValues.push(x, y, z, seed);
+      }
+      const motes = new Float32Array(moteValues);
+      const moteVao = release(gl.createVertexArray(), "deleteVertexArray");
+      gl.bindVertexArray(moteVao);
+      const moteBuffer = release(gl.createBuffer(), "deleteBuffer");
+      gl.bindBuffer(gl.ARRAY_BUFFER, moteBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, motes, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 16, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 16, 12);
+      gl.bindVertexArray(null);
+
+      const cubeUniforms = {
+        viewProjection: gl.getUniformLocation(cubeProgram, "uViewProjection"),
+        time: gl.getUniformLocation(cubeProgram, "uTime"),
+        pointer: gl.getUniformLocation(cubeProgram, "uPointer"),
+        camera: gl.getUniformLocation(cubeProgram, "uCamera"),
+        theme: gl.getUniformLocation(cubeProgram, "uTheme"),
+      };
+      const gridUniforms = {
+        viewProjection: gl.getUniformLocation(gridProgram, "uViewProjection"),
+        time: gl.getUniformLocation(gridProgram, "uTime"),
+        pointer: gl.getUniformLocation(gridProgram, "uPointer"),
+        theme: gl.getUniformLocation(gridProgram, "uTheme"),
+      };
+      const moteUniforms = {
+        viewProjection: gl.getUniformLocation(moteProgram, "uViewProjection"),
+        time: gl.getUniformLocation(moteProgram, "uTime"),
+        dpr: gl.getUniformLocation(moteProgram, "uDpr"),
+        theme: gl.getUniformLocation(moteProgram, "uTheme"),
+      };
+
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+      function resize() {
+        const rectangle = canvas.getBoundingClientRect();
+        const dprLimit = window.innerWidth < 700 ? 1.25 : 1.5;
+        const dpr = Math.min(window.devicePixelRatio || 1, dprLimit);
+        const width = Math.max(1, Math.round(rectangle.width * dpr));
+        const height = Math.max(1, Math.round(rectangle.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        gl.viewport(0, 0, width, height);
+        needsResize = false;
+        return { dpr, width, height };
+      }
+
+      function draw(now = performance.now()) {
+        if (destroyed) return;
+        const metrics = needsResize
+          ? resize()
+          : {
+              dpr: Math.min(window.devicePixelRatio || 1, window.innerWidth < 700 ? 1.25 : 1.5),
+              width: canvas.width,
+              height: canvas.height,
+            };
+        const aspect = Math.max(0.5, metrics.width / metrics.height);
+        const time = reducedMotion.matches ? 0 : (now - startTime) / 1000;
+        if (!reducedMotion.matches) {
+          pointerX += (targetX - pointerX) * 0.055;
+          pointerY += (targetY - pointerY) * 0.055;
+        } else {
+          pointerX = 0;
+          pointerY = 0;
+        }
+
+        const camera = [
+          pointerX * 0.18,
+          2.82 - pointerY * 0.10,
+          7.05,
+        ];
+        const projection = perspective(Math.PI * 0.245, aspect, 0.1, 20);
+        const view = lookAt(camera, [0, 0.74, 0.05], [0, 1, 0]);
+        const viewProjection = multiply(projection, view);
+        const lightTheme = document.documentElement.getAttribute("data-theme") === "winter" ? 1 : 0;
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.useProgram(gridProgram);
+        gl.bindVertexArray(gridVao);
+        gl.uniformMatrix4fv(gridUniforms.viewProjection, false, viewProjection);
+        gl.uniform1f(gridUniforms.time, time);
+        gl.uniform2f(gridUniforms.pointer, pointerX, pointerY);
+        gl.uniform1f(gridUniforms.theme, lightTheme);
+        gl.drawElements(gl.TRIANGLES, grid.indices.length, gl.UNSIGNED_SHORT, 0);
+
+        gl.useProgram(moteProgram);
+        gl.bindVertexArray(moteVao);
+        gl.uniformMatrix4fv(moteUniforms.viewProjection, false, viewProjection);
+        gl.uniform1f(moteUniforms.time, time);
+        gl.uniform1f(moteUniforms.dpr, metrics.dpr);
+        gl.uniform1f(moteUniforms.theme, lightTheme);
+        gl.drawArrays(gl.POINTS, 0, motes.length / 4);
+
+        gl.useProgram(cubeProgram);
+        gl.bindVertexArray(cubeVao);
+        gl.uniformMatrix4fv(cubeUniforms.viewProjection, false, viewProjection);
+        gl.uniform1f(cubeUniforms.time, time);
+        gl.uniform2f(cubeUniforms.pointer, pointerX, pointerY);
+        gl.uniform3f(cubeUniforms.camera, camera[0], camera[1], camera[2]);
+        gl.uniform1f(cubeUniforms.theme, lightTheme);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, pixels.length);
+        gl.bindVertexArray(null);
+        lastRender = now;
+      }
+
+      function frame(now) {
+        if (destroyed || !visible || document.hidden || reducedMotion.matches) {
+          animationFrame = 0;
+          return;
+        }
+        draw(now);
+        animationFrame = requestAnimationFrame(frame);
+      }
+
+      function start() {
+        if (animationFrame || destroyed || !visible || document.hidden || reducedMotion.matches) return;
+        animationFrame = requestAnimationFrame(frame);
+      }
+
+      function stop() {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+      }
+
+      function renderStill() {
+        stop();
+        draw(lastRender || performance.now());
+        start();
+      }
+
+      const onPointerMove = (event) => {
+        if (reducedMotion.matches) return;
+        const rectangle = root.getBoundingClientRect();
+        targetX = ((event.clientX - rectangle.left) / rectangle.width - 0.5) * 2;
+        targetY = ((event.clientY - rectangle.top) / rectangle.height - 0.5) * 2;
+      };
+      const onPointerLeave = () => {
+        targetX = 0;
+        targetY = 0;
+      };
+      const onVisibilityChange = () => {
+        if (document.hidden) stop();
+        else if (visible) {
+          renderStill();
+          start();
+        }
+      };
+      const onMotionChange = () => renderStill();
+      const onThemeChange = () => renderStill();
+      const onContextLost = (event) => {
+        event.preventDefault();
+        stop();
+        root.dataset.engineState = "unsupported";
+      };
+      const onContextRestored = () => initOctopusEngine(root);
+
+      const resizeObserver = new ResizeObserver(() => {
+        needsResize = true;
+        if (!animationFrame) renderStill();
+      });
+      const themeObserver = new MutationObserver(onThemeChange);
+      const intersectionObserver = new IntersectionObserver(([entry]) => {
+        visible = Boolean(entry?.isIntersecting);
+        if (visible) {
+          renderStill();
+          start();
+        } else {
+          stop();
+        }
+      }, { rootMargin: "120px" });
+
+      root.addEventListener("pointermove", onPointerMove, { passive: true });
+      root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+      canvas.addEventListener("webglcontextlost", onContextLost);
+      canvas.addEventListener("webglcontextrestored", onContextRestored);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      document.addEventListener("themechange", onThemeChange);
+      reducedMotion.addEventListener("change", onMotionChange);
+      resizeObserver.observe(root);
+      themeObserver.observe(document.documentElement, {
+        attributeFilter: ["data-theme"],
+        attributes: true,
+      });
+      intersectionObserver.observe(root);
+
+      root.dataset.engineState = "ready";
+      draw();
+      start();
+
+      root.__octopusEngine = {
+        destroy() {
+          destroyed = true;
+          stop();
+          resizeObserver.disconnect();
+          themeObserver.disconnect();
+          intersectionObserver.disconnect();
+          root.removeEventListener("pointermove", onPointerMove);
+          root.removeEventListener("pointerleave", onPointerLeave);
+          canvas.removeEventListener("webglcontextlost", onContextLost);
+          canvas.removeEventListener("webglcontextrestored", onContextRestored);
+          document.removeEventListener("visibilitychange", onVisibilityChange);
+          document.removeEventListener("themechange", onThemeChange);
+          reducedMotion.removeEventListener("change", onMotionChange);
+          resources.reverse().forEach((dispose) => dispose());
+          root.__octopusEngine = null;
+        },
+      };
+    } catch (error) {
+      resources.reverse().forEach((dispose) => dispose());
+      root.dataset.engineState = "unsupported";
+      console.warn("WebGL octopus fallback enabled", error);
+    }
+  }
+
+  function initializeOctopusEngines() {
+    document.querySelectorAll("[data-octopus-engine]").forEach(initOctopusEngine);
+  }
+
+  initializeOctopusEngines();
+  document.addEventListener("astro:page-load", initializeOctopusEngines);
+  document.addEventListener("astro:before-swap", () => {
+    document.querySelectorAll("[data-octopus-engine]").forEach((root) => {
+      root.__octopusEngine?.destroy();
+    });
+  });
+</script>
+
+<style>
+  .octopus-engine {
+    position: relative;
+    min-width: 0;
+    min-height: 360px;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    isolation: isolate;
+    border-left: 1px solid var(--tui-border);
+    background:
+      radial-gradient(circle at 50% 46%, rgba(70, 197, 43, .12), transparent 28%),
+      linear-gradient(180deg, rgba(3, 9, 5, .30), rgba(0, 2, 1, .92));
+  }
+
+  .octopus-engine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(90deg, var(--tui-panel) 0, transparent 13%, transparent 82%, rgba(0, 0, 0, .10) 100%);
+    pointer-events: none;
+  }
+
+  .octopus-engine canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 260ms ease;
+    touch-action: pan-y;
+  }
+
+  .octopus-engine[data-engine-state="ready"] canvas {
+    opacity: 1;
+  }
+
+  .octopus-engine__fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: grid;
+    place-items: center;
+    opacity: .82;
+    transition: opacity 180ms ease;
+  }
+
+  .octopus-engine[data-engine-state="ready"] .octopus-engine__fallback {
+    opacity: 0;
+  }
+
+  .octopus-engine__fallback :global(.green-octopus) {
+    margin: 0;
+    filter: drop-shadow(0 22px 25px rgba(0, 0, 0, .45));
+    transform: scale(1.08);
+  }
+
+  .octopus-engine__caption {
+    position: absolute;
+    right: 16px;
+    bottom: 13px;
+    left: 16px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: rgba(157, 224, 126, .78);
+    font: 700 9px/1 var(--tui-code);
+    letter-spacing: .09em;
+  }
+
+  .octopus-engine__caption b {
+    color: var(--tui-dim);
+    font-weight: 700;
+  }
+
+  html[data-theme="winter"] .octopus-engine {
+    background:
+      radial-gradient(circle at 50% 46%, rgba(81, 142, 54, .13), transparent 31%),
+      linear-gradient(180deg, rgba(241, 245, 235, .48), rgba(222, 229, 214, .82));
+  }
+
+  html[data-theme="winter"] .octopus-engine::after {
+    background: linear-gradient(90deg, var(--tui-panel) 0, transparent 13%, transparent 88%);
+  }
+
+  html[data-theme="winter"] .octopus-engine__caption {
+    color: rgba(54, 104, 34, .82);
+  }
+
+  @media (max-width: 980px) {
+    .octopus-engine {
+      min-height: 330px;
+      border-top: 1px solid var(--tui-border);
+      border-left: 0;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .octopus-engine {
+      min-height: 290px;
+    }
+
+    .octopus-engine__caption {
+      right: 12px;
+      bottom: 10px;
+      left: 12px;
+      font-size: 8px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .octopus-engine canvas,
+    .octopus-engine__fallback {
+      transition: none;
+    }
+  }
+</style>
