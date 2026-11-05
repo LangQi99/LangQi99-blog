@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="326" viewBox="0 0 520 326" role="img" aria-labelledby="title description">
+  <title id="title">起卦和寻卦结果</title>
+  <desc id="description">从下往上投币六次。上爻和三爻变动，本卦泽天夬，变卦天泽履。</desc>
+  <defs>
+    <path id="yang" d="M-30 0H30"/>
+    <path id="yin" d="M-30 0H-7M7 0H30"/>
+  </defs>
+  <rect x=".5" y=".5" width="519" height="325" rx="14" fill="#fff" stroke="#ddd"/>
+  <path d="M16 60H504V101H16ZM16 183H504V224H16Z" fill="#f8efec"/>
+  <path d="M16 60H504M16 101H504M16 142H504M16 183H504M16 224H504M16 265H504" stroke="#e0ded9"/>
+  <g fill="#222" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" text-anchor="middle" dominant-baseline="middle">
+    <g fill="#4f4d47">
+      <text x="56" y="32">爻位</text>
+      <text x="164" y="32">投币</text>
+      <text x="286" y="22">本卦</text>
+      <text x="286" y="44" font-size="15">泽天夬</text>
+      <text x="421" y="22">变卦</text>
+      <text x="421" y="44" font-size="15">天泽履</text>
+    </g>
+    <g transform="translate(0 80)">
+      <text x="56">上爻</text><text x="164">0 正</text>
+    </g>
+    <g transform="translate(0 121)">
+      <text x="56">五爻</text><text x="164">1 正</text>
+    </g>
+    <g transform="translate(0 162)">
+      <text x="56">四爻</text><text x="164">1 正</text>
+    </g>
+    <g transform="translate(0 203)">
+      <text x="56">三爻</text><text x="164">3 正</text>
+    </g>
+    <g transform="translate(0 244)">
+      <text x="56">二爻</text><text x="164">1 正</text>
+    </g>
+    <g transform="translate(0 285)">
+      <text x="56">初爻</text><text x="164">1 正</text>
+    </g>
+  </g>
+  <g fill="none" stroke="#222" stroke-width="4">
+    <use href="#yang" x="286" y="121"/><use href="#yang" x="421" y="121"/>
+    <use href="#yang" x="286" y="162"/><use href="#yang" x="421" y="162"/>
+    <use href="#yang" x="286" y="244"/><use href="#yang" x="421" y="244"/>
+    <use href="#yang" x="286" y="285"/><use href="#yang" x="421" y="285"/>
+  </g>
+  <g fill="none" stroke="#973d2a" stroke-width="4">
+    <use href="#yin" x="286" y="80"/><use href="#yang" x="421" y="80"/>
+    <use href="#yang" x="286" y="203"/><use href="#yin" x="421" y="203"/>
+    <path d="m326 75 10 10m0-10-10 10" stroke-width="2"/>
+    <circle cx="331" cy="203" r="5.5" stroke-width="2"/>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"
+viewBox="0 0 400 400" text-anchor="middle" font-size="15" fill="#000"
+font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<title>八卦卦名与取象</title>
+<desc>改自维基共享资源 Acht-trigramme.svg。原图 M-Falcon，矢量化 Manuel Strehl，公有领域。卦名改为简体并补充取象。</desc>
+<g stroke="#000">
+<path fill="none" stroke-width="2" d="m61,143v114l82
+82h114l82-82v-114l-82-82h-114zM108,162v76l54
+54h76l54-54v-76l-54-54h-76zM61,143l47,19m184,76 47
+19m0-114-47,19m-184,76-47,19m82,82 19-47m76-184
+19-47m-114,0 19,47m76,184 19,47"/>
+<path stroke-width="6" d="m185,19h12m6
+0h12m-30,12h30m-30,12h12m6,0h12m-159,22h30m228,0h30m-288
+12h30m228,0h12m6,0h12m-288,12h30m228,0h12m6,0h12m-328
+96h12m6,0h12m308,0h12m6,0h12m-368,12h30m308,0h12m6
+0h12m-368,12h30m308,0h30m-328,102h12m6,0h12m228,0h30m-288
+12h12m6,0h12m228,0h30m-288,12h12m6,0h12m228,0h12m6
+0h12m-159,20h30m-30,12h12m6,0h12m-30,12h30"/></g>
+<text x="200" y="213" font-size="46">八卦</text>
+<text x="200" y="93">坎为水</text>
+<text x="120" y="127">乾为天<tspan x="280">艮为山</tspan></text>
+<text x="85" y="205">兑为泽<tspan x="316">震为雷</tspan></text>
+<text x="120" y="292">坤为地<tspan x="280">巽为风</tspan></text>
+<text x="200" y="325">离为火</text>
+</svg>
