@@ -1,7 +1,0 @@
----
-import { getCollection } from "astro:content";
-import Site from "../../../sites/LilacCTF-writeup/index.astro";
-const blog = (await getCollection("blog")).find((entry) => entry.slug.toLowerCase() === "lilacctf-writeup");
-if (!blog) throw new Error("Missing blog entry: lilacctf-writeup");
----
-<Site blog={blog} />

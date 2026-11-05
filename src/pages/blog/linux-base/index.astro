@@ -1,7 +1,0 @@
----
-import { getCollection } from "astro:content";
-import Site from "../../../sites/linux-base/index.astro";
-const blog = (await getCollection("blog")).find((entry) => entry.slug === "linux-base");
-if (!blog) throw new Error("Missing blog entry: linux-base");
----
-<Site blog={blog} />

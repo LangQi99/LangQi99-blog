@@ -25,9 +25,3 @@ pnpm-debug.log*
 
 # pagefind
 public/pagefind/
-
-# local agent planning and progress documents
-AGENTS.md
-plan.md
-prd.md
-process.md
